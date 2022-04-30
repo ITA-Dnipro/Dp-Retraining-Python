@@ -27,3 +27,8 @@ class Settings(BaseModel):
         f'{POSTGRES_DB_PASSWORD}@{POSTGRES_DB_HOST}:'
         f'{POSTGRES_DB_PORT}/{POSTGRES_DB_NAME}'
     )
+
+    # JWT settings.
+    authjwt_secret_key: str = os.getenv('authjwt_secret_key')
+    authjwt_token_location: set = {os.getenv('authjwt_token_location')}
+    authjwt_cookie_csrf_protect: bool = (os.getenv('authjwt_cookie_csrf_protect', 'False') == 'True')
