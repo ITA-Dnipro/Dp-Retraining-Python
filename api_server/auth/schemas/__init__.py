@@ -4,7 +4,7 @@ from common.constants.users import UserSchemaConstants
 
 
 class AuthUserBaseSchema(BaseModel):
-    """Auth user Base schema."""
+    """Auth User Base Schema."""
 
     username: str = Field(
         description='Username of a user.',
@@ -22,13 +22,16 @@ class AuthUserBaseSchema(BaseModel):
 
 
 class AuthUserInputSchema(AuthUserBaseSchema):
+    """Auth User Input Schema."""
     pass
 
 
 class AuthUserOutputSchema(BaseModel):
+    """Auth User Output Schema."""
     access_token: str
     refresh_token: str
 
 
 class AuthUserLogoutSchema(BaseModel):
+    """Auth User Logout Schema."""
     message: str

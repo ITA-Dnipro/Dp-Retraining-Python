@@ -11,6 +11,7 @@ from auth.schemas import AuthUserInputSchema
 from auth.utils.exceptions import AuthUserInvalidPasswordException
 from common.constants.auth import AuthJWTConstants
 from db import get_session
+from users.models import User
 from users.services import UserService
 from utils.logging import setup_logging
 
@@ -21,30 +22,58 @@ class AbstractAuthService(metaclass=abc.ABCMeta):
         self,
         session: AsyncSession = Depends(get_session),
         Authorize: AuthJWT = Depends(),
+        user_service: UserService = Depends(),
     ) -> None:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
-        self.user_service = UserService(session=self.session)
+        self.user_service = user_service
         self.Authorize = Authorize
 
-    async def login(self, user: AuthUserInputSchema) -> None:
-        """Login user with credentials."""
+    async def login(self, user: AuthUserInputSchema) -> dict:
+        """Creates JTW access and refresh tokens based on user credentials.
+
+        Args:
+            user: Serialized AuthUserInputSchema object.
+
+        Returns:
+        dict with created access and refresh tokens.
+        """
         return await self._login(user)
 
-    async def me(self) -> None:
-        """Return currently authenticated user."""
+    async def me(self) -> User:
+        """Gets user information based on JWT credentials.
+
+        Returns:
+        User object from db.
+        """
         return await self._me()
 
-    async def logout(self) -> None:
-        """Unset credentials for currently authenticated user."""
+    async def logout(self) -> dict:
+        """Unset JWT credentials for currently authenticated user.
+
+        Returns:
+        dict with response message.
+        """
         return await self._logout()
 
     async def verify_password(self, password: str, password_hash: str) -> bool:
-        """Return bool of verifying password with argon2 algorithm."""
+        """Checks password and password hash with argon2 algorithm.
+
+        Args:
+            password: string with password.
+            password_hash: string with password hash.
+
+        Returns:
+        bool of verifying password with argon2 algorithm.
+        """
         return await self._verify_password(password, password_hash)
 
-    async def refresh_token(self) -> None:
-        """Refresh and return access and refresh tokens."""
+    async def refresh_token(self) -> dict:
+        """Creates JTW access and refresh tokens based on user credentials.
+
+        Returns:
+        dict with newly created access and refresh tokens.
+        """
         return await self._refresh_token()
 
     @abc.abstractclassmethod
@@ -99,7 +128,17 @@ class AuthService(AbstractAuthService):
             )
 
     async def _create_jwt_token(self, subject: str, token_type: str, time_amount: int, time_unit: str) -> str:
-        """Return access or refresh token with set parameters."""
+        """Creates JWT access or refresh tokens.
+
+        Args:
+            subject: string to create token.
+            token_type: string with token_type.
+            time_amount: token lifetime amount.
+            time_unit: token lifetime unit.
+
+        Returns:
+        Return access or refresh token with set parameters.
+        """
         CREATE_TOKEN_METHODS = {
             'access': self.Authorize.create_access_token,
             'refresh': self.Authorize.create_refresh_token,

@@ -1,9 +1,17 @@
 import logging
 
-LOG_FORMAT = '%(asctime)s %(levelname)s %(name)s:%(lineno)s %(message)s'
+from common.constants.api import ApiConstants
 
 
 def setup_logging(name: str, log_level: str = 'DEBUG') -> logging.Logger:
-    """Return Logger class to setup logging for the project."""
-    logging.basicConfig(format=LOG_FORMAT, level=log_level)
+    """Creates Logger objects.
+
+    Args:
+        name: of class.
+        log_level: string of log level.
+
+    Returns:
+    Logger object for specific class.
+    """
+    logging.basicConfig(format=ApiConstants.LOG_FORMAT.value, level=log_level)
     return logging.getLogger(name)

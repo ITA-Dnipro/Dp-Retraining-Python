@@ -27,13 +27,13 @@ class UserBaseSchema(BaseModel):
     )
     email: str = Field(
         description='Email address of a user.',
-        min_length=UserSchemaConstants.СHAR_SIZE_3.value,
+        min_length=UserSchemaConstants.CHAR_SIZE_3.value,
         max_length=UserSchemaConstants.CHAR_SIZE_256.value,
         regex=UserSchemaConstants.EMAIL_REGEX.value,
     )
     phone_number: str = Field(
         description='Password of a user.',
-        min_length=UserSchemaConstants.СHAR_SIZE_3.value,
+        min_length=UserSchemaConstants.CHAR_SIZE_3.value,
         max_length=UserSchemaConstants.CHAR_SIZE_64.value,
     )
 
@@ -55,3 +55,8 @@ class UserOutputSchema(UserBaseSchema):
     id: UUID = Field(description='Unique identifier of a user.')
     is_active: bool = Field(description='Boolean field whether a user is active or not.')
     created_at: datetime = Field(description="Datetime of user's creation.")
+
+
+class UserUpdateSchema(UserBaseSchema):
+    """User Update schema for User model."""
+    pass
