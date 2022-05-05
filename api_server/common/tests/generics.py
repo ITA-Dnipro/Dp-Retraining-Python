@@ -47,9 +47,11 @@ class TestMixin:
             engine, class_=AsyncSession, expire_on_commit=False,
         )
         async with async_session() as session:
-            yield session
-            await session.close()
-            await engine.dispose()
+            try:
+                yield session
+            finally:
+                await session.close()
+                await engine.dispose()
 
     async def _database_exists(self, db_connect: Database, db_query: str) -> int | None:
         """Query postgres server and get database id.
@@ -217,7 +219,7 @@ class TestMixin:
         return await user_service.add_user(user)
 
     @pytest.fixture
-    async def create_user(self, user_service: UserService) -> User:
+    async def test_user(self, user_service: UserService) -> User:
         """Create test user data and store it in test database.
 
         Args:

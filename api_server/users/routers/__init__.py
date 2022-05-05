@@ -44,7 +44,7 @@ async def get_user(id: UUID, user_service: UserService = Depends()) -> ResponseB
     )
 
 
-@users_router.post('/', response_model=ResponseBaseSchema)
+@users_router.post('/', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
 async def post_users(user: UserInputSchema, user_service: UserService = Depends()) -> ResponseBaseSchema:
     """POST '/users' endpoint view function.
 

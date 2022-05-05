@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.config import get_app_config
 from common.constants.api import ApiConstants
-from users.models import Base as UserBase
+from db import Base
+from users.models import User
 
 Config = get_app_config(ApiConstants.DEVELOPMENT_CONFIG.value)
 
@@ -28,7 +29,7 @@ fileConfig(config.config_file_name)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = UserBase.metadata
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

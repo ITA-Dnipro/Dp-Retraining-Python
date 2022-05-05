@@ -1,7 +1,10 @@
 from fastapi import Request
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+Base = declarative_base()
 
 
 def create_engine(database_url: str, echo: bool, future: bool) -> AsyncEngine:
@@ -36,6 +39,8 @@ async def get_session(request: Request) -> AsyncSession:
         engine, class_=AsyncSession, expire_on_commit=False,
     )
     async with async_session() as session:
-        yield session
-        await session.close()
-        await engine.dispose()
+        try:
+            yield session
+        finally:
+            await session.close()
+            await engine.dispose()
