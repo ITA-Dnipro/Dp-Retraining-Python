@@ -20,20 +20,19 @@ services:
       - ./api_server:/usr/src/app
     depends_on:
       - postgres_server
-  celery:
-    restart: always
-    build: ./api_server
-    command: celery -A celery_app worker -l INFO
-    env_file:
-      - .env
-    depends_on:
-        - api_server
-        - postgres_server
-        - redis
+#  celery:
+#    restart: always
+#    build: ./api_server
+#    command: celery -A celery_app worker -l INFO
+#    env_file:
+#      - .env
+#    depends_on:
+#        - api_server
+#        - postgres_server
+#        - redis
   redis:
       image: redis
       ports:
         - ${REDIS_PORT}:${REDIS_PORT}
-
 volumes:
   pgdata:
