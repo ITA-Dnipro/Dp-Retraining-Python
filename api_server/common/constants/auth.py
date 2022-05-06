@@ -13,3 +13,5 @@ class AuthJWTConstants(enum.Enum):
     TOKEN_EXPIRE_7 = 7
     TOKEN_EXPIRE_30 = 30
     TOKEN_EXPIRE_60 = 60
+    ACCESS_TOKEN_COOKIE_NAME = 'access_token_cookie'
+    REFRESH_TOKEN_COOKIE_NAME = 'refresh_token_cookie'

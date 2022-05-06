@@ -28,6 +28,19 @@ RESPONSE_POST_USER = {
     'errors': [],
     'status_code': 201,
 }
+# PUT
+RESPONSE_USER_UPDATE_TEST_DATA = {
+    'data': {
+        'id': ANY,
+        'username': request_test_user_data.UPDATE_USER_TEST_DATA['username'],
+        'first_name': request_test_user_data.UPDATE_USER_TEST_DATA['first_name'],
+        'last_name': request_test_user_data.UPDATE_USER_TEST_DATA['last_name'],
+        'email': request_test_user_data.UPDATE_USER_TEST_DATA['email'],
+        'phone_number': request_test_user_data.UPDATE_USER_TEST_DATA['phone_number'],
+    },
+    'errors': [],
+    'status_code': 200,
+}
 # Errors.
 RESPONSE_USER_NOT_FOUND = {'detail': f"User with id: '{request_test_user_data.DUMMY_USER_UUID}' not found."}
 RESPONSE_USER_INVALID_PAYLOAD = {
@@ -61,3 +74,11 @@ RESPONSE_USER_DUPLICATE_USERNAME = {
     ],
     'status_code': 400,
 }
+RESPONSE_USER_UNAUTHORIZED_UPDATE = {
+    'data': [],
+    'errors': [{'detail': 'Missing cookie access_token_cookie'}],
+    'status_code': 401,
+}
+RESPONSE_USER_UNAUTHORIZED_UPDATE = {'detail': 'User do not have permissions to perform this action.'}
+RESPONSE_USER_DELETE = b''
+RESPONSE_USER_UNAUTHORIZED_DELETE = {'detail': 'User do not have permissions to perform this action.'}

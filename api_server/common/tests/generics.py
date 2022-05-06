@@ -1,4 +1,6 @@
+from uuid import uuid4
 import os
+import random
 
 from fastapi import FastAPI
 
@@ -14,7 +16,10 @@ import alembic
 import pytest
 
 from app import create_app
+from auth.schemas import AuthUserInputSchema
+from auth.services import AuthService
 from common.constants.api import ApiConstants
+from common.constants.auth import AuthJWTConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.users import request_test_user_data
 from db import create_engine
@@ -251,3 +256,78 @@ class TestMixin:
                     follow_redirects=True,
             ) as client:
                 yield client
+
+    @pytest.fixture(autouse=True)
+    async def auth_service(self, db_session: AsyncSession, user_service: fixture) -> UserService:
+        """A pytest fixture that creates instance of auth_service business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+            user_service: instance of business logic class.
+
+        Returns:
+        An instance of AuthService business logic class.
+        """
+        return AuthService(session=db_session, Authorize=AuthJWT(), user_service=user_service)
+
+    @pytest.fixture
+    async def authenticated_test_user(self, client: fixture, user_service: UserService, auth_service: AuthService) -> User:
+        """Create authenticated test user data and store it in test database.
+
+        Args:
+            user_service: instance of user business logic class.
+            auth_service: instance of auth business logic class.
+
+        Returns:
+        newly created User object.
+        """
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        return await self._create_authenticated_user(user, auth_service, client)
+
+    async def _create_authenticated_user(self, user: User, auth_service: AuthService, client: fixture) -> User:
+        """Modifies 'client' fixture by adding JWT cookies for user authentication.
+
+        Args:
+            user_service: instance of business logic class.
+            user: User instance.
+            client: pytest fixture that creates test httpx client.
+
+        Returns:
+        newly created User object.
+        """
+        access_token = await auth_service._create_jwt_token(
+            subject=user.username,
+            token_type=AuthJWTConstants.ACCESS_TOKEN_NAME.value,
+            time_unit=AuthJWTConstants.MINUTES.value,
+            time_amount=AuthJWTConstants.TOKEN_EXPIRE_60.value,
+        )
+        refresh_token = await auth_service._create_jwt_token(
+            subject=user.username,
+            token_type=AuthJWTConstants.REFRESH_TOKEN_NAME.value,
+            time_unit=AuthJWTConstants.DAYS.value,
+            time_amount=AuthJWTConstants.TOKEN_EXPIRE_7.value,
+
+        )
+        client.cookies.update({AuthJWTConstants.ACCESS_TOKEN_COOKIE_NAME.value: access_token})
+        client.cookies.update({AuthJWTConstants.REFRESH_TOKEN_COOKIE_NAME.value: refresh_token})
+        return user
+
+    @pytest.fixture
+    async def random_test_user(self, user_service: UserService) -> User:
+        """Create test User object with random data and store it in test database.
+
+        Args:
+            user_service: instance of business logic class.
+
+        Returns:
+        newly created User object with random data.
+        """
+        ADD_RANDOM_USER_TEST_DATA = {
+            'username': f'test_john_{uuid4()}',
+            'first_name': 'john',
+            'last_name': 'bar',
+            'email': f'test_john{random.randrange(1000000000, 9999999999)}@john.com',
+            'password': '12345678',
+            'phone_number': f'+38{random.randrange(1000000000, 9999999999)}',
+        }
+        return await self._create_user(user_service, UserInputSchema(**ADD_RANDOM_USER_TEST_DATA))
