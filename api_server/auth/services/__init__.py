@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from auth.schemas import AuthUserInputSchema
 from auth.utils.exceptions import AuthUserInvalidPasswordException
 from common.constants.auth import AuthJWTConstants
+from common.exceptions.auth import AuthExceptionMsgs
 from db import get_session
 from users.models import User
 from users.services import UserService
@@ -124,7 +125,7 @@ class AuthService(AbstractAuthService):
             return {'access_token': access_token, 'refresh_token': refresh_token}
         raise AuthUserInvalidPasswordException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Incorect username or password.',
+                detail=AuthExceptionMsgs.WRONG_USERNAME_OR_PASSWORD.value,
             )
 
     async def _create_jwt_token(self, subject: str, token_type: str, time_amount: int, time_unit: str) -> str:

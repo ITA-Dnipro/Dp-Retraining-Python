@@ -16,7 +16,6 @@ import alembic
 import pytest
 
 from app import create_app
-from auth.schemas import AuthUserInputSchema
 from auth.services import AuthService
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants
@@ -271,7 +270,9 @@ class TestMixin:
         return AuthService(session=db_session, Authorize=AuthJWT(), user_service=user_service)
 
     @pytest.fixture
-    async def authenticated_test_user(self, client: fixture, user_service: UserService, auth_service: AuthService) -> User:
+    async def authenticated_test_user(
+            self, client: fixture, user_service: UserService, auth_service: AuthService,
+    ) -> User:
         """Create authenticated test user data and store it in test database.
 
         Args:

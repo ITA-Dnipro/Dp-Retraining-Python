@@ -42,7 +42,11 @@ RESPONSE_USER_UPDATE_TEST_DATA = {
     'status_code': 200,
 }
 # Errors.
-RESPONSE_USER_NOT_FOUND = {'detail': f"User with id: '{request_test_user_data.DUMMY_USER_UUID}' not found."}
+RESPONSE_USER_NOT_FOUND = {
+    'data': [],
+    'errors': [{'detail': "User with id: '7c1b7fb5-20f2-4988-b075-e4cc236f7784' not found."}],
+    'status_code': 404,
+}
 RESPONSE_USER_INVALID_PAYLOAD = {
     'detail': [
         {
@@ -79,6 +83,14 @@ RESPONSE_USER_UNAUTHORIZED_UPDATE = {
     'errors': [{'detail': 'Missing cookie access_token_cookie'}],
     'status_code': 401,
 }
-RESPONSE_USER_UNAUTHORIZED_UPDATE = {'detail': 'User do not have permissions to perform this action.'}
+RESPONSE_USER_UNAUTHORIZED_UPDATE = {
+    'data': [],
+    'errors': [{'detail': 'User do not have permissions to perform this action.'}],
+    'status_code': 401,
+}
 RESPONSE_USER_DELETE = b''
-RESPONSE_USER_UNAUTHORIZED_DELETE = {'detail': 'User do not have permissions to perform this action.'}
+RESPONSE_USER_UNAUTHORIZED_DELETE = {
+    'data': [],
+    'errors': [{'detail': 'User do not have permissions to perform this action.'}],
+    'status_code': 401,
+}

@@ -30,3 +30,24 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 class AuthUserInvalidPasswordException(HTTPException):
     """Custom User invalid password exception."""
     pass
+
+
+def invalid_auth_credentials_handler(request: Request, exc: AuthUserInvalidPasswordException):
+    """Handler for AuthUserInvalidPasswordException exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised AuthUserInvalidPasswordException.
+
+    Returns:
+    http response for raised AuthUserInvalidPasswordException.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )
