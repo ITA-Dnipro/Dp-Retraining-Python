@@ -26,9 +26,6 @@ services:
     command: celery -A celery_app worker -l INFO
     env_file:
       - .env
-    environment:
-        - BROKER_URL=redis://redis/0
-        - RESULT_BACKEND=redis://redis/1
     depends_on:
         - api_server
         - postgres_server
@@ -36,7 +33,7 @@ services:
   redis:
       image: redis
       ports:
-        - "6379:6379"
+        - ${REDIS_PORT}:${REDIS_PORT}
 
 volumes:
   pgdata:
