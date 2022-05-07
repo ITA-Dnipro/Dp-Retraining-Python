@@ -13,7 +13,7 @@ from pytest import fixture
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 import alembic
-import pytest
+import pytest_asyncio
 
 from app import create_app
 from auth.services import AuthService
@@ -31,7 +31,7 @@ from utils.tests import find_fullpath
 class TestMixin:
     """Generic test helper class."""
 
-    @pytest.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)
     async def db_session(self, make_alembic_migrations: fixture, app: FastAPI) -> AsyncSession:
         """A pytest fixture to create sqlalchemy AsyncSession instance to use in tests.
 
@@ -121,7 +121,7 @@ class TestMixin:
         async with db_connect as connection:
             await connection.execute(db_query)
 
-    @pytest.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)
     def app(self) -> FastAPI:
         """Create FastAPI instance to use it in tests.
 
@@ -157,7 +157,7 @@ class TestMixin:
             ),
         )
 
-    @pytest.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)
     async def setup_db(self, app: FastAPI) -> None:
         """Creates test database before test run, and delete it afterwards.
 
@@ -172,7 +172,7 @@ class TestMixin:
         yield
         await self.delete_database(default_db, db_name=app.app_config.POSTGRES_DB_NAME)
 
-    @pytest.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)
     def make_alembic_migrations(self, setup_db: fixture, app: FastAPI) -> None:
         """A pytest fixture to run alembic migrations after creation of test database.
 
@@ -198,7 +198,7 @@ class TestMixin:
         config.set_main_option(GenericTestConstants.SCRIPT_LOCATION_OPTION.value, alembic_migrations_filepath)
         alembic.command.upgrade(config, GenericTestConstants.ALEMBIC_HEAD.value)
 
-    @pytest.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)
     async def user_service(self, db_session: AsyncSession) -> UserService:
         """A pytest fixture that creates instance of user_service business logic.
 
@@ -222,7 +222,7 @@ class TestMixin:
         """
         return await user_service.add_user(user)
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def test_user(self, user_service: UserService) -> User:
         """Create test user data and store it in test database.
 
@@ -234,7 +234,7 @@ class TestMixin:
         """
         return await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
 
-    @pytest.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)
     async def client(self, app: FastAPI) -> AsyncClient:
         """A pytest fixture that creates AsyncClient instance.
 
@@ -256,7 +256,7 @@ class TestMixin:
             ) as client:
                 yield client
 
-    @pytest.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)
     async def auth_service(self, db_session: AsyncSession, user_service: fixture) -> UserService:
         """A pytest fixture that creates instance of auth_service business logic.
 
@@ -269,7 +269,7 @@ class TestMixin:
         """
         return AuthService(session=db_session, Authorize=AuthJWT(), user_service=user_service)
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def authenticated_test_user(
             self, client: fixture, user_service: UserService, auth_service: AuthService,
     ) -> User:
@@ -313,7 +313,7 @@ class TestMixin:
         client.cookies.update({AuthJWTConstants.REFRESH_TOKEN_COOKIE_NAME.value: refresh_token})
         return user
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def random_test_user(self, user_service: UserService) -> User:
         """Create test User object with random data and store it in test database.
 

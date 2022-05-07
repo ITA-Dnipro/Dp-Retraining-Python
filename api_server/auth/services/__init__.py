@@ -156,7 +156,7 @@ class AuthService(AbstractAuthService):
     async def _logout(self) -> None:
         self.Authorize.jwt_required()
         self.Authorize.unset_jwt_cookies()
-        return {'message': 'Successfully logout.'}
+        return {'message': AuthJWTConstants.LOGOUT_MSG.value}
 
     async def _refresh_token(self) -> None:
         self.Authorize.jwt_refresh_token_required()

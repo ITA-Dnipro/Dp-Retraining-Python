@@ -53,3 +53,16 @@ docker-compose -f ${PWD}/docker-compose.yml -d start
 ```
 docker-compose -f ${PWD}/docker-compose.yml down
 ```
+## How to run tests and create coverage reports
+1. Use command to run all tests
+```
+make run_tests
+```
+2. Use command to create .coverage file
+```
+make coverage
+```
+3. Use command to create folder with html report
+```
+make coverage_html_report
+```
