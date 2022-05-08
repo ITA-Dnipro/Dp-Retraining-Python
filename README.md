@@ -1,4 +1,6 @@
 # Retraining project
+[![Status](https://github.com/ITA-Dnipro/Dp-Retraining-Python/actions/workflows/dev_checks.yml/badge.svg)](https://github.com/ITA-Dnipro/Dp-Retraining-Python/actions/workflows/dev_checks.yml)
+
 A retraining project to get familiar with various technologies.
 ## How to setup and run
 ### How to get project:

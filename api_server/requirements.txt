@@ -21,6 +21,7 @@ httpcore==0.14.7
 httpx==0.22.0
 idna==3.3
 iniconfig==1.1.1
+isort==5.10.1
 Mako==1.2.0
 MarkupSafe==2.1.1
 mccabe==0.6.1
