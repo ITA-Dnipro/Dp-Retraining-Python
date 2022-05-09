@@ -1,8 +1,12 @@
-.vscode
-.env
+.coverage
+htmlcov
+
+# Cache files
 __pycache__
 db.sqlite3
 .idea
 .coverage
 htmlcov
 .pytest_cache
+var
+
