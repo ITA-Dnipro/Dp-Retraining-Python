@@ -1,7 +1,7 @@
 #!/bin/sh
 
-
-
+# Run alembic migrations on project startup.
+cd /usr/src/app/db && alembic upgrade head
 # Check for RUN_FOR_EVER env variable.
 if [ $RUN_FOR_EVER = "True" ]
     then
