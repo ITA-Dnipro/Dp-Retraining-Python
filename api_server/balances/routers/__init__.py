@@ -44,24 +44,6 @@ async def get_balance(id: UUID, balance_service: BalanceService = Depends()) -> 
     )
 
 
-@balances_router.post('/', response_model=ResponseBaseSchema)
-async def post_balances(balance: BalanceInputSchema, balance_service: BalanceService = Depends()) -> ResponseBaseSchema:
-    """POST '/balances' endpoint view function.
-
-    Args:
-        balance: Serialized BalanceInputSchema object.
-        balance_service: dependency as business logic instance.
-
-    Returns:
-    ResponseBaseSchema object with BalanceOutputSchema object as response data.
-    """
-    return ResponseBaseSchema(
-        status_code=status.HTTP_201_CREATED,
-        data=BalanceOutputSchema.from_orm(await balance_service.add_balance(balance=balance)),
-        errors=[],
-    )
-
-
 @balances_router.put('/{id}', response_model=ResponseBaseSchema)
 async def put_balance(id: UUID, balance: BalanceUpdateSchema,
                       balance_service: BalanceService = Depends()) -> ResponseBaseSchema:
@@ -80,18 +62,3 @@ async def put_balance(id: UUID, balance: BalanceUpdateSchema,
         data=BalanceOutputSchema.from_orm(await balance_service.update_balance(id_=id, balance=balance)),
         errors=[],
     )
-
-
-@balances_router.delete('/{id}')
-async def delete_balance(id: UUID, balance_service: BalanceService = Depends()) -> Response:
-    """DELETE '/balances/{id}' endpoint view function.
-
-    Args:
-        id: UUID of balance.
-        balance_service: dependency as business logic instance.
-
-    Returns:
-    http response with no data and 204 status code.
-    """
-    await balance_service.delete_balance(id_=id)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

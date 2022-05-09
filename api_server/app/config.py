@@ -81,8 +81,10 @@ CONFIGS = {
 
 def get_app_config(config_name: str) -> BaseModel:
     """Get pydantic BaseModel class with application settings.
+
     Args:
         config_name: string with config name.
+
     Returns:
     App config from config mapping.
     """

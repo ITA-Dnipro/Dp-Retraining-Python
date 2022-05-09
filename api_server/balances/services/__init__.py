@@ -132,7 +132,6 @@ class BalanceService(AbstractBalanceService):
         return balance
 
     async def _add_balance(self, balance: BalanceInputSchema) -> None:
-        balance.amount = 0
         balance = Balance(**balance.dict())
         self.session.add(balance)
         await self.session.commit()
@@ -150,8 +149,7 @@ class BalanceService(AbstractBalanceService):
             return await self._get_balance_by_id(id_=id_)
 
     async def _delete_balance(self, id_) -> None:
-        self.Authorize.jwt_required()
-        balance_exists = await self._select_balancey(column='id', value=id_)
+        balance_exists = await self._select_balance(column='id', value=id_)
         if balance_exists:
             # Deleting balance.
             balance = await self._get_balance_by_id(id_=id_)

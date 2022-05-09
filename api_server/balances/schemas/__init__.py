@@ -8,7 +8,7 @@ class BalanceBaseSchema(BaseModel):
 
     amount: float = Field(
         min_value=0,
-        max_value=100_000_000
+        max_value=100_000_000,
     )
 
     class Config:
@@ -23,4 +23,9 @@ class BalanceOutputSchema(BalanceBaseSchema):
 
 class BalanceUpdateSchema(BalanceBaseSchema):
     """Balance Update schema for Balance model."""
+    pass
+
+
+class BalanceInputSchema(BalanceBaseSchema):
+    """Balance Input schema for Balance model."""
     pass

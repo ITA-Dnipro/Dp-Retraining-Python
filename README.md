@@ -1,4 +1,6 @@
 # Retraining project
+[![Status](https://github.com/ITA-Dnipro/Dp-Retraining-Python/actions/workflows/dev_checks.yml/badge.svg)](https://github.com/ITA-Dnipro/Dp-Retraining-Python/actions/workflows/dev_checks.yml)
+
 A retraining project to get familiar with various technologies.
 ## How to setup and run
 ### How to get project:
@@ -52,4 +54,17 @@ docker-compose -f ${PWD}/docker-compose.yml -d start
 3. Run command to stop docker-compose
 ```
 docker-compose -f ${PWD}/docker-compose.yml down
+```
+## How to run tests and create coverage reports
+1. Use command to run all tests
+```
+make run_tests
+```
+2. Use command to create .coverage file
+```
+make coverage
+```
+3. Use command to create folder with html report
+```
+make coverage_html_report
 ```
