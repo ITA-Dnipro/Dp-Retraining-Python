@@ -1,6 +1,7 @@
+import uvicorn
+
 from app import create_app
 from common.constants.api import ApiConstants
-import uvicorn
 
 app = create_app(config_name=ApiConstants.DEVELOPMENT_CONFIG.value)
 

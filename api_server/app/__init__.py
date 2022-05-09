@@ -1,19 +1,14 @@
 from fastapi import FastAPI
 
-from sqlalchemy.exc import IntegrityError
-
-from app.config import get_app_config
 from auth.routers import auth_router
 from auth.utils.exceptions import (
     AuthUserInvalidPasswordException,
     authjwt_exception_handler,
     invalid_auth_credentials_handler,
 )
-from balances.routers import balances_router
-from balances.utils.exceptions import BalanceNotFoundError, BalancePermissionError
-from common.constants.api import ApiConstants
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
+from sqlalchemy.exc import IntegrityError
 from users.routers import users_router
 from users.utils.exceptions import (
     UserNotFoundError,
@@ -21,6 +16,11 @@ from users.utils.exceptions import (
     user_not_found_error_handler,
     user_permission_error_handler,
 )
+
+from app.config import get_app_config
+from balances.routers import balances_router
+from balances.utils.exceptions import BalanceNotFoundError, BalancePermissionError
+from common.constants.api import ApiConstants
 from utils.exceptions import integrity_error_handler
 
 

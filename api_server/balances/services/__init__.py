@@ -4,6 +4,7 @@ import abc
 
 from fastapi import Depends, status
 
+from fastapi_jwt_auth import AuthJWT
 from sqlalchemy import update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +14,6 @@ from balances.models import Balance
 from balances.schemas import BalanceInputSchema, BalanceUpdateSchema
 from balances.utils.exceptions import BalanceNotFoundError
 from db import get_session
-from fastapi_jwt_auth import AuthJWT
 from utils.logging import setup_logging
 
 

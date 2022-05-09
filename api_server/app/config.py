@@ -1,9 +1,9 @@
 import os
 
+from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from common.constants.api import ApiConstants
-from dotenv import load_dotenv
 
 load_dotenv()
 
