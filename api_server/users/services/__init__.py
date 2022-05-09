@@ -11,14 +11,14 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from balances.schemas import BalanceInputSchema
+from balances.services import BalanceService
 from db import get_session
 from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
 from users.utils.exceptions import UserNotFoundError
 from users.utils.jwt import jwt_user_validator
 from utils.logging import setup_logging
-from balances.services import BalanceService
-from balances.schemas import BalanceInputSchema
 
 
 class AbstractUserService(metaclass=abc.ABCMeta):
@@ -152,7 +152,8 @@ class UserService(AbstractUserService):
 
     async def _add_user(self, user: UserInputSchema) -> None:
         user.password = await self._hash_password(user.password)
-        balance = await BalanceService(session=self.session).add_balance(balance=BalanceInputSchema(amount=0))
+        balance = await BalanceService(session=self.session).add_balance(
+            balance=BalanceInputSchema(amount=0))
         user.balance_id = balance.id
         user = User(**user.dict())
         self.session.add(user)
@@ -182,7 +183,7 @@ class UserService(AbstractUserService):
                 user = await self._get_user_by_id(id_=id_)
                 await self.session.delete(user)
                 await self.session.commit()
-                await BalanceService(session=self.session).delete_balance(user.balance_id)
+                await BalanceService(session=self.session, Authorize=self.Authorize).delete_balance(user.balance_id)
                 self._log.debug(f'''User with id: "{id_}" deleted.''')
 
     async def _hash_password(self, password: str) -> str:

@@ -25,6 +25,12 @@ from common.constants.auth import AuthJWTConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.users import request_test_user_data
 from db import create_engine
+from donations.models import Donation
+from donations.schemas import DonationInputSchema
+from donations.services import DonationService
+from refills.models import Refill
+from refills.schemas import RefillInputSchema
+from refills.services import RefillService
 from users.models import User
 from users.schemas import UserInputSchema
 from users.services import UserService
@@ -237,33 +243,6 @@ class TestMixin:
         """
         return await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
 
-    async def _create_balance(self, balance_service: BalanceService,
-                              balance: BalanceInputSchema) -> Balance:
-        """Stores balance test data in test database.
-
-        Args:
-            balance_service: instance of business logic class.
-            balance: serialized BalanceInputSchema object.
-
-        Returns:
-        newly created Balance object.
-        """
-        return await balance_service.add_balance(balance)
-
-    @pytest_asyncio.fixture
-    async def test_balance(self, balance_service: BalanceService) -> Balance:
-        """Create test balance data and store it in test database.
-
-        Args:
-            balance_service: instance of business logic class.
-
-        Returns:
-        newly created Balance object.
-        """
-        test_balance = {'amount': 10}
-        return await self._create_balance(balance_service,
-                                          BalanceInputSchema(**test_balance))
-
     @pytest_asyncio.fixture(autouse=True)
     async def client(self, app: FastAPI) -> AsyncClient:
         """A pytest fixture that creates AsyncClient instance.
@@ -362,3 +341,135 @@ class TestMixin:
             'phone_number': f'+38{random.randrange(1000000000, 9999999999)}',
         }
         return await self._create_user(user_service, UserInputSchema(**ADD_RANDOM_USER_TEST_DATA))
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def balance_service(self, db_session: AsyncSession) -> BalanceService:
+        """A pytest fixture that creates instance of balance_service business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of UserService business logic class.
+        """
+        return BalanceService(session=db_session, Authorize=AuthJWT())
+
+    async def _create_balance(self, balance_service: BalanceService, balance: BalanceInputSchema) -> Balance:
+        """Stores user test data in test database.
+
+        Args:
+            balance_service: instance of business logic class.
+            balance: serialized BalanceInputSchema object.
+
+        Returns:
+        newly created Balance object.
+        """
+        return await balance_service.add_balance(balance)
+
+    @pytest_asyncio.fixture
+    async def test_balance(self, balance_service: BalanceService) -> Balance:
+        """Create test balance data and store it in test database.
+
+        Args:
+            balance_service: instance of business logic class.
+
+        Returns:
+        newly created Balance object.
+        """
+        test_balance = {'amount': 0}
+        return await self._create_balance(balance_service,
+                                          BalanceInputSchema(**test_balance))
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def donation_service(self, db_session: AsyncSession) -> DonationService:
+        """A pytest fixture that creates instance of donation_service business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of UserService business logic class.
+        """
+        return DonationService(session=db_session, Authorize=AuthJWT())
+
+    async def _create_donation(self, donation_service: DonationService, donation: DonationInputSchema) -> Donation:
+        """Stores user test data in test database.
+
+        Args:
+            donation_service: instance of business logic class.
+            donation: serialized DonationInputSchema object.
+
+        Returns:
+        newly created donation object.
+        """
+        return await donation_service._add_donation(donation)
+
+    @pytest_asyncio.fixture
+    async def test_donation(self, donation_service: DonationService, authenticated_test_user: User,
+                            user_service: UserService) -> Donation:
+        """Create test donation data and store it in test database.
+
+        Args:
+            donation_service: instance of business logic class.
+
+        Returns:
+        newly created Balance object.
+        """
+        recipient_user_data = {
+            'password': '12345678',
+            'username': 'updated_test_john',
+            'first_name': 'updated_john',
+            'last_name': 'updated_bar',
+            'email': 'updated_john@john.com',
+            'phone_number': '+380994445566',
+        }
+        donation_test_data = {
+            'amount': 1,
+            "sender_id": authenticated_test_user.balance_id,
+            "recipient_id": (await self._create_user(user_service, UserInputSchema(
+                **recipient_user_data))).balance_id,
+        }
+        return await self._create_donation(donation_service,
+                                           DonationInputSchema(**donation_test_data))
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def refill_service(self, db_session: AsyncSession) -> RefillService:
+        """A pytest fixture that creates instance of refill_service business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of UserService business logic class.
+        """
+        return RefillService(session=db_session, Authorize=AuthJWT())
+
+    async def _create_refill(self, refill_service: RefillService, refill: RefillInputSchema) -> Refill:
+        """Stores user test data in test database.
+
+        Args:
+            refill_service: instance of business logic class.
+            refill: serialized RefillInputSchema object.
+
+        Returns:
+        newly created refill object.
+        """
+        return await refill_service._add_refill(refill)
+
+    @pytest_asyncio.fixture
+    async def test_refill(self, refill_service: RefillService,
+                          authenticated_test_user: User) -> Refill:
+        """Create test refill data and store it in test database.
+
+        Args:
+            refill_service: instance of business logic class.
+
+        Returns:
+        newly created Balance object.
+        """
+        refill_test_data = {
+            'amount': 1,
+            "balance_id": authenticated_test_user.balance_id,
+        }
+        return await self._create_refill(refill_service,
+                                         RefillInputSchema(**refill_test_data))

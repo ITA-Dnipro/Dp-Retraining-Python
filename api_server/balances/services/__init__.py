@@ -12,7 +12,7 @@ from sqlalchemy.future import select
 
 from balances.models import Balance
 from balances.schemas import BalanceInputSchema, BalanceUpdateSchema
-from balances.utils.exceptions import BalanceNotFoundError
+from balances.utils.exceptions import BalanceNotFoundError, BalancePermissionError
 from db import get_session
 from utils.logging import setup_logging
 
@@ -110,7 +110,8 @@ class BalanceService(AbstractBalanceService):
         return balances.scalars().all()
 
     async def _balance_exists(self, column: str, value: Union[UUID, str]) -> bool:
-        balance = await self.session.execute(select(Balance).where(Balance.__table__.columns[column] == value))
+        balance = await self.session.execute(
+            select(Balance).where(Balance.__table__.columns[column] == value))
         try:
             balance.one()
         except NoResultFound as err:
@@ -127,9 +128,18 @@ class BalanceService(AbstractBalanceService):
             return balance.scalar_one()
 
     async def _get_balance_by_id(self, id_: str) -> None:
-        self._log.debug(f'''Getting balance with id: "{id_}" from the db.''')
-        balance = await self._select_balance(column='id', value=id_)
-        return balance
+        self.Authorize.jwt_required()
+        jwt_subject = self.Authorize.get_jwt_subject()
+        from users.services import UserService
+        user = await UserService(session=self.session)._get_user_by_username(username=jwt_subject)
+        if user and user.balance_id == id_:
+            self._log.debug(f'''Getting balance with id: "{id_}" from the db.''')
+            balance = await self._select_balance(column='id', value=id_)
+            return balance
+        else:
+            err_msg = f'''User don't have access to balance with id: "{id_}".'''
+            self._log.debug(err_msg)
+            raise BalancePermissionError(status_code=status.HTTP_403_FORBIDDEN, detail=err_msg)
 
     async def _add_balance(self, balance: BalanceInputSchema) -> None:
         balance = Balance(**balance.dict())
@@ -139,20 +149,28 @@ class BalanceService(AbstractBalanceService):
         return balance
 
     async def _update_balance(self, id_: str, balance: BalanceUpdateSchema) -> None:
-        self.Authorize.jwt_required()
         balance_exists = await self._select_balance(column='id', value=id_)
         if balance_exists:
             # Updating balance.
-            await self.session.execute(update(Balance).where(Balance.id == id_).values(**balance.dict()))
+            new_balance = balance_exists.amount + balance
+            await self.session.execute(
+                update(Balance).where(Balance.id == id_).values({'amount': new_balance}))
             await self.session.commit()
-            # Return updated balance.
-            return await self._get_balance_by_id(id_=id_)
 
     async def _delete_balance(self, id_) -> None:
-        balance_exists = await self._select_balance(column='id', value=id_)
-        if balance_exists:
+        balance = await self._select_balance(column='id', value=id_)
+        if balance:
+            from donations.services import DonationService
+            from refills.services import RefillService
+            donations = await DonationService(session=self.session).get_donations()
+            for donation in donations:
+                if donation.sender_id == balance.id or donation.recipient_id == balance.id:
+                    await DonationService(session=self.session).delete_donation(id_=donation.id)
+            refills = await RefillService(session=self.session).get_refills()
+            for refill in refills:
+                if refill.balance_id == balance.id:
+                    await RefillService(session=self.session).delete_refill(id_=refill.id)
             # Deleting balance.
-            balance = await self._get_balance_by_id(id_=id_)
             await self.session.delete(balance)
             await self.session.commit()
             self._log.debug(f'''Balance with id: "{id_}" deleted.''')

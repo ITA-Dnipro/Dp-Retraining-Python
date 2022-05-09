@@ -11,7 +11,17 @@ from auth.utils.exceptions import (
     authjwt_exception_handler,
     invalid_auth_credentials_handler,
 )
+from balances.routers import balances_router
+from balances.utils.exceptions import (
+    BalanceNotFoundError,
+    BalancePermissionError,
+    balance_not_found_error_handler,
+    balance_permission_error_handler,
+)
 from common.constants.api import ApiConstants
+from donations.routers import donations_router
+from refills.routers import refills_router
+from refills.utils.exceptions import RefillPermissionError, refill_permission_error_handler
 from users.routers import users_router
 from users.utils.exceptions import (
     UserNotFoundError,
@@ -20,11 +30,6 @@ from users.utils.exceptions import (
     user_permission_error_handler,
 )
 from utils.exceptions import integrity_error_handler
-from balances.routers import balances_router
-from balances.utils.exceptions import (
-    BalanceNotFoundError,
-    BalancePermissionError,
-)
 
 
 def create_app(config_name=ApiConstants.DEVELOPMENT_CONFIG.value) -> FastAPI:
@@ -61,6 +66,8 @@ def app_route_includer(app: FastAPI) -> FastAPI:
     app.include_router(users_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(auth_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(balances_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
+    app.include_router(refills_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
+    app.include_router(donations_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     return app
 
 
@@ -78,4 +85,7 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(AuthUserInvalidPasswordException, invalid_auth_credentials_handler)
     app.add_exception_handler(UserNotFoundError, user_not_found_error_handler)
     app.add_exception_handler(UserPermissionError, user_permission_error_handler)
+    app.add_exception_handler(BalanceNotFoundError, balance_not_found_error_handler)
+    app.add_exception_handler(BalancePermissionError, balance_permission_error_handler)
+    app.add_exception_handler(RefillPermissionError, refill_permission_error_handler)
     return app
