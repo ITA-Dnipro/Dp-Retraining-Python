@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-
 from common.constants.api import ApiVersion
 from hello_world import hello_world_router
 
