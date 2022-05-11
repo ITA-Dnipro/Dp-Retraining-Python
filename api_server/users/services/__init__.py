@@ -6,6 +6,7 @@ from fastapi import Depends, UploadFile, status
 
 from fastapi_jwt_auth import AuthJWT
 from passlib.hash import argon2
+from PIL import Image
 from sqlalchemy import update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +18,12 @@ from db import get_session
 from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
 from users.services.aws_s3 import S3Handler
-from users.utils.exceptions import UserNotFoundError, UserPictureSizeError
+from users.utils.exceptions import (
+    UserNotFoundError,
+    UserPictureExtensionError,
+    UserPictureResolutionError,
+    UserPictureSizeError,
+)
 from users.utils.jwt import jwt_user_validator
 from utils.logging import setup_logging
 
@@ -161,7 +167,7 @@ class UserService(AbstractUserService):
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
-        await self._save_user_image(user, image)
+        # await self._save_user_image(user, image)
         return user
 
     async def _update_user(self, id_: str, user: UserUpdateSchema) -> None:
@@ -210,6 +216,22 @@ class UserService(AbstractUserService):
         )
 
     async def _validate_image(self, image: UploadFile):
+        await self.validate_image_size(image)
+        await self.validate_image_extension(image)
+        await self.validate_image_resolution(image)
+
+    async def validate_image_size(self, image: UploadFile) -> None:
+        """Validates image size and raises exception in case of invalidation.
+
+        Args:
+            image: UploadFile image object.
+
+        Raises:
+            custom UserPictureSizeError if image size exceeds maximum image size.
+
+        Returns:
+        Nothing.
+        """
         if await self._validate_image_size(image):
             raise UserPictureSizeError(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -220,10 +242,78 @@ class UserService(AbstractUserService):
         """Checks currently uploaded image size to the maximum image size threshold.
 
         Args:
-            image: UploadFile image object
+            image: UploadFile image object.
 
         Returns:
         bool of comparison uploaded image size and maximum image size threshold.
         """
         image_size = len(await image.read())
         return image_size >= UserServiceConstants.IMAGE_SIZE_6_MB.value
+
+    async def validate_image_extension(self, image: UploadFile) -> None:
+        """Validates image extension and raises exception in case of invalidation.
+
+        Args:
+            image: UploadFile image object.
+
+        Raises:
+            custom UserPictureExtensionError if image extension not supported.
+
+        Returns:
+        Nothing.
+        """
+        if not await self._validate_image_extension(image):
+            raise UserPictureExtensionError(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=UserPictureExceptionMsgs.UNSUPPORTED_IMAGE_EXTENSION.value,
+            )
+
+    async def _validate_image_extension(self, image: UploadFile) -> bool:
+        """Checks if currently uploaded image's exception present in mapping of allowed image file extensions.
+
+        Args:
+            image: UploadFile image object.
+
+        Returns:
+        bool of presence uploaded image's extension in allowed image file extensions.
+        """
+        image_extension = image.filename.split('.')[-1]
+        return bool(UserServiceConstants.VALID_IMAGE_EXTENSIONS.value.get(image_extension))
+
+    async def validate_image_resolution(self, image: UploadFile) -> None:
+        """Validates image resolution in allowed range and raises exception in case of invalidation.
+
+        Args:
+            image: UploadFile image object.
+
+        Raises:
+            custom UserPictureResolutionError if image resolution not in allowed image resolution range.
+
+        Returns:
+        Nothing.
+        """
+        if not await self._validate_image_resolution(image):
+            raise UserPictureResolutionError(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=UserPictureExceptionMsgs.INVALID_IMAGE_RESOLUTION.value,
+            )
+
+    async def _validate_image_resolution(self, image: UploadFile) -> bool:
+        """Checks if currently uploaded image's width and height present in allowed image resolution range.
+
+        Args:
+            image: UploadFile image object.
+
+        Returns:
+        bool of presence uploaded image's width and height in allowed image resolution range.
+        """
+        pillow_image = Image.open(image.file)
+        width_check = pillow_image.width in range(
+            UserServiceConstants.MIN_IMAGE_WIDTH.value,
+            UserServiceConstants.MAX_IMAGE_WIDTH.value,
+        )
+        height_check = pillow_image.height in range(
+            UserServiceConstants.MIN_IMAGE_HEIGHT.value,
+            UserServiceConstants.MAX_IMAGE_HEIGHT.value,
+        )
+        return width_check and height_check
