@@ -1,9 +1,10 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, String, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
-from common.constants.users import UserModelConstants
+from common.constants.users import UserModelConstants, UserPictureModelConstants
 from db import Base
 
 
@@ -21,8 +22,27 @@ class User(Base):
     phone_number = Column(String(UserModelConstants.CHAR_SIZE_64.value), nullable=False, unique=True)
     is_active = Column(Boolean, nullable=True, default=UserModelConstants.FALSE.value)
     created_at = Column(DateTime, server_default=func.now())
+    profile_picture = relationship('UserPicture', back_populates='user', uselist=False)
 
     __mapper_args__ = {"eager_defaults": True}
 
     def __repr__(self):
         return f'User: id={self.id}, username={self.username}, email={self.email}'
+
+
+class UserPicture(Base):
+    """A model representing user's profile picture."""
+
+    __tablename__ = "user-pictures"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('Users.id'), nullable=False)
+    url = Column(String(UserPictureModelConstants.CHAR_SIZE_512.value), nullable=True, unique=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, nullable=True)
+    user = relationship('User', back_populates='profile_picture')
+
+    __mapper_args__ = {"eager_defaults": True}
+
+    def __repr__(self):
+        return f'UserPicture: id={self.id}, url={self.url}, created_at={self.created_at}'

@@ -16,8 +16,10 @@ from users.routers import users_router
 from users.utils.exceptions import (
     UserNotFoundError,
     UserPermissionError,
+    UserPictureSizeError,
     user_not_found_error_handler,
     user_permission_error_handler,
+    user_picture_size_error_handler,
 )
 from utils.exceptions import integrity_error_handler
 
@@ -72,4 +74,5 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(AuthUserInvalidPasswordException, invalid_auth_credentials_handler)
     app.add_exception_handler(UserNotFoundError, user_not_found_error_handler)
     app.add_exception_handler(UserPermissionError, user_permission_error_handler)
+    app.add_exception_handler(UserPictureSizeError, user_picture_size_error_handler)
     return app

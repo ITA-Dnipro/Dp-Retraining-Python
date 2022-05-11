@@ -2,7 +2,7 @@ from typing import Union
 from uuid import UUID
 import abc
 
-from fastapi import Depends, status
+from fastapi import Depends, UploadFile, status
 
 from fastapi_jwt_auth import AuthJWT
 from passlib.hash import argon2
@@ -11,10 +11,13 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from common.constants.users import S3HandlerConstants, UserServiceConstants
+from common.exceptions.users import UserPictureExceptionMsgs
 from db import get_session
 from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
-from users.utils.exceptions import UserNotFoundError
+from users.services.aws_s3 import S3Handler
+from users.utils.exceptions import UserNotFoundError, UserPictureSizeError
 from users.utils.jwt import jwt_user_validator
 from utils.logging import setup_logging
 
@@ -25,10 +28,12 @@ class AbstractUserService(metaclass=abc.ABCMeta):
         self,
         session: AsyncSession = Depends(get_session),
         Authorize: AuthJWT = Depends(),
+        S3Handler: S3Handler = Depends(),
     ) -> None:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
         self.Authorize = Authorize
+        self.S3Handler = S3Handler
 
     async def get_users(self) -> list[User]:
         """Get User objects from database.
@@ -49,7 +54,7 @@ class AbstractUserService(metaclass=abc.ABCMeta):
         """
         return await self._get_user_by_id(id_)
 
-    async def add_user(self, user: UserInputSchema) -> User:
+    async def add_user(self, user: UserInputSchema, image: UploadFile | None) -> User:
         """Add User object to the database.
 
         Args:
@@ -58,7 +63,7 @@ class AbstractUserService(metaclass=abc.ABCMeta):
         Returns:
         newly created User object.
         """
-        return await self._add_user(user)
+        return await self._add_user(user, image)
 
     async def update_user(self, id_: str, user: UserUpdateSchema) -> User:
         """Updates User object in the database.
@@ -103,7 +108,7 @@ class AbstractUserService(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractclassmethod
-    async def _add_user(self, user: UserInputSchema) -> None:
+    async def _add_user(self, user: UserInputSchema, image: UploadFile | None) -> None:
         pass
 
     @abc.abstractclassmethod
@@ -148,12 +153,15 @@ class UserService(AbstractUserService):
         user = await self._select_user(column='id', value=id_)
         return user
 
-    async def _add_user(self, user: UserInputSchema) -> None:
+    async def _add_user(self, user: UserInputSchema, image: UploadFile | None) -> User:
+        if image:
+            await self._validate_image(image)
         user.password = await self._hash_password(user.password)
         user = User(**user.dict())
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
+        await self._save_user_image(user, image)
         return user
 
     async def _update_user(self, id_: str, user: UserUpdateSchema) -> None:
@@ -188,3 +196,34 @@ class UserService(AbstractUserService):
     async def _get_user_by_username(self, username: str) -> None:
         user = await self._select_user(column='username', value=username)
         return user
+
+    async def _save_user_image(self, user: User, image: UploadFile) -> None:
+        # save image here
+        file_name = S3HandlerConstants.PICTURE_FILE_NAME.value.format(
+            user_id=user.id,
+            file_extension='jpg',
+        )
+        await self.S3Handler.upload_file_object(
+            file_name=file_name,
+            content_type=S3HandlerConstants.CONTENT_TYPE_JPEG.value,
+            file_obj=image,
+        )
+
+    async def _validate_image(self, image: UploadFile):
+        if await self._validate_image_size(image):
+            raise UserPictureSizeError(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=UserPictureExceptionMsgs.IMAGE_EXCEED_MAX_SIZE.value,
+            )
+
+    async def _validate_image_size(self, image: UploadFile) -> bool:
+        """Checks currently uploaded image size to the maximum image size threshold.
+
+        Args:
+            image: UploadFile image object
+
+        Returns:
+        bool of comparison uploaded image size and maximum image size threshold.
+        """
+        image_size = len(await image.read())
+        return image_size >= UserServiceConstants.IMAGE_SIZE_6_MB.value

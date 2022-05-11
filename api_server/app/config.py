@@ -37,6 +37,12 @@ class DevelopmentConfig(BaseModel):
     authjwt_token_location: set = {os.getenv('authjwt_token_location')}
     authjwt_cookie_csrf_protect: bool = (os.getenv('authjwt_cookie_csrf_protect', 'False') == 'True')
 
+    # AWS settings.
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_S3_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')
+    AWS_S3_BUCKET_REGION = os.getenv('AWS_S3_BUCKET_REGION')
+
 
 class TestingConfig(BaseModel):
     """Testing configuration variables for the project."""

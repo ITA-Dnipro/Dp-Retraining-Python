@@ -1,10 +1,12 @@
 from uuid import UUID
+import functools
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, UploadFile, status
 
 from common.schemas.responses import ResponseBaseSchema
 from users.schemas import UserInputSchema, UserOutputSchema, UserUpdateSchema
 from users.services import UserService
+from users.utils.schemas import form_json_deserializer
 
 users_router = APIRouter(prefix='/users', tags=['Users'])
 
@@ -45,7 +47,11 @@ async def get_user(id: UUID, user_service: UserService = Depends()) -> ResponseB
 
 
 @users_router.post('/', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
-async def post_users(user: UserInputSchema, user_service: UserService = Depends()) -> ResponseBaseSchema:
+async def post_users(
+        user: UserInputSchema = Depends(functools.partial(form_json_deserializer, UserInputSchema)),
+        image: UploadFile | None = UploadFile(None),
+        user_service: UserService = Depends(),
+) -> ResponseBaseSchema:
     """POST '/users' endpoint view function.
 
     Args:
@@ -57,7 +63,7 @@ async def post_users(user: UserInputSchema, user_service: UserService = Depends(
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_201_CREATED,
-        data=UserOutputSchema.from_orm(await user_service.add_user(user=user)),
+        data=UserOutputSchema.from_orm(await user_service.add_user(user=user, image=image)),
         errors=[],
     )
 
