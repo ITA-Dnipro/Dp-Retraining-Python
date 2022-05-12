@@ -4,11 +4,13 @@ import functools
 from fastapi import APIRouter, Depends, Response, UploadFile, status
 
 from common.schemas.responses import ResponseBaseSchema
+from users.routers.user_pictures import user_pictures_router
 from users.schemas import UserInputSchema, UserOutputSchema, UserUpdateSchema
 from users.services import UserService
 from users.utils.schemas import form_json_deserializer
 
 users_router = APIRouter(prefix='/users', tags=['Users'])
+users_router.include_router(user_pictures_router, prefix='/{user_id}')
 
 
 @users_router.get('/', response_model=ResponseBaseSchema)
@@ -57,6 +59,7 @@ async def post_users(
     Args:
         user: Serialized UserInputSchema object.
         user_service: dependency as business logic instance.
+        image: Uploaded user image.
 
     Returns:
     ResponseBaseSchema object with UserOutputSchema object as response data.

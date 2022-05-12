@@ -160,7 +160,7 @@ class UserService(AbstractUserService):
         return user
 
     async def _add_user(self, user: UserInputSchema, image: UploadFile | None) -> User:
-        if image:
+        if image.filename:
             await self._validate_image(image)
         user.password = await self._hash_password(user.password)
         user = User(**user.dict())
@@ -277,7 +277,7 @@ class UserService(AbstractUserService):
         Returns:
         bool of presence uploaded image's extension in allowed image file extensions.
         """
-        image_extension = image.filename.split('.')[-1]
+        image_extension = image.filename.split('.')[-1].lower()
         return bool(UserServiceConstants.VALID_IMAGE_EXTENSIONS.value.get(image_extension))
 
     async def validate_image_resolution(self, image: UploadFile) -> None:
