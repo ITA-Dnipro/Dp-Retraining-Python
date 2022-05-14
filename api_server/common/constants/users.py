@@ -64,3 +64,5 @@ class S3HandlerConstants(enum.Enum):
     SUCCESSFUL_UPLOAD_MSG = 'File object uploaded to https://{bucket_name}.s3.{bucket_region}.amazonaws.com/{file_name}'
     PICTURE_FILE_NAME = 'users/{user_id}/profile_pics/{user_id}.{file_extension}'
     CONTENT_TYPE_JPEG = 'image/jpeg'
+    UPLOADED_FILE_URL = 'https://{bucket_name}.s3.{bucket_region}.amazonaws.com/{file_name}'
+    AWS_S3_RESPONSE_DATETIME_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'

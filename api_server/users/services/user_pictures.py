@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db import get_session
 from users.cruds import UserPictureCRUD
 from users.models import UserPicture
+from users.tasks.user_pictures import save_user_picture_in_aws_s3_bucket
 from users.utils.aws_s3.aws_s3 import S3Handler
 from users.utils.jwt.user_picture import jwt_user_picture_validator
 from users.utils.user_pictures import UserProfileImageValidator
@@ -48,10 +49,24 @@ class AbstractUserPictureService(metaclass=abc.ABCMeta):
 class UserPictureService(AbstractUserPictureService):
 
     async def _add_user_picture(self, id_: UUID, image: UploadFile | None) -> UserPicture:
+        # Checking JWT.
         self.Authorize.jwt_required()
         jwt_subject = self.Authorize.get_jwt_subject()
         user = await self.user_picture_crud._get_user_by_id(id_=id_)
         if jwt_user_picture_validator(jwt_subject=jwt_subject, username=user.username):
+            # Validating incoming image.
             await UserProfileImageValidator.validate_image(image)
-            return await self.user_picture_crud._add_user_picture(id_)
-            # TODO: AWS S3 image saving here.
+            # Saving UserPicture object.
+            user_picture = await self.user_picture_crud._add_user_picture(id_)
+            # Starting celery task to save image in AWS S3 bucket.
+            save_user_picture_in_aws_s3_bucket.apply_async(
+                kwargs={
+                    'db_user_picture': user_picture,
+                    'image': await image.read(),
+                    'content_type': image.content_type,
+                    'file_extension': image.filename.split('.')[-1].lower(),
+                },
+                serializers='pickle',
+            )
+
+            return user_picture
