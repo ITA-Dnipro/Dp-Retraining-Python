@@ -12,8 +12,8 @@ from auth.utils.exceptions import AuthUserInvalidPasswordException
 from common.constants.auth import AuthJWTConstants
 from common.exceptions.auth import AuthExceptionMsgs
 from db import get_session
+from users.cruds import UserCRUD
 from users.models import User
-from users.services import UserService
 from utils.logging import setup_logging
 
 
@@ -23,11 +23,10 @@ class AbstractAuthService(metaclass=abc.ABCMeta):
         self,
         session: AsyncSession = Depends(get_session),
         Authorize: AuthJWT = Depends(),
-        user_service: UserService = Depends(),
     ) -> None:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
-        self.user_service = user_service
+        self.user_crud = UserCRUD(session=self.session)
         self.Authorize = Authorize
 
     async def login(self, user: AuthUserInputSchema) -> dict:
@@ -104,7 +103,7 @@ class AuthService(AbstractAuthService):
         return argon2.verify(password, password_hash)
 
     async def _login(self, user: AuthUserInputSchema) -> None:
-        db_user = await self.user_service.get_user_by_username(username=user.username)
+        db_user = await self.user_crud.get_user_by_username(username=user.username)
         if await self.verify_password(password=user.password, password_hash=db_user.password):
             access_token = await self._create_jwt_token(
                 subject=user.username,
@@ -150,7 +149,7 @@ class AuthService(AbstractAuthService):
     async def _me(self) -> None:
         self.Authorize.jwt_required()
         current_user = self.Authorize.get_jwt_subject()
-        user = await self.user_service.get_user_by_username(current_user)
+        user = await self.user_crud.get_user_by_username(current_user)
         return user
 
     async def _logout(self) -> None:

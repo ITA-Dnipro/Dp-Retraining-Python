@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from common.constants.api import ApiConstants
+from common.constants.celery import CeleryConstants
 
 load_dotenv()
 
@@ -95,3 +96,33 @@ def get_app_config(config_name: str) -> BaseModel:
     App config from config mapping.
     """
     return CONFIGS[config_name]
+
+
+class CeleryDevelopmentConfig:
+    """Celery development environment variables."""
+
+    CELERY_APP_NAME = os.getenv('CELERY_APP_NAME')
+    C_FORCE_ROOT = os.getenv('C_FORCE_ROOT')
+    accept_content = [os.getenv('CELERY_ACCEPT_CONTENT')]
+    result_accept_content = [os.getenv('CELERY_RESULT_ACCEPT_CONTENT')]
+    task_serializer = os.getenv('CELERY_TASK_SERIALIZER')
+    result_serializer = os.getenv('CELERY_RESULT_SERIALIZER')
+    backend = os.getenv('RESULT_BACKEND')
+    broker = os.getenv('BROKER_URL')
+
+
+CELERY_CONFIGS = {
+    CeleryConstants.DEVELOPMENT_CONFIG.value: CeleryDevelopmentConfig,
+}
+
+
+def get_celery_config(config_name: str) -> object:
+    """Get object with celery application settings.
+
+    Args:
+        config_name: string with config name.
+
+    Returns:
+    object from celery config mapping.
+    """
+    return CELERY_CONFIGS[config_name]

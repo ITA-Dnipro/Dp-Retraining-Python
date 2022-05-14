@@ -22,7 +22,9 @@ class User(Base):
     phone_number = Column(String(UserModelConstants.CHAR_SIZE_64.value), nullable=False, unique=True)
     is_active = Column(Boolean, nullable=True, default=UserModelConstants.FALSE.value)
     created_at = Column(DateTime, server_default=func.now())
-    profile_picture = relationship('UserPicture', back_populates='user', uselist=False, lazy='selectin')
+    profile_picture = relationship(
+        'UserPicture', back_populates='user', uselist=False, lazy='selectin', cascade='all, delete',
+    )
 
     __mapper_args__ = {'eager_defaults': True}
 
@@ -40,7 +42,7 @@ class UserPicture(Base):
     url = Column(String(UserPictureModelConstants.CHAR_SIZE_512.value), nullable=True, unique=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True)
-    user = relationship('User', back_populates='profile_picture')
+    user = relationship('User', back_populates='profile_picture', cascade='all, delete')
 
     __mapper_args__ = {'eager_defaults': True}
 

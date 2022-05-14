@@ -1,13 +1,11 @@
 from uuid import UUID
-import functools
 
-from fastapi import APIRouter, Depends, Response, UploadFile, status
+from fastapi import APIRouter, Depends, Response, status
 
 from common.schemas.responses import ResponseBaseSchema
 from users.routers.user_pictures import user_pictures_router
 from users.schemas import UserInputSchema, UserOutputSchema, UserUpdateSchema
 from users.services import UserService
-from users.utils.schemas import form_json_deserializer
 
 users_router = APIRouter(prefix='/users', tags=['Users'])
 users_router.include_router(user_pictures_router, prefix='/{user_id}')
@@ -50,8 +48,7 @@ async def get_user(id: UUID, user_service: UserService = Depends()) -> ResponseB
 
 @users_router.post('/', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
 async def post_users(
-        user: UserInputSchema = Depends(functools.partial(form_json_deserializer, UserInputSchema)),
-        image: UploadFile | None = UploadFile(None),
+        user: UserInputSchema,
         user_service: UserService = Depends(),
 ) -> ResponseBaseSchema:
     """POST '/users' endpoint view function.
@@ -59,14 +56,13 @@ async def post_users(
     Args:
         user: Serialized UserInputSchema object.
         user_service: dependency as business logic instance.
-        image: Uploaded user image.
 
     Returns:
     ResponseBaseSchema object with UserOutputSchema object as response data.
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_201_CREATED,
-        data=UserOutputSchema.from_orm(await user_service.add_user(user=user, image=image)),
+        data=UserOutputSchema.from_orm(await user_service.add_user(user=user)),
         errors=[],
     )
 
