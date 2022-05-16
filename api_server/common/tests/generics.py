@@ -22,8 +22,8 @@ from common.constants.auth import AuthJWTConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.users import request_test_user_data
 from db import create_engine
-from users.cruds import UserCRUD
-from users.models import User
+from users.cruds import UserCRUD, UserPictureCRUD
+from users.models import User, UserPicture
 from users.schemas import UserInputSchema
 from utils.tests import find_fullpath
 
@@ -331,3 +331,44 @@ class TestMixin:
             'phone_number': f'+38{random.randrange(1000000000, 9999999999)}',
         }
         return await self._create_user(user_crud, UserInputSchema(**ADD_RANDOM_USER_TEST_DATA))
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def user_picture_crud(self, db_session: AsyncSession) -> UserPictureCRUD:
+        """A pytest fixture that creates instance of user_picture_crud database logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of UserPictureCRUD database logic class.
+        """
+        return UserPictureCRUD(session=db_session)
+
+    @pytest_asyncio.fixture
+    async def test_user_picture(self, user_crud: UserCRUD, user_picture_crud: UserPictureCRUD) -> UserPicture:
+        """Creates test UserPicture object and storing it in the test databases.
+
+        Args:
+            user_picture_crud: instance of database crud logic class.
+
+        Returns:
+        newly created UserPicture object.
+        """
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        return await user_picture_crud.add_user_picture(user.id)
+
+    @pytest_asyncio.fixture
+    async def authenticated_test_user_picture(
+            self, user_crud: UserCRUD, user_picture_crud: UserPictureCRUD, auth_service: AuthService, client: fixture,
+    ) -> UserPicture:
+        """Creates test UserPicture object and storing it in the test databases.
+
+        Args:
+            user_picture_crud: instance of database crud logic class.
+
+        Returns:
+        newly created UserPicture object.
+        """
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        await self._create_authenticated_user(user, auth_service, client)
+        return await user_picture_crud.add_user_picture(user.id)
