@@ -17,11 +17,13 @@ from users.utils.exceptions import (
     UserNotFoundError,
     UserPermissionError,
     UserPictureExtensionError,
+    UserPictureNotFoundError,
     UserPictureResolutionError,
     UserPictureSizeError,
     user_not_found_error_handler,
     user_permission_error_handler,
     user_picture_extension_error_handler,
+    user_picture_not_found_error_handler,
     user_picture_resolution_error_handler,
     user_picture_size_error_handler,
 )
@@ -81,4 +83,5 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(UserPictureSizeError, user_picture_size_error_handler)
     app.add_exception_handler(UserPictureExtensionError, user_picture_extension_error_handler)
     app.add_exception_handler(UserPictureResolutionError, user_picture_resolution_error_handler)
+    app.add_exception_handler(UserPictureNotFoundError, user_picture_not_found_error_handler)
     return app

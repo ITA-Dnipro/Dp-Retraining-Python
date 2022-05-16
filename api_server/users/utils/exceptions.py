@@ -25,7 +25,12 @@ class UserPictureExtensionError(HTTPException):
 
 
 class UserPictureResolutionError(HTTPException):
-    """"""
+    """Custom UserPicture invalid resolution error."""
+    pass
+
+
+class UserPictureNotFoundError(HTTPException):
+    """Custom UserPicture not found error."""
     pass
 
 
@@ -122,6 +127,27 @@ def user_picture_resolution_error_handler(request: Request, exc: UserPictureReso
 
     Returns:
     http response for raised UserPictureResolutionError.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )
+
+
+def user_picture_not_found_error_handler(request: Request, exc: UserPictureNotFoundError):
+    """Handler for UserPictureNotFoundError exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised UserPictureNotFoundError.
+
+    Returns:
+    http response for raised UserPictureNotFoundError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,

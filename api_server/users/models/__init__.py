@@ -43,6 +43,7 @@ class UserPicture(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True)
     user = relationship('User', back_populates='profile_picture', cascade='all, delete')
+    etag = Column(String(UserPictureModelConstants.CHAR_SIZE_512.value), nullable=True)
 
     __mapper_args__ = {'eager_defaults': True}
 

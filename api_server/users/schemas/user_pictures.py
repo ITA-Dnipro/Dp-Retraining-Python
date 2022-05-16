@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -19,4 +20,19 @@ class UserPictureOutputSchema(UserPictureBaseSchema):
         description="url of user's picture.",
         min_length=UserPictureSchemaConstants.CHAR_SIZE_2.value,
         max_length=UserPictureSchemaConstants.CHAR_SIZE_512.value,
+    )
+
+
+class UserPictureUpdateSchema(UserPictureBaseSchema):
+    """UserPictureOutput for UserPicture model."""
+    url: str = Field(
+        description="url of user's picture.",
+        min_length=UserPictureSchemaConstants.CHAR_SIZE_2.value,
+        max_length=UserPictureSchemaConstants.CHAR_SIZE_512.value,
+    )
+    updated_at: datetime = Field(
+        description="updated time of user's picture.",
+    )
+    etag: str = Field(
+        description='Etag of user picture in AWS S3 bucket.',
     )

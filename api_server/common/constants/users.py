@@ -40,16 +40,12 @@ class UserServiceConstants(enum.Enum):
     FILE_PNG_EXTENSION = 'png'
     FILE_BMP_EXTENSION = 'bmp'
     FILE_GIF_EXTENSION = 'gif'
-    FILE_TIFF_EXTENSION = 'tiff'
-    FILE_SVG_EXTENSION = 'svg'
     VALID_IMAGE_EXTENSIONS = {
         FILE_JPG_EXTENSION: FILE_JPG_EXTENSION,
         FILE_JPEG_EXTENSION: FILE_JPEG_EXTENSION,
         FILE_PNG_EXTENSION: FILE_PNG_EXTENSION,
         FILE_BMP_EXTENSION: FILE_BMP_EXTENSION,
         FILE_GIF_EXTENSION: FILE_GIF_EXTENSION,
-        FILE_TIFF_EXTENSION: FILE_TIFF_EXTENSION,
-        FILE_SVG_EXTENSION: FILE_SVG_EXTENSION,
     }
     MIN_IMAGE_WIDTH = 32
     MAX_IMAGE_WIDTH = 5184
@@ -57,12 +53,16 @@ class UserServiceConstants(enum.Enum):
     MAX_IMAGE_HEIGHT = 3456
 
 
-class S3HandlerConstants(enum.Enum):
-    """S3 handler constants."""
+class S3ClientConstants(enum.Enum):
+    """S3 client constants."""
     S3_NAME = 's3'
     ACL_PUBLIC_READ = 'public-read'
     SUCCESSFUL_UPLOAD_MSG = 'File object uploaded to https://{bucket_name}.s3.{bucket_region}.amazonaws.com/{file_name}'
-    PICTURE_FILE_NAME = 'users/{user_id}/profile_pics/{user_id}.{file_extension}'
+    PICTURE_FILE_NAME = 'users/{user_id}/profile_pics/{picture_id}.{file_extension}'
     CONTENT_TYPE_JPEG = 'image/jpeg'
     UPLOADED_FILE_URL = 'https://{bucket_name}.s3.{bucket_region}.amazonaws.com/{file_name}'
     AWS_S3_RESPONSE_DATETIME_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
+    USER_PROFILE_PICS_FOLDER_NAME = (
+        'users/{user_id}/profile_pics'
+    )
+    SUCCESSFUL_DELETE_MSG = 'File object successfully deleted {file_path}.'
