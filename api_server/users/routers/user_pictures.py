@@ -57,3 +57,28 @@ async def put_user_picture(
         )),
         errors=[],
     )
+
+
+@user_pictures_router.get('/{picture_id}', response_model=ResponseBaseSchema)
+async def get_user_picture(
+        user_id: UUID,
+        picture_id: UUID,
+        user_picture_service: UserPictureService = Depends(),
+):
+    """GET '/users/{user_id}/pictures/{picture_id}' endpoint view function.
+
+    Args:
+        user_id: UUID of a User object.
+        picture_id: UUID of a UserPicture object.
+        user_picture_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with UserPictureOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_200_OK,
+        data=UserPictureOutputSchema.from_orm(await user_picture_service.get_user_picture_by_id(
+            picture_id=picture_id,
+        )),
+        errors=[],
+    )

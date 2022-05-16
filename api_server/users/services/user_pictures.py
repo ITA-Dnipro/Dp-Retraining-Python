@@ -52,12 +52,27 @@ class AbstractUserPictureService(metaclass=abc.ABCMeta):
         """
         return await self._update_user_picture(id_, picture_id, image)
 
+    async def get_user_picture_by_id(self, picture_id: UUID) -> UserPicture:
+        """Get UserPicture object from database filtered by id.
+
+        Args:
+            picture_id: UUID of UserPicture object.
+
+        Returns:
+        A single UserPicture object filtered by id.
+        """
+        return await self._get_user_picture_by_id(picture_id)
+
     @abc.abstractclassmethod
     async def _add_user_picture(self, id_: UUID, image: UploadFile) -> None:
         pass
 
     @abc.abstractclassmethod
     async def _update_user_picture(self, id_: UUID, picture_id: UUID, image: UploadFile) -> None:
+        pass
+
+    @abc.abstractclassmethod
+    async def _get_user_picture_by_id(self, picture_id: UUID) -> None:
         pass
 
 
@@ -108,3 +123,6 @@ class UserPictureService(AbstractUserPictureService):
                 serializers='pickle',
             )
             return user_picture
+
+    async def _get_user_picture_by_id(self, picture_id: UUID) -> UserPicture:
+        return await self.user_picture_crud.get_user_picture_by_id(picture_id)
