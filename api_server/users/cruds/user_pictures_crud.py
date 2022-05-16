@@ -53,6 +53,17 @@ class AbstractUserPictureCRUD(metaclass=abc.ABCMeta):
         """
         return await self._get_user_picture_by_id(id_)
 
+    async def delete_user_picture(self, id_: UUID) -> None:
+        """Delete UserPicture object from the database.
+
+        Args:
+            id_: UUID of UserPicture object.
+
+        Returns:
+        Nothing.
+        """
+        return await self._delete_user_picture(id_)
+
     @abc.abstractclassmethod
     async def _add_user_picture(self, id_: UUID) -> None:
         pass
@@ -63,6 +74,10 @@ class AbstractUserPictureCRUD(metaclass=abc.ABCMeta):
 
     @abc.abstractclassmethod
     async def _get_user_picture_by_id(self, id_: UUID) -> None:
+        pass
+
+    @abc.abstractclassmethod
+    async def _delete_user_picture(self, id_: UUID) -> None:
         pass
 
 
@@ -109,3 +124,9 @@ class UserPictureCRUD(AbstractUserPictureCRUD, UserCRUD):
             self._log.debug(err)
             raise UserPictureNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
         return True
+
+    async def _delete_user_picture(self, id_: UUID) -> None:
+        user_picture = await self._get_user_picture_by_id(id_)
+        await self.session.delete(user_picture)
+        await self.session.commit()
+        self._log.debug(f'''UserPicture with id: "{id_}" successfully deleted.''')

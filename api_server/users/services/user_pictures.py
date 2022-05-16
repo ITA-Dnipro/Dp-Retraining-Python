@@ -9,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db import get_session
 from users.cruds import UserPictureCRUD
 from users.models import UserPicture
-from users.tasks.user_pictures import save_user_picture_in_aws_s3_bucket, update_user_picture_in_aws_s3_bucket
+from users.tasks.user_pictures import (
+    delete_user_picture_in_aws_s3_bucket,
+    save_user_picture_in_aws_s3_bucket,
+    update_user_picture_in_aws_s3_bucket,
+)
 from users.utils.jwt.user_picture import jwt_user_picture_validator
 from users.utils.user_pictures import UserProfileImageValidator
 from utils.logging import setup_logging
@@ -63,6 +67,18 @@ class AbstractUserPictureService(metaclass=abc.ABCMeta):
         """
         return await self._get_user_picture_by_id(picture_id)
 
+    async def delete_user_picture(self, id_: UUID, picture_id: UUID) -> None:
+        """Delete UserPicture object from the database.
+
+        Args:
+            id_: UUID of a User object.
+            picture_id: UUID of UserPicture object.
+
+        Returns:
+        Nothing.
+        """
+        return await self._delete_user_picture(id_, picture_id)
+
     @abc.abstractclassmethod
     async def _add_user_picture(self, id_: UUID, image: UploadFile) -> None:
         pass
@@ -73,6 +89,10 @@ class AbstractUserPictureService(metaclass=abc.ABCMeta):
 
     @abc.abstractclassmethod
     async def _get_user_picture_by_id(self, picture_id: UUID) -> None:
+        pass
+
+    @abc.abstractclassmethod
+    async def _delete_user_picture(self, id_: UUID, picture_id: UUID) -> None:
         pass
 
 
@@ -111,7 +131,7 @@ class UserPictureService(AbstractUserPictureService):
             # Validating incoming image.
             await UserProfileImageValidator.validate_image(image)
             user_picture = await self.user_picture_crud._get_user_picture_by_id(picture_id)
-            # Starting celery task to save image in AWS S3 bucket.
+            # Starting celery task to update image in AWS S3 bucket.
             await image.seek(0)
             update_user_picture_in_aws_s3_bucket.apply_async(
                 kwargs={
@@ -126,3 +146,16 @@ class UserPictureService(AbstractUserPictureService):
 
     async def _get_user_picture_by_id(self, picture_id: UUID) -> UserPicture:
         return await self.user_picture_crud.get_user_picture_by_id(picture_id)
+
+    async def _delete_user_picture(self, id_: UUID, picture_id: UUID) -> None:
+        # Checking JWT.
+        self.Authorize.jwt_required()
+        jwt_subject = self.Authorize.get_jwt_subject()
+        user = await self.user_picture_crud._get_user_by_id(id_)
+        if jwt_user_picture_validator(jwt_subject=jwt_subject, username=user.username):
+            await self.user_picture_crud.delete_user_picture(picture_id)
+            # Starting celery task to delete image in AWS S3 bucket.
+            delete_user_picture_in_aws_s3_bucket.apply_async(
+                kwargs={'user_id': user.id},
+                serializers='pickle',
+            )

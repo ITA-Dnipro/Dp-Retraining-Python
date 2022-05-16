@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, UploadFile, status
+from fastapi import APIRouter, Depends, Response, UploadFile, status
 
 from common.schemas.responses import ResponseBaseSchema
 from users.schemas.user_pictures import UserPictureOutputSchema
@@ -82,3 +82,23 @@ async def get_user_picture(
         )),
         errors=[],
     )
+
+
+@user_pictures_router.delete('/{picture_id}')
+async def delete_user_picture(
+        user_id: UUID,
+        picture_id: UUID,
+        user_picture_service: UserPictureService = Depends(),
+):
+    """DELETE '/users/{user_id}/pictures/{picture_id}' endpoint view function.
+
+    Args:
+        user_id: UUID of a User object.
+        picture_id: UUID of a UserPicture object.
+        user_picture_service: dependency as business logic instance.
+
+    Returns:
+    http response with no data and 204 status code.
+    """
+    await user_picture_service.delete_user_picture(user_id, picture_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
