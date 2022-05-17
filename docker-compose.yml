@@ -25,5 +25,18 @@ services:
       image: redis
       ports:
         - ${REDIS_PORT}:${REDIS_PORT}
+  frontend:
+    build: ./frontend
+    restart: always
+    env_file:
+      - .env
+    command: ["npm", "start"]
+    ports:
+      - ${FRONTEND_EXPOSE_PORT}:${FRONTEND_DEFAULT_PORT}
+    expose:
+      - ${FRONTEND_EXPOSE_PORT}
+    stdin_open: true
+    depends_on:
+      - api_server
 volumes:
   pgdata:
