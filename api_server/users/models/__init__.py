@@ -42,7 +42,7 @@ class UserPicture(Base):
     url = Column(String(UserPictureModelConstants.CHAR_SIZE_512.value), nullable=True, unique=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True)
-    user = relationship('User', back_populates='profile_picture', cascade='all, delete')
+    user = relationship('User', back_populates='profile_picture')
     etag = Column(String(UserPictureModelConstants.CHAR_SIZE_512.value), nullable=True)
 
     __mapper_args__ = {'eager_defaults': True}

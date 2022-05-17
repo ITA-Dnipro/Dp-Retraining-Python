@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock
 from uuid import uuid4
 import os
 import random
@@ -6,25 +7,35 @@ from fastapi import FastAPI
 
 from alembic.config import Config
 from asgi_lifespan import LifespanManager
+from celery import Celery
 from databases import Database
 from fastapi_jwt_auth import AuthJWT
 from httpx import AsyncClient
 from pytest import fixture
+from pytest_mock.plugin import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 import alembic
 import pytest_asyncio
 
 from app import create_app
+from app.celery_base import create_celery_app
 from auth.services import AuthService
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants
+from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
-from common.tests.test_data.users import request_test_user_data
+from common.tests.test_data.users import (
+    request_test_user_data,
+    request_test_user_pictures_data,
+    user_pictures_mock_data,
+)
 from db import create_engine
 from users.cruds import UserCRUD, UserPictureCRUD
 from users.models import User, UserPicture
 from users.schemas import UserInputSchema
+from users.utils.aws_s3 import S3Client
+from users.utils.aws_s3.user_pictures import UserImageFile
 from utils.tests import find_fullpath
 
 
@@ -372,3 +383,76 @@ class TestMixin:
         user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         await self._create_authenticated_user(user, auth_service, client)
         return await user_picture_crud.add_user_picture(user.id)
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def celery_app(self):
+        """Create Celery app instance to use it in tests.
+
+        Returns:
+        an instance of FastAPI.
+        """
+        return create_celery_app(config_name=CeleryConstants.TESTING_CONFIG.value)
+
+    @pytest_asyncio.fixture
+    async def test_S3Client(self, celery_app: Celery) -> S3Client:
+        """A pytest fixture that creates instance of S3Client.
+
+        Args:
+            celery_app: pytest fixture that creates test Celery app.
+
+        Returns:
+        An instance of S3Client.
+        """
+        return S3Client(
+            aws_access_key_id=celery_app.conf.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=celery_app.conf.get('AWS_SECRET_ACCESS_KEY'),
+            aws_s3_bucket_region=celery_app.conf.get('AWS_S3_BUCKET_REGION'),
+            aws_s3_bucket_name=celery_app.conf.get('AWS_S3_BUCKET_NAME'),
+        )
+
+    @pytest_asyncio.fixture
+    async def test_user_image_file(self, test_user_picture: UserPicture) -> UserImageFile:
+        """A pytest fixture that creates instance of UserImageFile.
+
+        Args:
+            test_user_picture: instance of UserPicture object.
+
+        Returns:
+        An instance of UserImageFile object.
+        """
+        return UserImageFile(
+            db_user_picture=test_user_picture,
+            image_data=request_test_user_pictures_data.TEST_USER_PICTURE_VALID_JPEG.read(),
+            content_type=request_test_user_pictures_data.TEST_USER_PICTURE_CONTENT_TYPE,
+            file_extension=request_test_user_pictures_data.TEST_USER_PICTURE_EXTENSION,
+        )
+
+    @pytest_asyncio.fixture
+    async def mock_upload_file_object(self, mocker: MockerFixture) -> AsyncMock:
+        """A pytest fixture creates mocked return value for 'S3Client.upload_file_object()' method.
+
+        Args:
+            mocker: A pytest_mock lib fixture.
+
+        Returns:
+        An instance of AsyncMock object with mocked return value for 'S3Client.upload_file_object()' method.
+        """
+        async_mock = AsyncMock()
+        mocker.patch('users.utils.aws_s3.S3Client.upload_file_object', side_effect=async_mock)
+        async_mock.return_value = user_pictures_mock_data.S3Client_upload_image_to_s3_valid_response
+        return async_mock
+
+    @pytest_asyncio.fixture
+    async def mock_delete_file_objects(self, mocker: MockerFixture) -> AsyncMock:
+        """A pytest fixture creates mocked return value for 'S3Client.delete_file_objects()' method.
+
+        Args:
+            mocker: A pytest_mock lib fixture.
+
+        Returns:
+        An instance of AsyncMock object with mocked return value for 'S3Client.delete_file_objects()' method.
+        """
+        async_mock = AsyncMock()
+        mocker.patch('users.utils.aws_s3.S3Client.delete_file_objects', side_effect=async_mock)
+        async_mock.return_value = user_pictures_mock_data.S3Client_delete_images_in_s3_valid_response
+        return async_mock

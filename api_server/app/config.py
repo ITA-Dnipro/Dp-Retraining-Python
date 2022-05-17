@@ -128,8 +128,45 @@ class CeleryDevelopmentConfig:
     )
 
 
+class CeleryTestingConfig:
+    """Celery testing environment variables."""
+
+    CELERY_APP_NAME = os.getenv('CELERY_APP_NAME')
+    C_FORCE_ROOT = os.getenv('C_FORCE_ROOT')
+    accept_content = [os.getenv('CELERY_ACCEPT_CONTENT')]
+    result_accept_content = [os.getenv('CELERY_RESULT_ACCEPT_CONTENT')]
+    task_serializer = os.getenv('CELERY_TASK_SERIALIZER')
+    result_serializer = os.getenv('CELERY_RESULT_SERIALIZER')
+    backend = os.getenv('RESULT_BACKEND')
+    broker = os.getenv('BROKER_URL')
+
+    # AWS settings.
+    AWS_ACCESS_KEY_ID = f'test_{os.getenv("AWS_ACCESS_KEY_ID")}'
+    AWS_SECRET_ACCESS_KEY = f'test_{os.getenv("AWS_SECRET_ACCESS_KEY")}'
+    AWS_S3_BUCKET_NAME = f'test_{os.getenv("AWS_S3_BUCKET_NAME")}'
+    AWS_S3_BUCKET_REGION = os.getenv('AWS_S3_BUCKET_REGION')
+
+    # API settings.
+    API_SQLALCHEMY_ECHO: bool = (os.getenv('API_SQLALCHEMY_ECHO', 'False') == 'True')
+    API_SQLALCHEMY_FUTURE: bool = (os.getenv('API_SQLALCHEMY_FUTURE', 'False') == 'True')
+
+    # Postgres settings.
+    POSTGRES_DIALECT_DRIVER: str = os.getenv('POSTGRES_DIALECT_DRIVER')
+    POSTGRES_DB_USERNAME: str = os.getenv('POSTGRES_DB_USERNAME')
+    POSTGRES_DB_PASSWORD: str = os.getenv('POSTGRES_DB_PASSWORD')
+    POSTGRES_DB_HOST: str = os.getenv('POSTGRES_DB_HOST')
+    POSTGRES_DB_PORT: str = os.getenv('POSTGRES_DB_PORT')
+    POSTGRES_DB_NAME: str = 'test_postgres'
+    POSTGRES_DATABASE_URL = (
+        f'{POSTGRES_DIALECT_DRIVER}://{POSTGRES_DB_USERNAME}:'
+        f'{POSTGRES_DB_PASSWORD}@{POSTGRES_DB_HOST}:'
+        f'{POSTGRES_DB_PORT}/{POSTGRES_DB_NAME}'
+    )
+
+
 CELERY_CONFIGS = {
     CeleryConstants.DEVELOPMENT_CONFIG.value: CeleryDevelopmentConfig,
+    CeleryConstants.TESTING_CONFIG.value: CeleryTestingConfig,
 }
 
 

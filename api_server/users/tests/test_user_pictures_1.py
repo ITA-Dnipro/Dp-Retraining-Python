@@ -132,3 +132,4 @@ class TestCaseDeleteUserPicture(TestMixin):
         assert response_data == expected_result
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert (await db_session.execute(select(func.count(UserPicture.id)))).scalar_one() == 0
+        assert (await db_session.execute(select(func.count(User.id)))).scalar_one() == 1

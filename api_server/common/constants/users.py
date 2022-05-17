@@ -66,3 +66,4 @@ class S3ClientConstants(enum.Enum):
         'users/{user_id}/profile_pics'
     )
     SUCCESSFUL_DELETE_MSG = 'File object successfully deleted {file_path}.'
+    GMT_TIMEZONE = 'GMT'
