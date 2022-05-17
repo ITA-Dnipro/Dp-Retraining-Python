@@ -1,10 +1,10 @@
 import React, {useState, useEffect} from 'react';
-//import {Link} from 'react-router-dom';
+import { Alert } from 'react-bootstrap';
 import axiosInstance from "../axiosApi";
 
 
 const Auth = ({setIsAuthenticated}) => {
-//    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [registrationStatus, setRegistrationStatus] = useState('');
 
     const [loginUsername, setLoginUsername] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
@@ -20,6 +20,14 @@ const Auth = ({setIsAuthenticated}) => {
     const onRegistrationUsernameChange = (event) => { setRegistrationUsername(event.target.value) }
     const onRegistrationPhoneNumberChange = (event) => { setRegistrationPhoneNumber(event.target.value) }
 
+    let registrationStatusMessage;
+
+    if (registrationStatus==='success') {
+        registrationStatusMessage = <Alert key={'success'} variant={'success'}>Registered!</Alert>
+    } else if (registrationStatus==='fail') {
+        registrationStatusMessage = <Alert key={'danger'} variant={'danger'}>Registration failed!</Alert>
+    }
+
     const onLoginSubmit = (event) => {
         event.preventDefault();
         let payload = {
@@ -32,15 +40,8 @@ const Auth = ({setIsAuthenticated}) => {
                 payload
             )
             .then(response => {
-//                const jwt_decoded = jwt_decode(response.data.access);
-                axiosInstance.defaults.headers['Authorization'] = "JWT " + response.data.access;
                 localStorage.setItem('access_token', response.data.data.access_token);
                 localStorage.setItem('refresh_token', response.data.data.refresh_token);
-//                localStorage.setItem('user_id', jwt_decoded['user_id']);
-//                localStorage.setItem('username', jwt_decoded['username']);
-//                dispatch(setApprovedUsername(jwt_decoded['username']));
-//                setIsAuthenticated(true);
-//                history.push('/');
                 window.location.href = '/';
                 console.log(response);
                 return response;
@@ -70,10 +71,12 @@ const Auth = ({setIsAuthenticated}) => {
                 setRegistrationEmail('');
                 setRegistrationPassword('');
                 setRegistrationPhoneNumber('');
+                setRegistrationStatus('success');
             })
             .catch(error => {
                 console.log('registration failed');
                 console.log(error);
+                setRegistrationStatus('fail');
             });
     }
 
@@ -139,6 +142,7 @@ const Auth = ({setIsAuthenticated}) => {
                             <button type="submit" className="btn btn-warning btn-block my-2"
                                     id="register-submit">Submit
                             </button>
+                            {registrationStatusMessage}
                         </form>
                     </div>
                 </div>

@@ -45,11 +45,6 @@ axiosInstance.interceptors.response.use(
                             const responseRefreshToken = response.data.data.refresh_token;
                             localStorage.setItem('access_token', responseAccessToken);
                             localStorage.setItem('refresh_token', responseRefreshToken);
-//                            axiosInstance.defaults.headers['Authorization'] = "JWT " + response.data.access;
-//                            originalRequest.headers['Authorization'] = "JWT " + response.data.access;
-//                            let cookie = `access_token_cookie=${responseAccessToken}; refresh_token_cookie=${responseRefreshToken}`;
-//                            axiosInstance.defaults.headers['Cookie'] = cookie;
-//                            originalRequest.headers['Cookie'] = cookie;
                             return axiosInstance(originalRequest);
                         })
                         .catch(err => {

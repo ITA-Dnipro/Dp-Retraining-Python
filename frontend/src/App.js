@@ -13,7 +13,6 @@ const App = () => {
 
   const checkAuthentication = () => {
     const token = localStorage.getItem('access_token');
-
     setIsAuthenticated(Boolean(token));
   };
 
@@ -23,21 +22,21 @@ const App = () => {
 
   return (
     <div className="App">
-        <BrowserRouter>
-            <Header
-              isAuthenticated={isAuthenticated}
-              setIsAuthenticated={setIsAuthenticated}
-            />
-            <Routes>
-                <Route exact path="/" element={<Home />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/posts" element={<Posts />} />
-                <Route path="/charities" element={<Charities />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/auth" element={<Auth setIsAuthenticated={setIsAuthenticated} />} />
-            </Routes>
-        </BrowserRouter>
+      <BrowserRouter>
+        <Header
+          isAuthenticated={isAuthenticated}
+          setIsAuthenticated={setIsAuthenticated}
+        />
+        <Routes>
+          <Route exact path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/posts" element={<Posts />} />
+          <Route path="/charities" element={<Charities />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/auth" element={<Auth setIsAuthenticated={setIsAuthenticated} />} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
