@@ -6,8 +6,6 @@ up:
 	@docker-compose -f ${PWD}/docker-compose.yml up -d
 restart:
 	@docker-compose -f ${PWD}/docker-compose.yml restart
-run:
-	make remove_everything && make build && make up
 down:
 	@docker-compose -f ${PWD}/docker-compose.yml down
 remove_all_containers:
