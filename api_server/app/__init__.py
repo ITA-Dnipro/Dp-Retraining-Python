@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
@@ -36,6 +37,19 @@ def create_app(config_name=ApiConstants.DEVELOPMENT_CONFIG.value) -> FastAPI:
     app_route_includer(app)
     # Adding exceptions handlers.
     app_exception_handler(app)
+    # Allow CORS
+    origins = [
+        "http://localhost:4500",
+        "http://localhost:3030",
+        "http://localhost:3000",
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @AuthJWT.load_config
     def get_config():
