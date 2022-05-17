@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
@@ -9,10 +9,25 @@ import Home from './components/Home';
 import Profile from './components/Profile/Profile';
 
 const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const checkAuthentication = () => {
+    const token = localStorage.getItem('access_token');
+
+    setIsAuthenticated(Boolean(token));
+  };
+
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
   return (
     <div className="App">
         <BrowserRouter>
-            <Navbar />
+            <Header
+              isAuthenticated={isAuthenticated}
+              setIsAuthenticated={setIsAuthenticated}
+            />
             <Routes>
                 <Route exact path="/" element={<Home />} />
                 <Route path="/home" element={<Home />} />
@@ -20,6 +35,7 @@ const App = () => {
                 <Route path="/charities" element={<Charities />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/auth" element={<Auth setIsAuthenticated={setIsAuthenticated} />} />
             </Routes>
         </BrowserRouter>
     </div>
