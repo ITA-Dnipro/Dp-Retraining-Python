@@ -1,18 +1,33 @@
-from app.config import get_app_config
-from auth.routers import auth_router
-from auth.utils.exceptions import (AuthUserInvalidPasswordException,
-                                   authjwt_exception_handler,
-                                   invalid_auth_credentials_handler)
-from charity.routers import charities_router
-from common.constants.api import ApiConstants
 from fastapi import FastAPI
+
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from sqlalchemy.exc import IntegrityError
+
+from charity.routers import charities_router
+from app.config import get_app_config
+from auth.routers import auth_router
+from auth.utils.exceptions import (
+    AuthUserInvalidPasswordException,
+    authjwt_exception_handler,
+    invalid_auth_credentials_handler,
+)
+from common.constants.api import ApiConstants
 from users.routers import users_router
-from users.utils.exceptions import (UserNotFoundError, UserPermissionError,
-                                    user_not_found_error_handler,
-                                    user_permission_error_handler)
+from users.utils.exceptions import (
+    UserNotFoundError,
+    UserPermissionError,
+    UserPictureExtensionError,
+    UserPictureNotFoundError,
+    UserPictureResolutionError,
+    UserPictureSizeError,
+    user_not_found_error_handler,
+    user_permission_error_handler,
+    user_picture_extension_error_handler,
+    user_picture_not_found_error_handler,
+    user_picture_resolution_error_handler,
+    user_picture_size_error_handler,
+)
 from utils.exceptions import integrity_error_handler
 
 
@@ -67,4 +82,8 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(AuthUserInvalidPasswordException, invalid_auth_credentials_handler)
     app.add_exception_handler(UserNotFoundError, user_not_found_error_handler)
     app.add_exception_handler(UserPermissionError, user_permission_error_handler)
+    app.add_exception_handler(UserPictureSizeError, user_picture_size_error_handler)
+    app.add_exception_handler(UserPictureExtensionError, user_picture_extension_error_handler)
+    app.add_exception_handler(UserPictureResolutionError, user_picture_resolution_error_handler)
+    app.add_exception_handler(UserPictureNotFoundError, user_picture_not_found_error_handler)
     return app

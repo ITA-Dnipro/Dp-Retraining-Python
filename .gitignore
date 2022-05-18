@@ -12,3 +12,11 @@
 
 # local env files
 .env
+
+# frontend dependencies
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.js
+
+# misc
+.DS_Store

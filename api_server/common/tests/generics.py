@@ -1,28 +1,41 @@
+from unittest.mock import AsyncMock
+from uuid import uuid4
 import os
 import random
-from uuid import uuid4
 
-import alembic
-import pytest_asyncio
-from alembic.config import Config
-from app import create_app
-from asgi_lifespan import LifespanManager
-from auth.services import AuthService
-from common.constants.api import ApiConstants
-from common.constants.auth import AuthJWTConstants
-from common.constants.tests import GenericTestConstants
-from common.tests.test_data.users import request_test_user_data
-from databases import Database
-from db import create_engine
 from fastapi import FastAPI
+
+from alembic.config import Config
+from asgi_lifespan import LifespanManager
+from celery import Celery
+from databases import Database
 from fastapi_jwt_auth import AuthJWT
 from httpx import AsyncClient
 from pytest import fixture
+from pytest_mock.plugin import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from users.models import User
+import alembic
+import pytest_asyncio
+
+from app import create_app
+from app.celery_base import create_celery_app
+from auth.services import AuthService
+from common.constants.api import ApiConstants
+from common.constants.auth import AuthJWTConstants
+from common.constants.celery import CeleryConstants
+from common.constants.tests import GenericTestConstants
+from common.tests.test_data.users import (
+    request_test_user_data,
+    request_test_user_pictures_data,
+    user_pictures_mock_data,
+)
+from db import create_engine
+from users.cruds import UserCRUD, UserPictureCRUD
+from users.models import User, UserPicture
 from users.schemas import UserInputSchema
-from users.services import UserService
+from users.utils.aws_s3 import S3Client
+from users.utils.aws_s3.user_pictures import UserImageFile
 from utils.tests import find_fullpath
 
 
@@ -197,40 +210,40 @@ class TestMixin:
         alembic.command.upgrade(config, GenericTestConstants.ALEMBIC_HEAD.value)
 
     @pytest_asyncio.fixture(autouse=True)
-    async def user_service(self, db_session: AsyncSession) -> UserService:
-        """A pytest fixture that creates instance of user_service business logic.
+    async def user_crud(self, db_session: AsyncSession) -> UserCRUD:
+        """A pytest fixture that creates instance of user_crud business logic.
 
         Args:
             db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
-        An instance of UserService business logic class.
+        An instance of UserCRUD business logic class.
         """
-        return UserService(session=db_session, Authorize=AuthJWT())
+        return UserCRUD(session=db_session)
 
-    async def _create_user(self, user_service: UserService, user: UserInputSchema) -> User:
+    async def _create_user(self, user_crud: UserCRUD, user: UserInputSchema) -> User:
         """Stores user test data in test database.
 
         Args:
-            user_service: instance of business logic class.
+            user_crud: instance of business logic class.
             user: serialized UserInputSchema object.
 
         Returns:
         newly created User object.
         """
-        return await user_service.add_user(user)
+        return await user_crud.add_user(user)
 
     @pytest_asyncio.fixture
-    async def test_user(self, user_service: UserService) -> User:
+    async def test_user(self, user_crud: UserCRUD) -> User:
         """Create test user data and store it in test database.
 
         Args:
-            user_service: instance of business logic class.
+            user_crud: instance of business logic class.
 
         Returns:
         newly created User object.
         """
-        return await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        return await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
 
     @pytest_asyncio.fixture(autouse=True)
     async def client(self, app: FastAPI) -> AsyncClient:
@@ -249,74 +262,81 @@ class TestMixin:
                         api_host=app.app_config.API_SERVER_HOST,
                         api_port=app.app_config.API_SERVER_PORT,
                     ),
-                    headers=GenericTestConstants.TEST_CLIENT_HEADERS.value,
                     follow_redirects=True,
             ) as client:
                 yield client
 
     @pytest_asyncio.fixture(autouse=True)
-    async def auth_service(self, db_session: AsyncSession, user_service: fixture) -> UserService:
+    async def auth_service(self, db_session: AsyncSession, user_crud: fixture) -> AuthService:
         """A pytest fixture that creates instance of auth_service business logic.
 
         Args:
             db_session: pytest fixture that creates test sqlalchemy session.
-            user_service: instance of business logic class.
+            user_crud: instance of business logic class.
 
         Returns:
         An instance of AuthService business logic class.
         """
-        return AuthService(session=db_session, Authorize=AuthJWT(), user_service=user_service)
+        return AuthService(session=db_session, Authorize=AuthJWT())
 
     @pytest_asyncio.fixture
     async def authenticated_test_user(
-            self, client: fixture, user_service: UserService, auth_service: AuthService,
+            self, client: fixture, user_crud: UserCRUD, auth_service: AuthService,
     ) -> User:
         """Create authenticated test user data and store it in test database.
 
         Args:
-            user_service: instance of user business logic class.
+            user_crud: instance of user business logic class.
             auth_service: instance of auth business logic class.
 
         Returns:
         newly created User object.
         """
-        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         return await self._create_authenticated_user(user, auth_service, client)
 
     async def _create_authenticated_user(self, user: User, auth_service: AuthService, client: fixture) -> User:
         """Modifies 'client' fixture by adding JWT cookies for user authentication.
 
         Args:
-            user_service: instance of business logic class.
+            user_crud: instance of business logic class.
             user: User instance.
             client: pytest fixture that creates test httpx client.
 
         Returns:
         newly created User object.
         """
+        user_claims = {
+            'user_data': {
+                'id': str(user.id),
+                'email': user.email,
+                'phone': user.phone_number,
+            },
+        }
         access_token = await auth_service._create_jwt_token(
             subject=user.username,
             token_type=AuthJWTConstants.ACCESS_TOKEN_NAME.value,
             time_unit=AuthJWTConstants.MINUTES.value,
             time_amount=AuthJWTConstants.TOKEN_EXPIRE_60.value,
+            user_claims=user_claims,
         )
         refresh_token = await auth_service._create_jwt_token(
             subject=user.username,
             token_type=AuthJWTConstants.REFRESH_TOKEN_NAME.value,
             time_unit=AuthJWTConstants.DAYS.value,
             time_amount=AuthJWTConstants.TOKEN_EXPIRE_7.value,
-
+            user_claims=user_claims,
         )
         client.cookies.update({AuthJWTConstants.ACCESS_TOKEN_COOKIE_NAME.value: access_token})
         client.cookies.update({AuthJWTConstants.REFRESH_TOKEN_COOKIE_NAME.value: refresh_token})
         return user
 
     @pytest_asyncio.fixture
-    async def random_test_user(self, user_service: UserService) -> User:
+    async def random_test_user(self, user_crud: UserCRUD) -> User:
         """Create test User object with random data and store it in test database.
 
         Args:
-            user_service: instance of business logic class.
+            user_crud: instance of business logic class.
 
         Returns:
         newly created User object with random data.
@@ -329,4 +349,118 @@ class TestMixin:
             'password': '12345678',
             'phone_number': f'+38{random.randrange(1000000000, 9999999999)}',
         }
-        return await self._create_user(user_service, UserInputSchema(**ADD_RANDOM_USER_TEST_DATA))
+        return await self._create_user(user_crud, UserInputSchema(**ADD_RANDOM_USER_TEST_DATA))
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def user_picture_crud(self, db_session: AsyncSession) -> UserPictureCRUD:
+        """A pytest fixture that creates instance of user_picture_crud database logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of UserPictureCRUD database logic class.
+        """
+        return UserPictureCRUD(session=db_session)
+
+    @pytest_asyncio.fixture
+    async def test_user_picture(self, user_crud: UserCRUD, user_picture_crud: UserPictureCRUD) -> UserPicture:
+        """Creates test UserPicture object and storing it in the test databases.
+
+        Args:
+            user_picture_crud: instance of database crud logic class.
+
+        Returns:
+        newly created UserPicture object.
+        """
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        return await user_picture_crud.add_user_picture(user.id)
+
+    @pytest_asyncio.fixture
+    async def authenticated_test_user_picture(
+            self, user_crud: UserCRUD, user_picture_crud: UserPictureCRUD, auth_service: AuthService, client: fixture,
+    ) -> UserPicture:
+        """Creates test UserPicture object and storing it in the test databases.
+
+        Args:
+            user_picture_crud: instance of database crud logic class.
+
+        Returns:
+        newly created UserPicture object.
+        """
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        await self._create_authenticated_user(user, auth_service, client)
+        return await user_picture_crud.add_user_picture(user.id)
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def celery_app(self):
+        """Create Celery app instance to use it in tests.
+
+        Returns:
+        an instance of FastAPI.
+        """
+        return create_celery_app(config_name=CeleryConstants.TESTING_CONFIG.value)
+
+    @pytest_asyncio.fixture
+    async def test_S3Client(self, celery_app: Celery) -> S3Client:
+        """A pytest fixture that creates instance of S3Client.
+
+        Args:
+            celery_app: pytest fixture that creates test Celery app.
+
+        Returns:
+        An instance of S3Client.
+        """
+        return S3Client(
+            aws_access_key_id=celery_app.conf.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=celery_app.conf.get('AWS_SECRET_ACCESS_KEY'),
+            aws_s3_bucket_region=celery_app.conf.get('AWS_S3_BUCKET_REGION'),
+            aws_s3_bucket_name=celery_app.conf.get('AWS_S3_BUCKET_NAME'),
+        )
+
+    @pytest_asyncio.fixture
+    async def test_user_image_file(self, test_user_picture: UserPicture) -> UserImageFile:
+        """A pytest fixture that creates instance of UserImageFile.
+
+        Args:
+            test_user_picture: instance of UserPicture object.
+
+        Returns:
+        An instance of UserImageFile object.
+        """
+        return UserImageFile(
+            db_user_picture=test_user_picture,
+            image_data=request_test_user_pictures_data.TEST_USER_PICTURE_VALID_JPEG.read(),
+            content_type=request_test_user_pictures_data.TEST_USER_PICTURE_CONTENT_TYPE,
+            file_extension=request_test_user_pictures_data.TEST_USER_PICTURE_EXTENSION,
+        )
+
+    @pytest_asyncio.fixture
+    async def mock_upload_file_object(self, mocker: MockerFixture) -> AsyncMock:
+        """A pytest fixture creates mocked return value for 'S3Client.upload_file_object()' method.
+
+        Args:
+            mocker: A pytest_mock lib fixture.
+
+        Returns:
+        An instance of AsyncMock object with mocked return value for 'S3Client.upload_file_object()' method.
+        """
+        async_mock = AsyncMock()
+        mocker.patch('users.utils.aws_s3.S3Client.upload_file_object', side_effect=async_mock)
+        async_mock.return_value = user_pictures_mock_data.S3Client_upload_image_to_s3_valid_response
+        return async_mock
+
+    @pytest_asyncio.fixture
+    async def mock_delete_file_objects(self, mocker: MockerFixture) -> AsyncMock:
+        """A pytest fixture creates mocked return value for 'S3Client.delete_file_objects()' method.
+
+        Args:
+            mocker: A pytest_mock lib fixture.
+
+        Returns:
+        An instance of AsyncMock object with mocked return value for 'S3Client.delete_file_objects()' method.
+        """
+        async_mock = AsyncMock()
+        mocker.patch('users.utils.aws_s3.S3Client.delete_file_objects', side_effect=async_mock)
+        async_mock.return_value = user_pictures_mock_data.S3Client_delete_images_in_s3_valid_response
+        return async_mock
