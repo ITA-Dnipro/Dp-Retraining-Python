@@ -1,17 +1,15 @@
-from datetime import timedelta
 import abc
-
-from fastapi import Depends, status
-
-from fastapi_jwt_auth import AuthJWT
-from passlib.hash import argon2
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import timedelta
 
 from auth.schemas import AuthUserInputSchema
 from auth.utils.exceptions import AuthUserInvalidPasswordException
 from common.constants.auth import AuthJWTConstants
 from common.exceptions.auth import AuthExceptionMsgs
 from db import get_session
+from fastapi import Depends, status
+from fastapi_jwt_auth import AuthJWT
+from passlib.hash import argon2
+from sqlalchemy.ext.asyncio import AsyncSession
 from users.models import User
 from users.services import UserService
 from utils.logging import setup_logging

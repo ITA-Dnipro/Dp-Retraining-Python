@@ -1,27 +1,25 @@
-from uuid import uuid4
 import os
 import random
+from uuid import uuid4
 
-from fastapi import FastAPI
-
-from alembic.config import Config
-from asgi_lifespan import LifespanManager
-from databases import Database
-from fastapi_jwt_auth import AuthJWT
-from httpx import AsyncClient
-from pytest import fixture
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker
 import alembic
 import pytest_asyncio
-
+from alembic.config import Config
 from app import create_app
+from asgi_lifespan import LifespanManager
 from auth.services import AuthService
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.users import request_test_user_data
+from databases import Database
 from db import create_engine
+from fastapi import FastAPI
+from fastapi_jwt_auth import AuthJWT
+from httpx import AsyncClient
+from pytest import fixture
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
 from users.models import User
 from users.schemas import UserInputSchema
 from users.services import UserService

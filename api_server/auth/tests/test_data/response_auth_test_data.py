@@ -1,6 +1,7 @@
 from unittest.mock import ANY
 
-from users.tests.test_data.response_test_user_data import RESPONSE_USER_TEST_DATA
+from users.tests.test_data.response_test_user_data import \
+    RESPONSE_USER_TEST_DATA
 
 RESPONSE_VALID_LOGIN_DATA = {
     'data': {

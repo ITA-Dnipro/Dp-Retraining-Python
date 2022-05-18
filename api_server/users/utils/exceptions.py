@@ -1,7 +1,6 @@
+from common.schemas.responses import ResponseBaseSchema
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
-
-from common.schemas.responses import ResponseBaseSchema
 
 
 class UserNotFoundError(HTTPException):

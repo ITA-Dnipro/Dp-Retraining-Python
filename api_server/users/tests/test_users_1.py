@@ -1,12 +1,10 @@
+import pytest
+from common.tests.generics import TestMixin
+from common.tests.test_data.users import request_test_user_data
 from fastapi import FastAPI, status
-
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-import pytest
-
-from common.tests.generics import TestMixin
-from common.tests.test_data.users import request_test_user_data
 from users.models import User
 from users.tests.test_data import response_test_user_data
 

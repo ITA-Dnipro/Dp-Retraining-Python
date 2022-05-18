@@ -1,24 +1,18 @@
+from app.config import get_app_config
+from auth.routers import auth_router
+from auth.utils.exceptions import (AuthUserInvalidPasswordException,
+                                   authjwt_exception_handler,
+                                   invalid_auth_credentials_handler)
+from charity.routers import charities_router
+from common.constants.api import ApiConstants
 from fastapi import FastAPI
-
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from sqlalchemy.exc import IntegrityError
-
-from app.config import get_app_config
-from auth.routers import auth_router
-from auth.utils.exceptions import (
-    AuthUserInvalidPasswordException,
-    authjwt_exception_handler,
-    invalid_auth_credentials_handler,
-)
-from common.constants.api import ApiConstants
 from users.routers import users_router
-from users.utils.exceptions import (
-    UserNotFoundError,
-    UserPermissionError,
-    user_not_found_error_handler,
-    user_permission_error_handler,
-)
+from users.utils.exceptions import (UserNotFoundError, UserPermissionError,
+                                    user_not_found_error_handler,
+                                    user_permission_error_handler)
 from utils.exceptions import integrity_error_handler
 
 
@@ -55,6 +49,7 @@ def app_route_includer(app: FastAPI) -> FastAPI:
     """
     app.include_router(users_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(auth_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
+    app.include_router(charities_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     return app
 
 

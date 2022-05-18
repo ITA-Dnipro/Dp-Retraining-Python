@@ -1,12 +1,10 @@
 import re
 
-from fastapi import Request, status
-from fastapi.responses import JSONResponse
-
-from sqlalchemy.exc import IntegrityError
-
 from common.exceptions.db import SqlalchemyExceptionConstants
 from common.schemas.responses import ResponseBaseSchema
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 
 
 def parse_integrity_error(exc: IntegrityError) -> tuple:
