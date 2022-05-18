@@ -306,18 +306,26 @@ class TestMixin:
         Returns:
         newly created User object.
         """
+        user_claims = {
+            'user_data': {
+                'id': str(user.id),
+                'email': user.email,
+                'phone': user.phone_number,
+            },
+        }
         access_token = await auth_service._create_jwt_token(
             subject=user.username,
             token_type=AuthJWTConstants.ACCESS_TOKEN_NAME.value,
             time_unit=AuthJWTConstants.MINUTES.value,
             time_amount=AuthJWTConstants.TOKEN_EXPIRE_60.value,
+            user_claims=user_claims,
         )
         refresh_token = await auth_service._create_jwt_token(
             subject=user.username,
             token_type=AuthJWTConstants.REFRESH_TOKEN_NAME.value,
             time_unit=AuthJWTConstants.DAYS.value,
             time_amount=AuthJWTConstants.TOKEN_EXPIRE_7.value,
-
+            user_claims=user_claims,
         )
         client.cookies.update({AuthJWTConstants.ACCESS_TOKEN_COOKIE_NAME.value: access_token})
         client.cookies.update({AuthJWTConstants.REFRESH_TOKEN_COOKIE_NAME.value: refresh_token})
