@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, func
+from sqlalchemy import Column, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -20,10 +20,13 @@ class User(Base):
     email = Column(String(UserModelConstants.CHAR_SIZE_256.value), nullable=False, unique=True)
     password = Column(String(UserModelConstants.CHAR_SIZE_256.value), nullable=True)
     phone_number = Column(String(UserModelConstants.CHAR_SIZE_64.value), nullable=False, unique=True)
-    is_active = Column(Boolean, nullable=True, default=UserModelConstants.FALSE.value)
+    activated_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     profile_picture = relationship(
         'UserPicture', back_populates='user', uselist=False, lazy='selectin', cascade='all, delete',
+    )
+    email_confirmation_token = relationship(
+        'EmailConfirmationToken', back_populates='user', uselist=False, lazy='selectin', cascade='all, delete',
     )
 
     __mapper_args__ = {'eager_defaults': True}

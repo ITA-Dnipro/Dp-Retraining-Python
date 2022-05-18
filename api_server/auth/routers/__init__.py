@@ -75,3 +75,22 @@ async def refresh(auth_service: AuthService = Depends()) -> ResponseBaseSchema:
         data=AuthUserOutputSchema(**await auth_service.refresh_token()),
         errors=[],
     )
+
+
+@auth_router.get('/email-confirmation', response_model=ResponseBaseSchema)
+async def get_user_email_confiramation(token: str, auth_service: AuthService = Depends()) -> ResponseBaseSchema:
+    """GET '/auth/email-confirmation' endpoint view function.
+
+    Args:
+        token: query parameter with JWT token.
+        user_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with UserOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_200_OK,
+        # data=UserOutputSchema.from_orm(await auth_service.get_user_email_confirmation(token=token)),
+        data=await auth_service.get_user_email_confirmation(token=token),
+        errors=[],
+    )

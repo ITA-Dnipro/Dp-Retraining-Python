@@ -16,3 +16,8 @@ class AuthJWTConstants(enum.Enum):
     ACCESS_TOKEN_COOKIE_NAME = 'access_token_cookie'
     REFRESH_TOKEN_COOKIE_NAME = 'refresh_token_cookie'
     LOGOUT_MSG = 'Successfully logout.'
+
+
+class EmailConfirmationTokenModelConstants(enum.Enum):
+    """EmailConfirmationToken model contsnts."""
+    CHAR_SIZE_2048 = 2048

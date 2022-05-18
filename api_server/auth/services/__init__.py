@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 import abc
 
 from fastapi import Depends, status
@@ -6,6 +6,7 @@ from fastapi import Depends, status
 from fastapi_jwt_auth import AuthJWT
 from passlib.hash import argon2
 from sqlalchemy.ext.asyncio import AsyncSession
+import jwt
 
 from auth.schemas import AuthUserInputSchema
 from auth.utils.exceptions import AuthUserInvalidPasswordException
@@ -76,6 +77,17 @@ class AbstractAuthService(metaclass=abc.ABCMeta):
         """
         return await self._refresh_token()
 
+    async def get_user_email_confirmation(self, token: str) -> User:
+        """Verifies incoming JWT token and updates User object 'activated_at' field information.
+
+        Args:
+            token: JWT token encoded with user's information.
+
+        Returns:
+        User object.
+        """
+        return await self._get_user_email_confirmation(token)
+
     @abc.abstractclassmethod
     async def _login(user: AuthUserInputSchema) -> None:
         pass
@@ -94,6 +106,10 @@ class AbstractAuthService(metaclass=abc.ABCMeta):
 
     @abc.abstractclassmethod
     async def _refresh_token(self) -> None:
+        pass
+
+    @abc.abstractclassmethod
+    async def _get_user_email_confirmation(self, token: str) -> None:
         pass
 
 
@@ -189,3 +205,25 @@ class AuthService(AbstractAuthService):
         self.Authorize.set_access_cookies(access_token)
         self.Authorize.set_refresh_cookies(refresh_token)
         return {'access_token': access_token, 'refresh_token': refresh_token}
+
+    async def _get_user_email_confirmation(self, token: str):
+        # TODO: email token validation.
+        # user = await self.user_crud._get_user_by_id()
+        # created_token = jwt.encode(
+        #     {
+        #         'id': str(user.id),
+        #         'exp': datetime.datetime.fromisoformat('2022-05-19')
+        #     },
+        #     user.password,
+        #     algorithm="HS256",
+        # )
+        # try:
+        #     result = jwt.decode(
+        #         jwt=token,
+        #         key=user.password,
+        #         algorithm="HS256"
+        #     )
+        # except jwt.exceptions.InvalidSignatureError as exc:
+        #     err = 'invalid secret!'
+        # return user
+        return token
