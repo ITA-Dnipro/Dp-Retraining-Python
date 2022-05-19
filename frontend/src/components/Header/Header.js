@@ -2,14 +2,23 @@ import React from 'react';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import {Link, NavLink} from 'react-router-dom';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
+import axiosInstance from "../../axiosApi";
 
 const Header = ({isAuthenticated, setIsAuthenticated}) => {
-
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_id');
-    window.location.href = '/';
+    axiosInstance.post(
+      '/auth/logout',
+    )
+    .then(response => {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_id');
+      setIsAuthenticated(false);
+      window.location.href = '/';
+    })
+    .catch(error => {
+      console.log(error);
+    });
   }
 
   let profileButton;
