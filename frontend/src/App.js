@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import './App.css';
-import Header from './components/Header';
+import Header from './components/Header/Header';
 import Auth from './components/Auth'
 import Posts from './components/Posts';
 import Charities from './components/Charities';
