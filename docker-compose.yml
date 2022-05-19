@@ -20,6 +20,7 @@ services:
       - ./api_server:/usr/src/app
     depends_on:
       - postgres_server
+      - redis
   redis:
       image: redis
       ports:

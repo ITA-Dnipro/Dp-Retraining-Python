@@ -9,6 +9,7 @@ RESPONSE_USER_TEST_DATA = {
     'last_name': 'bar',
     'email': 'test_john@john.com',
     'phone_number': '+380991112233',
+    'profile_picture': None,
 }
 # GET
 RESPONSE_USERS_EMPTY_DB = {'data': [], 'errors': [], 'status_code': 200}
@@ -37,6 +38,7 @@ RESPONSE_USER_UPDATE_TEST_DATA = {
         'last_name': request_test_user_data.UPDATE_USER_TEST_DATA['last_name'],
         'email': request_test_user_data.UPDATE_USER_TEST_DATA['email'],
         'phone_number': request_test_user_data.UPDATE_USER_TEST_DATA['phone_number'],
+        'profile_picture': None,
     },
     'errors': [],
     'status_code': 200,
