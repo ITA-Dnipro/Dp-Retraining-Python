@@ -14,7 +14,6 @@ from common.exceptions.auth import AuthExceptionMsgs
 from db import get_session
 from users.cruds import UserCRUD
 from users.models import User
-from users.services import UserService
 from utils.logging import setup_logging
 
 

@@ -92,8 +92,9 @@ class CharityService(AbstractCharityService):
                                             detail="This organisation hasn't been found")
         return organisation.scalar_one()
 
-    async def _edit_organisation(self,org_id: str, org: CharityUpdateSchema):
-        # доп проверка: если юзернэйм аутентифицированного пользователя совпадает с юзернеймом менеджера, то можно изменять херь
+    async def _edit_organisation(self, org_id: str, org: CharityUpdateSchema):
+        # доп проверка: если юзернэйм аутентифицированного пользователя совпадает с
+        # юзернеймом менеджера, то можно изменять организацию
         self.Authorize.jwt_required()
         organisation_data = org.dict()
         for key in list(organisation_data.keys()):
@@ -104,4 +105,3 @@ class CharityService(AbstractCharityService):
         await self.session.commit()
 
         return await self._get_organisation_by_id(org_id)
-

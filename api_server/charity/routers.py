@@ -30,7 +30,9 @@ async def create_charity(organisation_data: CharityInputSchema, charity_service:
 
 
 @charities_router.put("/{org_id}", response_model_exclude_unset=True)
-async def edit_charity(org_id: UUID, organisation_data: CharityUpdateSchema, charity_service: CharityService = Depends()):
+async def edit_charity(org_id: UUID,
+                       organisation_data: CharityUpdateSchema,
+                       charity_service: CharityService = Depends()):
     return ResponseBaseSchema(status_code=HTTP_200_OK,
                               data=[
                                   CharityOutputSchema.from_orm(
