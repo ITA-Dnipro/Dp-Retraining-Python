@@ -1,6 +1,3 @@
-.coverage
-htmlcov
-
 # Cache files
 __pycache__
 db.sqlite3
@@ -9,4 +6,5 @@ db.sqlite3
 htmlcov
 .pytest_cache
 var
+celerybeat-schedule
 
