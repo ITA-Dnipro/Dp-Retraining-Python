@@ -40,11 +40,14 @@ const Auth = ({setIsAuthenticated}) => {
                 payload
             )
             .then(response => {
-                localStorage.setItem('access_token', response.data.data.access_token);
-                localStorage.setItem('refresh_token', response.data.data.refresh_token);
+                const accessToken = response.data.data.access_token;
+                const refreshToken = response.data.data.refresh_token;
+                const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
+                const userId = tokenPayload.user_data.id;
+                localStorage.setItem('access_token', accessToken);
+                localStorage.setItem('refresh_token', refreshToken);
+                localStorage.setItem('user_id', userId);
                 window.location.href = '/';
-                console.log(response);
-                return response;
             })
             .catch(error => {
                 setIsAuthenticated(false);

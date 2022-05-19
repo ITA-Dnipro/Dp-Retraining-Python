@@ -12,8 +12,8 @@ from auth.utils.exceptions import AuthUserInvalidPasswordException
 from common.constants.auth import AuthJWTConstants
 from common.exceptions.auth import AuthExceptionMsgs
 from db import get_session
+from users.cruds import UserCRUD
 from users.models import User
-from users.services import UserService
 from utils.logging import setup_logging
 
 
@@ -23,11 +23,10 @@ class AbstractAuthService(metaclass=abc.ABCMeta):
         self,
         session: AsyncSession = Depends(get_session),
         Authorize: AuthJWT = Depends(),
-        user_service: UserService = Depends(),
     ) -> None:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
-        self.user_service = user_service
+        self.user_crud = UserCRUD(session=self.session)
         self.Authorize = Authorize
 
     async def login(self, user: AuthUserInputSchema) -> dict:
@@ -104,20 +103,28 @@ class AuthService(AbstractAuthService):
         return argon2.verify(password, password_hash)
 
     async def _login(self, user: AuthUserInputSchema) -> None:
-        db_user = await self.user_service.get_user_by_username(username=user.username)
+        db_user = await self.user_crud.get_user_by_username(username=user.username)
         if await self.verify_password(password=user.password, password_hash=db_user.password):
+            user_claims = {
+                'user_data': {
+                    'id': str(db_user.id),
+                    'email': db_user.email,
+                    'phone': db_user.phone_number,
+                },
+            }
             access_token = await self._create_jwt_token(
                 subject=user.username,
                 token_type=AuthJWTConstants.ACCESS_TOKEN_NAME.value,
                 time_unit=AuthJWTConstants.MINUTES.value,
                 time_amount=AuthJWTConstants.TOKEN_EXPIRE_60.value,
+                user_claims=user_claims,
             )
             refresh_token = await self._create_jwt_token(
                 subject=user.username,
                 token_type=AuthJWTConstants.REFRESH_TOKEN_NAME.value,
                 time_unit=AuthJWTConstants.DAYS.value,
                 time_amount=AuthJWTConstants.TOKEN_EXPIRE_7.value,
-
+                user_claims=user_claims,
             )
 
             self.Authorize.set_access_cookies(access_token)
@@ -128,7 +135,9 @@ class AuthService(AbstractAuthService):
                 detail=AuthExceptionMsgs.WRONG_USERNAME_OR_PASSWORD.value,
             )
 
-    async def _create_jwt_token(self, subject: str, token_type: str, time_amount: int, time_unit: str) -> str:
+    async def _create_jwt_token(
+            self, subject: str, token_type: str, time_amount: int, time_unit: str, user_claims: dict,
+    ) -> str:
         """Creates JWT access or refresh tokens.
 
         Args:
@@ -136,6 +145,7 @@ class AuthService(AbstractAuthService):
             token_type: string with token_type.
             time_amount: token lifetime amount.
             time_unit: token lifetime unit.
+            user_claims: additional user information.
 
         Returns:
         Return access or refresh token with set parameters.
@@ -145,12 +155,12 @@ class AuthService(AbstractAuthService):
             'refresh': self.Authorize.create_refresh_token,
         }
         expires_time = timedelta(**{time_unit: time_amount})
-        return CREATE_TOKEN_METHODS[token_type](subject=subject, expires_time=expires_time)
+        return CREATE_TOKEN_METHODS[token_type](subject=subject, expires_time=expires_time, user_claims=user_claims)
 
     async def _me(self) -> None:
         self.Authorize.jwt_required()
         current_user = self.Authorize.get_jwt_subject()
-        user = await self.user_service.get_user_by_username(current_user)
+        user = await self.user_crud.get_user_by_username(current_user)
         return user
 
     async def _logout(self) -> None:
@@ -161,17 +171,20 @@ class AuthService(AbstractAuthService):
     async def _refresh_token(self) -> None:
         self.Authorize.jwt_refresh_token_required()
         current_user = self.Authorize.get_jwt_subject()
+        current_user_claims = {'user_data': self.Authorize.get_raw_jwt()['user_data']}
         access_token = await self._create_jwt_token(
             subject=current_user,
             token_type=AuthJWTConstants.ACCESS_TOKEN_NAME.value,
             time_unit=AuthJWTConstants.MINUTES.value,
             time_amount=AuthJWTConstants.TOKEN_EXPIRE_60.value,
+            user_claims=current_user_claims,
         )
         refresh_token = await self._create_jwt_token(
             subject=current_user,
             token_type=AuthJWTConstants.REFRESH_TOKEN_NAME.value,
             time_unit=AuthJWTConstants.DAYS.value,
             time_amount=AuthJWTConstants.TOKEN_EXPIRE_7.value,
+            user_claims=current_user_claims,
         )
         self.Authorize.set_access_cookies(access_token)
         self.Authorize.set_refresh_cookies(refresh_token)

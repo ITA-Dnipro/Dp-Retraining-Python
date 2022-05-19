@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from common.constants.users import UserSchemaConstants
+from users.schemas.user_pictures import UserPictureOutputSchema
 
 
 class UserBaseSchema(BaseModel):
@@ -52,6 +53,7 @@ class UserInputSchema(UserBaseSchema):
 class UserOutputSchema(UserBaseSchema):
     """User Output schema for User model."""
     id: UUID = Field(description='Unique identifier of a user.')
+    profile_picture: UserPictureOutputSchema | None = None
 
 
 class UserUpdateSchema(UserBaseSchema):
