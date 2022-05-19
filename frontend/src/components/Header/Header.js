@@ -1,7 +1,6 @@
 import React from 'react';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import {Link, NavLink} from 'react-router-dom';
-import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import axiosInstance from "../../axiosApi";
 
 const Header = ({isAuthenticated, setIsAuthenticated}) => {

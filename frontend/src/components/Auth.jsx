@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import { Alert } from 'react-bootstrap';
 import axiosInstance from "../axiosApi";
 
@@ -8,6 +8,8 @@ const Auth = ({setIsAuthenticated}) => {
 
     const [loginUsername, setLoginUsername] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
+    const [registrationFirstName, setRegistrationFirstName] = useState('');
+    const [registrationLastName, setRegistrationLastName] = useState('');
     const [registrationUsername, setRegistrationUsername] = useState('');
     const [registrationEmail, setRegistrationEmail] = useState('');
     const [registrationPassword, setRegistrationPassword] = useState('');
@@ -15,6 +17,8 @@ const Auth = ({setIsAuthenticated}) => {
 
     const onLoginUsernameChange = (event) => { setLoginUsername(event.target.value) }
     const onLoginPasswordChange = (event) => { setLoginPassword(event.target.value) }
+    const onRegistrationFirstNameChange = (event) => { setRegistrationFirstName(event.target.value) }
+    const onRegistrationLastNameChange = (event) => { setRegistrationLastName(event.target.value) }
     const onRegistrationPasswordChange = (event) => { setRegistrationPassword(event.target.value) }
     const onRegistrationEmailChange = (event) => { setRegistrationEmail(event.target.value) }
     const onRegistrationUsernameChange = (event) => { setRegistrationUsername(event.target.value) }
@@ -58,6 +62,8 @@ const Auth = ({setIsAuthenticated}) => {
     const onRegistrationSubmit = (event) => {
         event.preventDefault();
         let payload = {
+            'first_name': registrationFirstName,
+            'last_name': registrationLastName,
             'username': registrationUsername,
             'email': registrationEmail,
             'password': registrationPassword,
@@ -114,6 +120,20 @@ const Auth = ({setIsAuthenticated}) => {
                     <div className="card-header"><h4>Register</h4></div>
                     <div className="card-body">
                         <form onSubmit={onRegistrationSubmit}>
+                            <div className="form-group">
+                                <label htmlFor="register-first-name">First name</label>
+                                <input type="text" className="form-control" id="register-first-name"
+                                       placeholder="Enter first name" name="registerFirstUsername"
+                                       value={registrationFirstName} onChange={onRegistrationFirstNameChange}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="register-last-name">Last name</label>
+                                <input type="text" className="form-control" id="register-last-name"
+                                       placeholder="Enter last name" name="registerLastName"
+                                       value={registrationLastName} onChange={onRegistrationLastNameChange}
+                                />
+                            </div>
                             <div className="form-group">
                                 <label htmlFor="register-username">Username</label>
                                 <input type="text" className="form-control" id="register-username"
