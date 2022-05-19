@@ -3,12 +3,12 @@ from logging.config import fileConfig
 
 from alembic import context
 from app.config import get_app_config
-from charity.models import CharityOrganisation, CharityUserAssociation
 from common.constants.api import ApiConstants
 from db import Base
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 from users.models import User
+from charity.models import CharityOrganisation, CharityUserAssociation
 
 Config = get_app_config(ApiConstants.DEVELOPMENT_CONFIG.value)
 
