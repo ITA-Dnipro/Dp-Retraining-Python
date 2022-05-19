@@ -1,6 +1,24 @@
-import "./Profile.css"
+import React, {useEffect, useState} from 'react';
+import axiosInstance from "../../axiosApi";
+import "./Profile.css";
 
  const Profile = () => {
+    const [userInfo, setUserInfo] = useState('');
+
+    useEffect(() => {
+        let userId = localStorage.getItem('user_id');
+        axiosInstance.get(
+            `users/${userId}`
+            )
+            .then(response => response)
+            .then(result => {
+                setUserInfo(result.data.data);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }, []);
+
     return (
         <>
             <div className="profile">
@@ -9,10 +27,10 @@ import "./Profile.css"
                         <img className="profileUserImg" src="exampleAvatar.jpg" alt="" />
                     </div>
                     <div className="profileInfo">
-                        <span className="profileFullName">Jon Snow</span>
-                        <span className="profileUsernameValue">kingofthenorth</span>
-                        <span className="email">Email: j.snow@nightswatch.com</span>
-                        <span className="phone">Phone number: +380661234567</span>
+                        <span className="profileFullName">{userInfo.first_name} {userInfo.last_name}</span>
+                        <span className="profileUsernameValue">{userInfo.username}</span>
+                        <span className="email">Email: {userInfo.email}</span>
+                        <span className="phone">Phone number: {userInfo.phone_number}</span>
                     </div>
                 </div>
             </div>
@@ -21,4 +39,4 @@ import "./Profile.css"
     );
 }
 
-export default Profile
+export default Profile;
