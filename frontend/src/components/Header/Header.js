@@ -1,14 +1,28 @@
 import React from 'react';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import {Link, NavLink} from 'react-router-dom';
+import {BrowserRouter, Routes, Route} from 'react-router-dom';
 
-const Header = ({isAuthenticated}) => {
+const Header = ({isAuthenticated, setIsAuthenticated}) => {
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_id');
+    window.location.href = '/';
+  }
+
   let profileButton;
 
   if (isAuthenticated) {
-    profileButton = <Button as={Link} to="/profile" variant="outline-light" >
-      Profile
-    </Button>;
+    profileButton = <>
+      <Button as={Link} to="/profile" variant="outline-light" className="me-2" >
+        Profile
+      </Button>
+      <Button onClick={handleLogout} variant="outline-light" >
+        Logout
+      </Button>
+    </>;
   } else {
     profileButton = <Button as={Link} to="/auth" variant="outline-light" >Sing In</Button>;
   }
