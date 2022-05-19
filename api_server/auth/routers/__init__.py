@@ -1,8 +1,8 @@
-from auth.schemas import (AuthUserInputSchema, AuthUserLogoutSchema,
-                          AuthUserOutputSchema)
+from fastapi import APIRouter, Depends, status
+
+from auth.schemas import AuthUserInputSchema, AuthUserLogoutSchema, AuthUserOutputSchema
 from auth.services import AuthService
 from common.schemas.responses import ResponseBaseSchema
-from fastapi import APIRouter, Depends, status
 from users.schemas import UserOutputSchema
 
 auth_router = APIRouter(prefix='/auth', tags=['Auth'])

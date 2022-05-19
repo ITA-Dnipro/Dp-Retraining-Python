@@ -1,11 +1,12 @@
-import uuid
 from datetime import datetime
+import uuid
 
-from db import Base
 from sqlalchemy import Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
+
+from db import Base
 
 
 class CharityUserAssociation(Base):

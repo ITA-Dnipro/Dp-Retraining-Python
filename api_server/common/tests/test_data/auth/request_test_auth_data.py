@@ -1,5 +1,4 @@
-from common.tests.test_data.users.request_test_user_data import \
-    ADD_USER_TEST_DATA
+from common.tests.test_data.users.request_test_user_data import ADD_USER_TEST_DATA
 
 LOGIN_VALID_USER_CREDENTIALS = {
     'username': ADD_USER_TEST_DATA['username'],

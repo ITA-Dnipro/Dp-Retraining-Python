@@ -1,4 +1,5 @@
 import uvicorn
+
 from app import create_app
 from common.constants.api import ApiConstants
 

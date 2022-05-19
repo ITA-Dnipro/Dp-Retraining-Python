@@ -1,7 +1,9 @@
-from common.schemas.responses import ResponseBaseSchema
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
+
 from fastapi_jwt_auth.exceptions import AuthJWTException
+
+from common.schemas.responses import ResponseBaseSchema
 
 
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):

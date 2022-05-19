@@ -1,10 +1,10 @@
 from typing import Optional
 from uuid import UUID
 
+from pydantic import BaseModel, Field
 from pydantic.main import ModelMetaclass
 
 from common.constants.charities import CharitySchemaConstants
-from pydantic import BaseModel, Field
 
 
 class AllOptional(ModelMetaclass):

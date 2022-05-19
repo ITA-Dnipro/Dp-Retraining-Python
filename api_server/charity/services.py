@@ -1,16 +1,18 @@
 from abc import ABCMeta
 from uuid import UUID
 
-from starlette.status import HTTP_404_NOT_FOUND
-from charity.models import CharityOrganisation, CharityUserAssociation
-from charity.schemas import CharityInputSchema, CharityUpdateSchema
-from charity.utils.exceptions import OrganisationNotFoundError
-from db import get_session
 from fastapi import Depends
+
 from fastapi_jwt_auth import AuthJWT
 from sqlalchemy import select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.status import HTTP_404_NOT_FOUND
+
+from charity.models import CharityOrganisation, CharityUserAssociation
+from charity.schemas import CharityInputSchema, CharityUpdateSchema
+from charity.utils.exceptions import OrganisationNotFoundError
+from db import get_session
 from users.models import User
 from users.utils.exceptions import UserNotFoundError
 from utils.logging import setup_logging

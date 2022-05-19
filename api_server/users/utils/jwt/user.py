@@ -1,5 +1,6 @@
-from common.exceptions.users import UserExceptionMsgs
 from fastapi import status
+
+from common.exceptions.users import UserExceptionMsgs
 from users.utils.exceptions import UserPermissionError
 
 

@@ -1,11 +1,12 @@
 from uuid import UUID
 
-from common.schemas.responses import ResponseBaseSchema
 from fastapi import APIRouter, Depends
-from starlette.status import HTTP_201_CREATED, HTTP_200_OK
 
-from .schemas import CharityInputSchema, CharityOutputSchema, CharityUpdateSchema
-from .services import CharityService
+from starlette.status import HTTP_200_OK, HTTP_201_CREATED
+
+from charity.schemas import CharityInputSchema, CharityOutputSchema, CharityUpdateSchema
+from charity.services import CharityService
+from common.schemas.responses import ResponseBaseSchema
 
 charities_router = APIRouter(prefix='/charities', tags=['Charities'])
 

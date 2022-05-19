@@ -1,5 +1,6 @@
-from common.constants.users import UserSchemaConstants
 from pydantic import BaseModel, Field
+
+from common.constants.users import UserSchemaConstants
 
 
 class AuthUserBaseSchema(BaseModel):

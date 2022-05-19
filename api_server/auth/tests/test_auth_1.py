@@ -1,11 +1,13 @@
-import pytest
-from auth.tests.test_data import response_auth_test_data
-from common.tests.generics import TestMixin
-from common.tests.test_data.auth import request_test_auth_data
 from fastapi import FastAPI, status
+
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+import pytest
+
+from auth.tests.test_data import response_auth_test_data
+from common.tests.generics import TestMixin
+from common.tests.test_data.auth import request_test_auth_data
 from users.models import User
 
 
