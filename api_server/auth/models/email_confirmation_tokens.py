@@ -18,7 +18,7 @@ class EmailConfirmationToken(Base):
     token = Column(String(EmailConfirmationTokenModelConstants.CHAR_SIZE_2048.value), nullable=True, unique=True)
     created_at = Column(DateTime, server_default=func.now())
     expired_at = Column(DateTime, nullable=True)
-    user = relationship('User', back_populates='email_confirmation_token')
+    user = relationship('User', back_populates='email_confirmation_token', lazy='selectin')
 
     __mapper_args__ = {'eager_defaults': True}
 

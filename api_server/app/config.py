@@ -127,6 +127,12 @@ class CeleryDevelopmentConfig:
         f'{POSTGRES_DB_PORT}/{POSTGRES_DB_NAME}'
     )
 
+    # Email confirmation variables.
+    EMAIL_CONFIRMATION_HOST: str = os.getenv('EMAIL_CONFIRMATION_HOST')
+    EMAIL_CONFIRMATION_PORT: int = int(os.getenv('EMAIL_CONFIRMATION_PORT'))
+    EMAIL_CONFIRMATION_ENDPOINT_NAME = os.getenv('EMAIL_CONFIRMATION_ENDPOINT_NAME')
+    EMAIL_CONFIRMATION_TOKEN_NAME = os.getenv('EMAIL_CONFIRMATION_TOKEN_NAME')
+
 
 class CeleryTestingConfig:
     """Celery testing environment variables."""

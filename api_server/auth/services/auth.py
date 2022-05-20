@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.cruds import EmailConfirmationTokenCRUD
 from auth.schemas import AuthUserInputSchema, EmailConfirmationTokenInputSchema
+from auth.tasks import send_email_comfirmation_letter
 from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
 from auth.utils.exceptions import AuthUserInvalidPasswordException, UserAlreadyActivatedException
 from common.constants.auth import AuthJWTConstants
@@ -235,7 +236,12 @@ class AuthService(AbstractAuthService):
             id_=user.id,
             token=jwt_token,
         )
-        # TODO: background celery task here.
+        send_email_comfirmation_letter.apply_async(
+            kwargs={
+                'email_confirmation_token': db_email_confirmation_token,
+            },
+            serializers='pickle',
+        )
         return jwt_token
 
     async def _check_user_is_activated(self, user: User) -> bool:
