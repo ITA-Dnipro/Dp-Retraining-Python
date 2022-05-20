@@ -51,3 +51,29 @@ def invalid_auth_credentials_handler(request: Request, exc: AuthUserInvalidPassw
         status_code=exc.status_code,
         content=response,
     )
+
+
+class UserAlreadyActivatedException(HTTPException):
+    """Custom User alredy activated exception."""
+    pass
+
+
+def user_already_activated_handler(request: Request, exc: UserAlreadyActivatedException):
+    """Handler for UserAlreadyActivatedException exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised UserAlreadyActivatedException.
+
+    Returns:
+    http response for raised UserAlreadyActivatedException.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )

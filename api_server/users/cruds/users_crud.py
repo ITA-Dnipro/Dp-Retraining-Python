@@ -84,6 +84,17 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         """
         return await self._get_user_by_username(username)
 
+    async def get_user_by_email(self, email: str) -> User:
+        """Get User object from database filtered by email.
+
+        Args:
+            email: string of User's email.
+
+        Returns:
+        Single User object filtered by email.
+        """
+        return await self._get_user_by_email(email)
+
     @abc.abstractclassmethod
     async def _get_users(self) -> None:
         pass
@@ -106,6 +117,10 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
 
     @abc.abstractclassmethod
     async def _get_user_by_username(self, username: str) -> None:
+        pass
+
+    @abc.abstractclassmethod
+    async def _get_user_by_email(self, email: str) -> None:
         pass
 
 
@@ -167,3 +182,6 @@ class UserCRUD(AbstractUserCRUD):
     async def _get_user_by_username(self, username: str) -> None:
         user = await self._select_user(column='username', value=username)
         return user
+
+    async def _get_user_by_email(self, email: str) -> None:
+        return await self._select_user(column='email', value=email)

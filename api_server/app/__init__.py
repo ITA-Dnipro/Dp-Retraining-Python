@@ -8,8 +8,10 @@ from app.config import get_app_config
 from auth.routers import auth_router
 from auth.utils.exceptions import (
     AuthUserInvalidPasswordException,
+    UserAlreadyActivatedException,
     authjwt_exception_handler,
     invalid_auth_credentials_handler,
+    user_already_activated_handler,
 )
 from common.constants.api import ApiConstants
 from users.routers import users_router
@@ -84,4 +86,5 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(UserPictureExtensionError, user_picture_extension_error_handler)
     app.add_exception_handler(UserPictureResolutionError, user_picture_resolution_error_handler)
     app.add_exception_handler(UserPictureNotFoundError, user_picture_not_found_error_handler)
+    app.add_exception_handler(UserAlreadyActivatedException, user_already_activated_handler)
     return app
