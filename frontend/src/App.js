@@ -7,6 +7,7 @@ import Posts from './components/Posts';
 import Charities from './components/Charities';
 import Home from './components/Home';
 import Profile from './components/Profile/Profile';
+import Charity from './components/Charity/Charity';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,6 +35,7 @@ const App = () => {
           <Route path="/charities" element={<Charities />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/charity" element={<Charity />} />
           <Route path="/auth" element={<Auth setIsAuthenticated={setIsAuthenticated} />} />
         </Routes>
       </BrowserRouter>
