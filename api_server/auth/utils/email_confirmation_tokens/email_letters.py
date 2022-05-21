@@ -40,3 +40,15 @@ class EmailConfirmationLetter:
             FRONT_URL=self.front_url,
             EMAIL_CONFIRMATION_URL=self.email_confirmation_url,
         )
+
+    @property
+    def json_data(self):
+        return {
+            'email_data': {
+                'source': self._server_config.get('AWS_SES_EMAIL_SOURCE'),
+                'to_address': self.email_confirmation_token.user.email,
+                'subject': EmailConfirmationLetterConstants.EMAIL_SUBJECT.value,
+                'html': self.html_template,
+                'charset': EmailConfirmationLetterConstants.ENCODING_UTF_8.value,
+            }
+        }

@@ -13,7 +13,7 @@ def send_email_comfirmation_letter(email_confirmation_token: EmailConfirmationTo
     Returns:
     Nothing.
     """
-    email_comfirmation_letter = EmailConfirmationLetter(
+    email_comfirmation_letter = EmailConfirmationLetter( # noqa
         email_confirmation_token=email_confirmation_token,
         server_config=app.conf,
     )

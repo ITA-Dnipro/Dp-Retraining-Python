@@ -1,0 +1,23 @@
+name: User email confirmation lambda deploy
+
+on:
+  push:
+    branches:
+      - "USER-38_create_user_email_confirmation_logic"
+      - "dev"
+
+jobs:
+  deploy-lambda:
+    name: Deploy lambda from source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v1
+      - name: Default deploy
+        uses: appleboy/lambda-action@master
+        with:
+          function_name: 'email_confirmation'
+          source: ./api_server/auth/utils/email_confirmation_tokens/email_confirmation_lambda.py
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.EMAIL_CONFIRMATION_LAMBDA_REGION }}

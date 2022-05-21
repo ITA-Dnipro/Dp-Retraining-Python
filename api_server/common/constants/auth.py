@@ -55,7 +55,8 @@ class EmailConfirmationLetterConstants(enum.Enum):
     EMAIL_CONFIRMATION_URL = 'http://www.{host}:{port}{endpoint}?{token_value_name}={token_value}'
     FRONT_NAME = 'DONATello'
     FRONT_URL = 'http://www.{host}:{port}'
-
+    EMAIL_SUBJECT = 'Please, verify your email address.'
+    ENCODING_UTF_8 = 'UTF-8'
     EMAIL_HTML_TEMPLATE = '''<!DOCTYPE html>
     <html>
     <head>
