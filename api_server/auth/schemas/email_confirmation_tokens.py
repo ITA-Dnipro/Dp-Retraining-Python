@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from common.constants.auth import EmailConfirmationTokenSchemaConstants
@@ -18,4 +20,14 @@ class EmailConfirmationTokenInputSchema(EmailConfirmationTokenBaseSchema):
         min_length=EmailConfirmationTokenSchemaConstants.CHAR_SIZE_3.value,
         max_length=EmailConfirmationTokenSchemaConstants.CHAR_SIZE_256.value,
         regex=EmailConfirmationTokenSchemaConstants.EMAIL_REGEX.value,
+    )
+
+
+class EmailConfirmationTokenOutputSchema(EmailConfirmationTokenBaseSchema):
+    """EmailConfirmationToken Output Schema."""
+
+    id: UUID = Field(description="Unique identifier of a EmailConfirmationToken object.")
+    token: str = Field(
+        description='JWT token of EmailConfirmationToken object.',
+        max_length=EmailConfirmationTokenSchemaConstants.CHAR_SIZE_2048.value,
     )

@@ -1,3 +1,6 @@
+import html
+import re
+
 from celery.app.utils import Settings
 from jinja2 import Template
 
@@ -35,20 +38,21 @@ class EmailConfirmationLetter:
     @property
     def html_template(self):
         email_confirmation_template = Template(EmailConfirmationLetterConstants.EMAIL_HTML_TEMPLATE.value)
-        return email_confirmation_template.render(
+        email_confirmation_template = email_confirmation_template.render(
             FRONT_NAME=self.front_name,
             FRONT_URL=self.front_url,
             EMAIL_CONFIRMATION_URL=self.email_confirmation_url,
         )
+        email_confirmation_template = re.sub('\n', '', email_confirmation_template)
+        email_confirmation_template = html.escape(email_confirmation_template)
+        return email_confirmation_template
 
     @property
-    def json_data(self):
+    def payloda_data(self):
         return {
-            'email_data': {
-                'source': self._server_config.get('AWS_SES_EMAIL_SOURCE'),
-                'to_address': self.email_confirmation_token.user.email,
-                'subject': EmailConfirmationLetterConstants.EMAIL_SUBJECT.value,
-                'html': self.html_template,
-                'charset': EmailConfirmationLetterConstants.ENCODING_UTF_8.value,
-            }
+            'source': self._server_config.get('AWS_SES_EMAIL_SOURCE'),
+            'to_address': self.email_confirmation_token.user.email,
+            'subject': EmailConfirmationLetterConstants.EMAIL_SUBJECT.value,
+            'html': self.html_template,
+            'charset': EmailConfirmationLetterConstants.ENCODING_UTF_8.value,
         }

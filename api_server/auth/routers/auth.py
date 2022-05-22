@@ -5,6 +5,7 @@ from auth.schemas import (
     AuthUserLogoutSchema,
     AuthUserOutputSchema,
     EmailConfirmationTokenInputSchema,
+    EmailConfirmationTokenOutputSchema,
 )
 from auth.services import AuthService
 from common.schemas.responses import ResponseBaseSchema
@@ -116,7 +117,6 @@ async def post_user_email_confiramation(
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
-        # data=UserOutputSchema.from_orm(await auth_service.get_user_email_confirmation(token=token)),
-        data=await auth_service.resend_user_email_confirmation(email),
+        data=EmailConfirmationTokenOutputSchema.from_orm(await auth_service.resend_user_email_confirmation(email)),
         errors=[],
     )

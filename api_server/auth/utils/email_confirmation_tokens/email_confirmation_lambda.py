@@ -1,3 +1,4 @@
+import html
 import json
 
 import boto3
@@ -49,8 +50,9 @@ def get_email_data(event) -> dict:
     Returns:
     dict with email letter data.
     """
-    body = json.loads(event["body"])
-    return body['email_data']
+    payload = json.loads(event['body'])
+    payload['html'] = html.unescape(payload['html'])
+    return payload
 
 
 def lambda_handler(event, context):

@@ -242,7 +242,7 @@ class AuthService(AbstractAuthService):
             },
             serializers='pickle',
         )
-        return jwt_token
+        return db_email_confirmation_token
 
     async def _check_user_is_activated(self, user: User) -> bool:
         """Checks if user object has 'activated_at' field filled with data.

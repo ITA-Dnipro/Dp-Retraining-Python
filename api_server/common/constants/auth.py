@@ -31,6 +31,7 @@ class EmailConfirmationTokenSchemaConstants(enum.Enum):
     CHAR_SIZE_6 = 6
     CHAR_SIZE_64 = 64
     CHAR_SIZE_256 = 256
+    CHAR_SIZE_2048 = 2048
 
     # Regex.
     EMAIL_REGEX = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
@@ -155,7 +156,7 @@ class EmailConfirmationLetterConstants(enum.Enum):
 
       <!-- start preheader -->
       <div class="preheader" style="display: none; max-width: 0; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
-        A preheader is the short summary text that follows the subject line when an email is viewed in the inbox.
+        👋 👋 👋 💎 💎 💎 ✔ ✔ ✔ Welcome to DONATello please confirm your email address. 👋 👋 👋 💎 💎 💎 ✔ ✔ ✔
       </div>
       <!-- end preheader -->
 
@@ -301,3 +302,9 @@ class EmailConfirmationLetterConstants(enum.Enum):
     </body>
     </html>
     ''' # noqa
+
+
+class EmailConfirmationLambdaClientConstants(enum.Enum):
+    """EmailConfirmationLambdaClient constants."""
+    WAIT_1_SECOND = 1
+    TIMES_5 = 5
