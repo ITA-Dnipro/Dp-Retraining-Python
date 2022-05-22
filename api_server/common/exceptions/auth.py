@@ -9,3 +9,6 @@ class AuthExceptionMsgs(enum.Enum):
 class EmailConfirmationTokenExceptionMsgs(enum.Enum):
     """Constants for EmailConfirmationToken exception messages."""
     USER_ALREADY_ACTIVATED = "User with email: '{user_email}' already activated."
+    TOKEN_EXPIRED = 'Email confirmation token alredy expired.'
+    INVALID_JWT_TOKEN = 'Invalid JWT token provided.'
+    JWT_TOKEN_EXPIRED = 'Provided JWT token already expired.'

@@ -1,8 +1,13 @@
 from datetime import datetime, timedelta
 
+from fastapi import status
+
+from jwt.exceptions import DecodeError, ExpiredSignatureError
 import jwt
 
+from auth.utils.exceptions import EmailConfirmationExpiredJWTTokenError, EmailConfirmationJWTTokenError
 from common.constants.auth import EmailConfirmationTokenConstants
+from common.exceptions.auth import EmailConfirmationTokenExceptionMsgs
 from users.models import User
 
 
@@ -58,3 +63,32 @@ def encode_jwt_token(
     return jwt.encode(
         payload=payload, key=key, algorithm=algorightm,
     ).decode(EmailConfirmationTokenConstants.ENCODING_UTF_8.value)
+
+
+def decode_jwt_token(token: str, key: str) -> dict:
+    """Decodes JWT token and return it's content.
+
+    Args:
+        token: Encoded JWT token.
+
+    Raise:
+        EmailConfirmationJWTTokenError in case invalid JWT token.
+
+        EmailConfirmationExpiredJWTTokenError in case JWT token expired.
+
+    Returns:
+    dict with decoded JWT token.
+    """
+    try:
+        payload = jwt.decode(jwt=token, key=key)
+    except DecodeError:
+        raise EmailConfirmationJWTTokenError(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=EmailConfirmationTokenExceptionMsgs.INVALID_JWT_TOKEN.value,
+        )
+    except ExpiredSignatureError:
+        raise EmailConfirmationExpiredJWTTokenError(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=EmailConfirmationTokenExceptionMsgs.JWT_TOKEN_EXPIRED.value,
+        )
+    return payload

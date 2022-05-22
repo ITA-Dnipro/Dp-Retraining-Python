@@ -8,10 +8,16 @@ from passlib.hash import argon2
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.cruds import EmailConfirmationTokenCRUD
+from auth.models import EmailConfirmationToken
 from auth.schemas import AuthUserInputSchema, EmailConfirmationTokenInputSchema
 from auth.tasks import send_email_comfirmation_letter
-from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
-from auth.utils.exceptions import AuthUserInvalidPasswordException, UserAlreadyActivatedException
+from auth.utils.email_confirmation_tokens import create_email_cofirmation_token, decode_jwt_token
+from auth.utils.exceptions import (
+    AuthUserInvalidPasswordException,
+    EmailConfirmationExpiredJWTTokenError,
+    EmailConfirmationTokenExpiredError,
+    UserAlreadyActivatedException,
+)
 from common.constants.auth import AuthJWTConstants
 from common.exceptions.auth import AuthExceptionMsgs, EmailConfirmationTokenExceptionMsgs
 from db import get_session
@@ -225,10 +231,13 @@ class AuthService(AbstractAuthService):
         return {'access_token': access_token, 'refresh_token': refresh_token}
 
     async def _get_user_email_confirmation(self, token: str):
-        # TODO: email token validation.
+        email_confirmation_token = await self.email_confirmation_token_crud.get_email_confirmation_by_token(token)
+        await self._validate_token(email_confirmation_token)
+        await self.email_confirmation_token_crud._expire_email_confirmation_token_by_id(email_confirmation_token.id)
+        await self.email_confirmation_token_crud._activate_user_by_id(email_confirmation_token.user.id)
         return token
 
-    async def _resend_user_email_confirmation(self, email: EmailConfirmationTokenInputSchema) -> None:
+    async def _resend_user_email_confirmation(self, email: EmailConfirmationTokenInputSchema) -> EmailConfirmationToken:
         user = await self.user_crud.get_user_by_email(email.email)
         await self._check_user_is_activated(user)
         jwt_token = create_email_cofirmation_token(user)
@@ -251,7 +260,7 @@ class AuthService(AbstractAuthService):
             user: User object.
 
         Raise:
-            UserAlreadyActivatedException if 'user.activated_at' field filled with data
+            UserAlreadyActivatedException if 'user.activated_at' field filled with data.
 
         Returns:
         bool of content 'user.activated_at' field.
@@ -262,3 +271,70 @@ class AuthService(AbstractAuthService):
                 detail=EmailConfirmationTokenExceptionMsgs.USER_ALREADY_ACTIVATED.value.format(user_email=user.email),
             )
         return bool(user.activated_at)
+
+    async def _validate_token(self, token: EmailConfirmationToken) -> None:
+        """Validates EmailConfirmationToken not to be expired and user's not to be already activated.
+
+        Args:
+            token: An EmailConfirmationToken object.
+
+        Returns:
+        Nothing.
+        """
+        await self._validate_token_user_activation(token)
+        await self._validate_db_token_expiration(token)
+        await self._validate_jwt_token_expiration(token)
+
+    async def _validate_db_token_expiration(self, token: EmailConfirmationToken) -> bool:
+        """Check if token has expired_at filled aleready.
+
+        Args:
+            token: An EmailConfirmationToken object.
+
+        Raise:
+            EmailConfirmationTokenExpiredError if 'token.expired_at' field filled with data.
+
+        Returns:
+        bool of content 'token.expired_at' field.
+        """
+        if token.expired_at:
+            raise EmailConfirmationTokenExpiredError(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=EmailConfirmationTokenExceptionMsgs.TOKEN_EXPIRED.value,
+            )
+        return bool(token.expired_at)
+
+    async def _validate_token_user_activation(self, token: EmailConfirmationToken) -> None:
+        """Check if user already activated and expires current user's token.
+
+        Args:
+            token: An EmailConfirmationToken object.
+
+        Raise:
+            UserAlreadyActivatedException if 'user.activated_at' field filled with data.
+
+        Returns:
+        Nothing.
+        """
+        try:
+            await self._check_user_is_activated(token.user)
+        except UserAlreadyActivatedException as exc:
+            await self.email_confirmation_token_crud._expire_email_confirmation_token_by_id(token.id)
+            self._log.debug(exc)
+            raise exc
+
+    async def _validate_jwt_token_expiration(self, token: EmailConfirmationToken) -> None:
+        """Decodes jwt token and check expiration date set in token.
+
+        Args:
+            token: An EmailConfirmationToken object.
+
+        Returns:
+        Nothing.
+        """
+        try:
+            decode_jwt_token(token=token.token, key=token.user.password)
+        except EmailConfirmationExpiredJWTTokenError as exc:
+            await self.email_confirmation_token_crud._expire_email_confirmation_token_by_id(token.id)
+            self._log.debug(exc)
+            raise exc

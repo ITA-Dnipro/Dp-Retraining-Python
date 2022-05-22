@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 import abc
 
@@ -185,3 +186,23 @@ class UserCRUD(AbstractUserCRUD):
 
     async def _get_user_by_email(self, email: str) -> None:
         return await self._select_user(column='email', value=email)
+
+    async def _activate_user_by_id(self, id_: UUID) -> None:
+        """Activates User by setting 'activated_at' field with current time.
+
+        Args:
+            id_: UUID of User object.
+
+        Returns:
+        Nothing.
+        """
+        await self.session.execute(
+            update(
+                User
+            ).where(
+                User.id == id_
+            ).values(
+                activated_at=datetime.utcnow()
+            )
+        )
+        await self.session.commit()
