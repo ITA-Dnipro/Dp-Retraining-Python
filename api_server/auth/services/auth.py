@@ -18,7 +18,7 @@ from auth.utils.exceptions import (
     EmailConfirmationTokenExpiredError,
     UserAlreadyActivatedException,
 )
-from common.constants.auth import AuthJWTConstants
+from common.constants.auth import AuthJWTConstants, EmailConfirmationTokenConstants
 from common.exceptions.auth import AuthExceptionMsgs, EmailConfirmationTokenExceptionMsgs
 from db import get_session
 from users.cruds import UserCRUD
@@ -235,7 +235,12 @@ class AuthService(AbstractAuthService):
         await self._validate_token(email_confirmation_token)
         await self.email_confirmation_token_crud._expire_email_confirmation_token_by_id(email_confirmation_token.id)
         await self.email_confirmation_token_crud._activate_user_by_id(email_confirmation_token.user.id)
-        return token
+        EmailConfirmationTokenConstants.SUCCESSFUL_EMAIL_CONFIRMATION_MSG.value['message'] = (
+            EmailConfirmationTokenConstants.SUCCESSFUL_EMAIL_CONFIRMATION_MSG.value['message'].format(
+                email=email_confirmation_token.user.email,
+            )
+        )
+        return EmailConfirmationTokenConstants.SUCCESSFUL_EMAIL_CONFIRMATION_MSG.value
 
     async def _resend_user_email_confirmation(self, email: EmailConfirmationTokenInputSchema) -> EmailConfirmationToken:
         user = await self.user_crud.get_user_by_email(email.email)

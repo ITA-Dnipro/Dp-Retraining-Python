@@ -31,3 +31,10 @@ class EmailConfirmationTokenOutputSchema(EmailConfirmationTokenBaseSchema):
         description='JWT token of EmailConfirmationToken object.',
         max_length=EmailConfirmationTokenSchemaConstants.CHAR_SIZE_2048.value,
     )
+
+
+class EmailConfirmationTokenSuccessSchema(BaseModel):
+    """EmailConfirmationToken Success Schema."""
+    message: str = Field(
+        description='A message with succesfull user activation.',
+    )

@@ -48,6 +48,10 @@ class EmailConfirmationTokenConstants(enum.Enum):
     MINUTES = 'minutes'
     SECONDS = 'seconds'
     TOKEN_EXPIRE_7 = 7
+    ONE_SECOND = 1
+
+    # Responses.
+    SUCCESSFUL_EMAIL_CONFIRMATION_MSG = {'message': "User with email: '{email}' successfully activated."}
 
 
 class EmailConfirmationLetterConstants(enum.Enum):

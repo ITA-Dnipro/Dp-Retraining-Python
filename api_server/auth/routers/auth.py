@@ -6,6 +6,7 @@ from auth.schemas import (
     AuthUserOutputSchema,
     EmailConfirmationTokenInputSchema,
     EmailConfirmationTokenOutputSchema,
+    EmailConfirmationTokenSuccessSchema,
 )
 from auth.services import AuthService
 from common.schemas.responses import ResponseBaseSchema
@@ -96,13 +97,12 @@ async def get_user_email_confiramation(token: str, auth_service: AuthService = D
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
-        # data=UserOutputSchema.from_orm(await auth_service.get_user_email_confirmation(token=token)),
-        data=await auth_service.get_user_email_confirmation(token=token),
+        data=EmailConfirmationTokenSuccessSchema(**await auth_service.get_user_email_confirmation(token=token)),
         errors=[],
     )
 
 
-@auth_router.post('/email-confirmation', response_model=ResponseBaseSchema)
+@auth_router.post('/email-confirmation', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
 async def post_user_email_confiramation(
         email: EmailConfirmationTokenInputSchema, auth_service: AuthService = Depends(),
 ) -> ResponseBaseSchema:
@@ -116,7 +116,7 @@ async def post_user_email_confiramation(
     ResponseBaseSchema object with UserOutputSchema object as response data.
     """
     return ResponseBaseSchema(
-        status_code=status.HTTP_200_OK,
+        status_code=status.HTTP_201_CREATED,
         data=EmailConfirmationTokenOutputSchema.from_orm(await auth_service.resend_user_email_confirmation(email)),
         errors=[],
     )
