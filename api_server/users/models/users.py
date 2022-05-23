@@ -27,7 +27,7 @@ class User(Base):
         'UserPicture', back_populates='user', uselist=False, lazy='selectin', cascade='all, delete',
     )
     email_confirmation_token = relationship(
-        'EmailConfirmationToken', back_populates='user', uselist=False, lazy='selectin', cascade='all, delete',
+        'EmailConfirmationToken', back_populates='user', lazy='selectin', cascade='all, delete',
     )
 
     __mapper_args__ = {'eager_defaults': True}
