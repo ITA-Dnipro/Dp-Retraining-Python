@@ -6,9 +6,10 @@ from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.config import get_app_config
+from auth.models import EmailConfirmationToken
 from common.constants.api import ApiConstants
 from db import Base
-from users.models import User
+from users.models import User, UserPicture
 
 Config = get_app_config(ApiConstants.DEVELOPMENT_CONFIG.value)
 

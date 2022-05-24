@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 import pytest
 
+from auth.models import EmailConfirmationToken
 from common.tests.generics import TestMixin
 from common.tests.test_data.users import request_test_user_data
 from users.models import User
@@ -171,6 +172,30 @@ class TestCasePostUsers(TestMixin):
         assert response_data == expected_result
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert (await db_session.execute(select(func.count(User.id)))).scalar_one() == 1
+
+    @pytest.mark.asyncio
+    async def test_post_users_valid_payload_email_confirmation_token_gets_created(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession,
+    ) -> None:
+        """Test POST '/users' endpoint with valid payload and no user's data added to the db.
+        EmailConfiramtionToken created alongside with user.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+
+        Returns:
+        Nothing.
+        """
+        url = app.url_path_for('post_users')
+        response = await client.post(url, json=request_test_user_data.ADD_USER_TEST_DATA)
+        response_data = response.json()
+        expected_result = response_test_user_data.RESPONSE_POST_USER
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_201_CREATED
+        assert (await db_session.execute(select(func.count(User.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
 
 
 class TestCasePutUser(TestMixin):
