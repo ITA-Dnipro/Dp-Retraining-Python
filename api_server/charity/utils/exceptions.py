@@ -18,7 +18,7 @@ def organisation_exception_handler(request: Request, exc: OrganisationHTTPExcept
         exc: raised UserNotFoundError.
 
     Returns:
-    http response for raised UserNotFoundError.
+        http response for raised OrganisationHTTPException.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,
