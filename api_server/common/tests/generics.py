@@ -23,8 +23,8 @@ from app.celery_base import create_celery_app
 from auth.cruds import EmailConfirmationTokenCRUD
 from auth.models import EmailConfirmationToken
 from auth.services import AuthService
-from charity.models import CharityOrganisation, CharityUserAssociation
 from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
+from charity.models import CharityOrganisation, CharityUserAssociation
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants
 from common.constants.celery import CeleryConstants
