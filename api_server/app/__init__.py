@@ -75,6 +75,7 @@ def app_route_includer(app: FastAPI) -> FastAPI:
     """
     app.include_router(users_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(auth_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
+    app.include_router(charities_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     return app
 
 
