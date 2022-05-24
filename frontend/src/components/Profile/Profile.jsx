@@ -1,6 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import axiosInstance from "../../axiosApi";
 import "./Profile.css";
+import {Button} from "react-bootstrap";
+import {Link} from "react-router-dom";
 
  const Profile = () => {
     const [userInfo, setUserInfo] = useState('');
@@ -10,7 +12,6 @@ import "./Profile.css";
         axiosInstance.get(
             `users/${userId}`
             )
-            .then(response => response)
             .then(result => {
                 setUserInfo(result.data.data);
             })
@@ -31,6 +32,9 @@ import "./Profile.css";
                         <span className="profileUsernameValue">{userInfo.username}</span>
                         <span className="email">Email: {userInfo.email}</span>
                         <span className="phone">Phone number: {userInfo.phone_number}</span>
+                        <Button as={Link} to="/edit-profile" variant="outline-secondary" className="me-2" >
+                         Edit Profile
+                        </Button>
                     </div>
                 </div>
             </div>
