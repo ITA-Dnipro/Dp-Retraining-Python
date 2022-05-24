@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
+from starlette.status import HTTP_200_OK, HTTP_201_CREATED
 
 from charity.schemas import CharityInputSchema, CharityOutputSchema, CharityUpdateSchema
 from charity.services import CharityService

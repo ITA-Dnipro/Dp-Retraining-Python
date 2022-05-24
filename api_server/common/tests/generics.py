@@ -22,12 +22,11 @@ from app import create_app
 from app.celery_base import create_celery_app
 from auth.services import AuthService
 from charity.models import CharityOrganisation, CharityUserAssociation
-from charity.schemas import CharityInputSchema
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
-from common.tests.test_data.charity.charity_requests import response_create_organisation_endpoint, CHARITY_INIT
+from common.tests.test_data.charity.charity_requests import CHARITY_INIT
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,

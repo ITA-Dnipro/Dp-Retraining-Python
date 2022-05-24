@@ -90,20 +90,6 @@ class TestCaseCharity(TestMixin):
                                                                    charity: CharityOrganisation
                                                                    ):
         """
-        Test POST '/charities' endpoint with NOT authenticated user.
-        """
-        url = app.url_path_for('edit_charity', org_id=charity.id)
-        response = await client.put(url, json=EDIT_CHARITY)
-        assert response.status_code == HTTP_401_UNAUTHORIZED
-        assert response.json() == UNAUTHORIZED
-
-    @pytest.mark.asyncio
-    async def test_edit_charity_not_authenticated_should_be_denied(self,
-                                                                   app: FastAPI,
-                                                                   client: AsyncClient,
-                                                                   charity: CharityOrganisation
-                                                                   ):
-        """
         Test PUT '/charities/{org_id}' endpoint with NOT authenticated user.
         """
 

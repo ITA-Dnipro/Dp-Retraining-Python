@@ -19,5 +19,3 @@ def response_create_organisation_endpoint(user_id) -> dict:
         "phone_number": "+380707813196",
         "organisation_email": "org@mail.org"
     }
-
-
