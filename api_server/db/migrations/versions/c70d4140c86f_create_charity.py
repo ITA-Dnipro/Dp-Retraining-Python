@@ -1,17 +1,17 @@
-"""user_model_unique_fields_email_username
+"""create_charity
 
-Revision ID: 1b26d8666aee
-Revises: c024e48ebc32
-Create Date: 2022-05-19 07:54:05.932811
+Revision ID: c70d4140c86f
+Revises: fdcbb010ccba
+Create Date: 2022-05-24 15:12:38.839613
 
 """
 from alembic import op
-from sqlalchemy.dialects import postgresql
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '1b26d8666aee'
-down_revision = 'c024e48ebc32'
+revision = 'c70d4140c86f'
+down_revision = 'fdcbb010ccba'
 branch_labels = None
 depends_on = None
 
@@ -25,7 +25,8 @@ def upgrade():
     sa.Column('organisation_email', sa.String(length=120), nullable=True),
     sa.Column('phone_number', sa.String(length=15), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('title')
     )
     op.create_index(op.f('ix_CharityOrganisations_id'), 'CharityOrganisations', ['id'], unique=False)
     op.create_table('charity_user_association',
