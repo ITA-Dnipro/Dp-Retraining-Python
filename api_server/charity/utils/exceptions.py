@@ -11,7 +11,7 @@ class OrganisationHTTPException(HTTPException):
 
 
 def organisation_exception_handler(request: Request, exc: OrganisationHTTPException):
-    """Handler for UserNotFoundError exception that makes http response.
+    """Handler for OrganisationHTTPException exception that makes http response.
 
     Args:
         request: FastAPI Request object.

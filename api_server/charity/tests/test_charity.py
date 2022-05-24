@@ -105,6 +105,14 @@ class TestCaseCharity(TestMixin):
                                                            ):
         """
         Test PUT '/charities/{org_id}' endpoint with authenticated user.
+        Args:
+                   app: pytest fixture, an instance of FastAPI.
+                   client: pytest fixture, an instance of AsyncClient for http requests.
+                   authenticated_user_charity: pytest fixture, add CharityOrganisation to database
+                   and authenticate current user.
+
+        Returns:
+
         """
 
         url = app.url_path_for('edit_charity', org_id=authenticated_user_charity.id)
@@ -119,6 +127,14 @@ class TestCaseCharity(TestMixin):
                                                   authenticated_user_charity: CharityOrganisation):
         """
         Test PUT '/charities/{org_id}' endpoint with authenticated user and empty request.
+        Args:
+                   app: pytest fixture, an instance of FastAPI.
+                   client: pytest fixture, an instance of AsyncClient for http requests.
+                   authenticated_user_charity: pytest fixture, add CharityOrganisation to database
+                   and authenticate current user.
+
+        Returns:
+
         """
 
         url = app.url_path_for('edit_charity', org_id=authenticated_user_charity.id)
@@ -135,6 +151,14 @@ class TestCaseCharity(TestMixin):
                                                                    ):
         """
         Test PUT '/charities/{org_id}' endpoint with random authenticated user that is not related to this charity.
+        Args:
+                   app: pytest fixture, an instance of FastAPI.
+                   client: pytest fixture, an instance of AsyncClient for http requests.
+                   charity: pytest fixture, add CharityOrganisation to database with non-authenticated user
+                   authenticated_random_test_user: pytest fixture, create and authenticate random user which
+                   not related to current charity organisation.
+        Returns:
+
         """
 
         url = app.url_path_for('edit_charity', org_id=charity.id)
@@ -151,6 +175,14 @@ class TestCaseCharity(TestMixin):
                                                                      ):
         """
         Test DELETE '/charities/{org_id}' endpoint with random authenticated user that is not related to this charity.
+        Args:
+                   app: pytest fixture, an instance of FastAPI.
+                   client: pytest fixture, an instance of AsyncClient for http requests.
+                   charity: pytest fixture, add CharityOrganisation to database with non-authenticated user
+                   authenticated_random_test_user: pytest fixture, create and authenticate random user which
+                   not related to current charity organisation.
+        Returns:
+
         """
 
         url = app.url_path_for('delete_charity', org_id=charity.id)
@@ -166,6 +198,13 @@ class TestCaseCharity(TestMixin):
                                                              ):
         """
         Test DELETE '/charities/{org_id}' endpoint with authenticated user.
+        Args:
+                   app: pytest fixture, an instance of FastAPI.
+                   client: pytest fixture, an instance of AsyncClient for http requests.
+                   authenticated_user_charity: pytest fixture, add CharityOrganisation to database
+                   and authenticate current user.
+        Returns:
+
         """
 
         url = app.url_path_for('delete_charity', org_id=authenticated_user_charity.id)
