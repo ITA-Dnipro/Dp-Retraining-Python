@@ -32,7 +32,14 @@ const Header = ({isAuthenticated, setIsAuthenticated}) => {
       </Button>
     </>;
   } else {
-    profileButton = <Button as={Link} to="/auth" variant="outline-light" >Sing In</Button>;
+    profileButton =  <>
+      <Button as={Link} to="/login" variant="outline-light" className="me-2" >
+        Login
+      </Button>
+      <Button as={Link} to="/signup" variant="outline-light" >
+        Signup
+      </Button>
+    </>;
   }
 
   return (
