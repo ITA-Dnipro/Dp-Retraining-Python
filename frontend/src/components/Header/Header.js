@@ -1,7 +1,6 @@
 import React from 'react';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import {Link, NavLink} from 'react-router-dom';
-import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import axiosInstance from "../../axiosApi";
 
 const Header = ({isAuthenticated, setIsAuthenticated}) => {
@@ -33,7 +32,14 @@ const Header = ({isAuthenticated, setIsAuthenticated}) => {
       </Button>
     </>;
   } else {
-    profileButton = <Button as={Link} to="/auth" variant="outline-light" >Sing In</Button>;
+    profileButton =  <>
+      <Button as={Link} to="/login" variant="outline-light" className="me-2" >
+        Login
+      </Button>
+      <Button as={Link} to="/signup" variant="outline-light" >
+        Signup
+      </Button>
+    </>;
   }
 
   return (

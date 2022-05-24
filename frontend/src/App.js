@@ -2,7 +2,8 @@ import React, {useState, useEffect} from 'react';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import './App.css';
 import Header from './components/Header/Header';
-import Auth from './components/Auth'
+import Login from './components/Auth/Login';
+import Signup from './components/Auth/Signup';
 import Posts from './components/Posts';
 import Charities from './components/Charities';
 import Home from './components/Home';
@@ -34,10 +35,10 @@ const App = () => {
           <Route path="/home" element={<Home />} />
           <Route path="/posts" element={<Posts />} />
           <Route path="/charities" element={<Charities />} />
-          <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/charity" element={<Charity />} />
-          <Route path="/auth" element={<Auth setIsAuthenticated={setIsAuthenticated} />} />
+          <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/edit-profile" element={<EditProfile />} />
         </Routes>
       </BrowserRouter>

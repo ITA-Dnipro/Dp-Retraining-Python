@@ -32,7 +32,7 @@ class UserBaseSchema(BaseModel):
         regex=UserSchemaConstants.EMAIL_REGEX.value,
     )
     phone_number: str = Field(
-        description='Password of a user.',
+        description='Phone number of a user.',
         min_length=UserSchemaConstants.CHAR_SIZE_3.value,
         max_length=UserSchemaConstants.CHAR_SIZE_64.value,
     )
