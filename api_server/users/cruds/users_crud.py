@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+from datetime import datetime
+>>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 from uuid import UUID
 import abc
 
@@ -84,6 +88,20 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         """
         return await self._get_user_by_username(username)
 
+<<<<<<< HEAD
+=======
+    async def get_user_by_email(self, email: str) -> User:
+        """Get User object from database filtered by email.
+
+        Args:
+            email: string of User's email.
+
+        Returns:
+        Single User object filtered by email.
+        """
+        return await self._get_user_by_email(email)
+
+>>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
     @abc.abstractclassmethod
     async def _get_users(self) -> None:
         pass
@@ -108,6 +126,13 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
     async def _get_user_by_username(self, username: str) -> None:
         pass
 
+<<<<<<< HEAD
+=======
+    @abc.abstractclassmethod
+    async def _get_user_by_email(self, email: str) -> None:
+        pass
+
+>>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 
 class UserCRUD(AbstractUserCRUD):
 
@@ -167,3 +192,29 @@ class UserCRUD(AbstractUserCRUD):
     async def _get_user_by_username(self, username: str) -> None:
         user = await self._select_user(column='username', value=username)
         return user
+<<<<<<< HEAD
+=======
+
+    async def _get_user_by_email(self, email: str) -> None:
+        return await self._select_user(column='email', value=email)
+
+    async def _activate_user_by_id(self, id_: UUID) -> None:
+        """Activates User by setting 'activated_at' field with current time.
+
+        Args:
+            id_: UUID of User object.
+
+        Returns:
+        Nothing.
+        """
+        await self.session.execute(
+            update(
+                User
+            ).where(
+                User.id == id_
+            ).values(
+                activated_at=datetime.utcnow()
+            )
+        )
+        await self.session.commit()
+>>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236

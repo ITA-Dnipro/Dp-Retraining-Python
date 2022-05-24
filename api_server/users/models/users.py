@@ -1,10 +1,10 @@
-from users.models.users import User, UserPicture
+import uuid
 
-<<<<<<< HEAD
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, func
+from sqlalchemy import Column, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
+from auth.models import EmailConfirmationToken  # noqa
 from common.constants.users import UserModelConstants, UserPictureModelConstants
 from db import Base
 
@@ -21,10 +21,13 @@ class User(Base):
     email = Column(String(UserModelConstants.CHAR_SIZE_256.value), nullable=False, unique=True)
     password = Column(String(UserModelConstants.CHAR_SIZE_256.value), nullable=True)
     phone_number = Column(String(UserModelConstants.CHAR_SIZE_64.value), nullable=False, unique=True)
-    is_active = Column(Boolean, nullable=True, default=UserModelConstants.FALSE.value)
+    activated_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     profile_picture = relationship(
         'UserPicture', back_populates='user', uselist=False, lazy='selectin', cascade='all, delete',
+    )
+    email_confirmation_token = relationship(
+        'EmailConfirmationToken', back_populates='user', lazy='selectin', cascade='all, delete',
     )
 
     __mapper_args__ = {'eager_defaults': True}
@@ -50,9 +53,3 @@ class UserPicture(Base):
 
     def __repr__(self):
         return f'UserPicture: id={self.id}, url={self.url}, created_at={self.created_at}'
-=======
-__all__ = [
-    'User',
-    'UserPicture',
-]
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236

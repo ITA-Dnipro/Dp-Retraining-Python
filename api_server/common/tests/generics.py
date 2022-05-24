@@ -20,7 +20,13 @@ import pytest_asyncio
 
 from app import create_app
 from app.celery_base import create_celery_app
+<<<<<<< HEAD
+=======
+from auth.cruds import EmailConfirmationTokenCRUD
+from auth.models import EmailConfirmationToken
+>>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 from auth.services import AuthService
+from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants
 from common.constants.celery import CeleryConstants
@@ -464,3 +470,57 @@ class TestMixin:
         mocker.patch('users.utils.aws_s3.S3Client.delete_file_objects', side_effect=async_mock)
         async_mock.return_value = user_pictures_mock_data.S3Client_delete_images_in_s3_valid_response
         return async_mock
+<<<<<<< HEAD
+=======
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def email_confirmation_token_crud(self, db_session: AsyncSession) -> EmailConfirmationTokenCRUD:
+        """A pytest fixture that creates instance of email_confirmation_token_crud business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of EmailConfirmationTokenCRUD business logic class.
+        """
+        return EmailConfirmationTokenCRUD(session=db_session)
+
+    @pytest_asyncio.fixture
+    async def test_email_confirmation_token(
+            self, email_confirmation_token_crud: EmailConfirmationTokenCRUD, user_crud: UserCRUD,
+    ) -> EmailConfirmationToken:
+        """A pytest fixture that creates test EmailConfirmationToken object and storing it in the test databases.
+
+        Args:
+            email_confirmation_token_crud: instance of database crud logic class.
+            user_crud: instance of database crud logic class.
+
+        Returns:
+        An instance of EmailConfirmationToken object.
+        """
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        token = create_email_cofirmation_token(user)
+        return await email_confirmation_token_crud.add_email_confirmation_token(id_=user.id, token=token)
+
+    @pytest_asyncio.fixture
+    async def test_activated_email_confirmation_token(
+            self,
+            test_email_confirmation_token: EmailConfirmationToken,
+            email_confirmation_token_crud: EmailConfirmationTokenCRUD,
+            db_session: AsyncSession,
+    ) -> EmailConfirmationToken:
+        """A pytest fixture that creates activated test User object and storing it in the test databases.
+
+        Args:
+            test_email_confirmation_token: pytest fixture that creates test EmailConfirmationToken object.
+            email_confirmation_token_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        A User object with filled 'activated_at' field.
+        """
+        await email_confirmation_token_crud._activate_user_by_id(test_email_confirmation_token.user.id)
+        await email_confirmation_token_crud._expire_email_confirmation_token_by_id(test_email_confirmation_token.id)
+        await db_session.refresh(test_email_confirmation_token)
+        return test_email_confirmation_token
+>>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
