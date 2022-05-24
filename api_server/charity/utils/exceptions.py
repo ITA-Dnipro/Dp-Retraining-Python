@@ -15,7 +15,7 @@ def organisation_exception_handler(request: Request, exc: OrganisationHTTPExcept
 
     Args:
         request: FastAPI Request object.
-        exc: raised UserNotFoundError.
+        exc: raised OrganisationHTTPException.
 
     Returns:
         http response for raised OrganisationHTTPException.
