@@ -29,7 +29,7 @@ class CharityOrganisation(Base):
     __tablename__ = "CharityOrganisations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    title = Column(String)
+    title = Column(String, unique=True)
     description = Column(String(250))
     organisation_email = Column(String(120))
     phone_number = Column(String(15))
