@@ -22,5 +22,3 @@ coverage:
 	@docker compose run --rm api_server pytest --cov
 coverage_html_report:
 	@docker compose run --rm api_server coverage html
-run_isort:
-	@docker compose run --rm api_server isort . --settings ./.isort.cfg
