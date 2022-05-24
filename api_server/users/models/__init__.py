@@ -25,7 +25,7 @@ class User(Base):
     profile_picture = relationship(
         'UserPicture', back_populates='user', uselist=False, lazy='selectin', cascade='all, delete',
     )
-    charities = relationship('CharityUserAssociation', back_populates='user')
+    charities = relationship('CharityUserAssociation', back_populates='user', lazy="selectin")
 
     __mapper_args__ = {'eager_defaults': True}
 

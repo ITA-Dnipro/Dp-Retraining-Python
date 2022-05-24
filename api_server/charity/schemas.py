@@ -19,7 +19,7 @@ class AllOptional(ModelMetaclass):
         return super().__new__(self, name, bases, namespaces, **kwargs)
 
 
-class CharityOutputSchema(BaseModel):
+class CharityDefaultSchema(BaseModel):
     title: str = Field()
     description: str = Field()
     phone_number: str = Field(regex=CharitySchemaConstants.PHONE_REGEX.value)
@@ -29,9 +29,13 @@ class CharityOutputSchema(BaseModel):
         orm_mode = True
 
 
-class CharityInputSchema(CharityOutputSchema):
+class CharityOutputSchema(CharityDefaultSchema):
+    id: UUID = Field(description="id of current organisation")
+
+
+class CharityInputSchema(CharityDefaultSchema):
     user_id: UUID = Field()
 
 
-class CharityUpdateSchema(CharityOutputSchema, metaclass=AllOptional):
+class CharityUpdateSchema(CharityDefaultSchema, metaclass=AllOptional):
     pass

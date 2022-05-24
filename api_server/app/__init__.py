@@ -12,6 +12,7 @@ from auth.utils.exceptions import (
     invalid_auth_credentials_handler,
 )
 from charity.routers import charities_router
+from charity.utils.exceptions import organisation_exception_handler, OrganisationHTTPException
 from common.constants.api import ApiConstants
 from users.routers import users_router
 from users.utils.exceptions import (
@@ -86,4 +87,5 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(UserPictureExtensionError, user_picture_extension_error_handler)
     app.add_exception_handler(UserPictureResolutionError, user_picture_resolution_error_handler)
     app.add_exception_handler(UserPictureNotFoundError, user_picture_not_found_error_handler)
+    app.add_exception_handler(OrganisationHTTPException, organisation_exception_handler)
     return app

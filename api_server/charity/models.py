@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from db import Base
 
@@ -18,8 +18,8 @@ class CharityUserAssociation(Base):
 
     charity_id = Column(UUID(as_uuid=True), ForeignKey('CharityOrganisations.id'), nullable=False)
     users_id = Column(UUID(as_uuid=True), ForeignKey('Users.id'), nullable=False)
-    charity = relationship('CharityOrganisation', back_populates='users_association')
-    user = relationship('User', back_populates='charities')
+    charity = relationship('CharityOrganisation', back_populates='users_association', lazy="selectin")
+    user = relationship('User', back_populates='charities', lazy="selectin")
 
     def __repr__(self):
         return "Auxiliary table that connects CharityOrganisation and Users"
@@ -35,7 +35,7 @@ class CharityOrganisation(Base):
     phone_number = Column(String(15))
     created_at = Column(DateTime, default=datetime.now())
 
-    users_association = relationship('CharityUserAssociation', back_populates='charity')
+    users_association = relationship('CharityUserAssociation', back_populates='charity', lazy="selectin")
     users = association_proxy('users_association', 'user')
 
     def __repr__(self):

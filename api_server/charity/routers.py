@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from starlette.status import HTTP_200_OK, HTTP_201_CREATED
+from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
 from charity.schemas import CharityInputSchema, CharityOutputSchema, CharityUpdateSchema
 from charity.services import CharityService
@@ -11,7 +11,7 @@ from common.schemas.responses import ResponseBaseSchema
 charities_router = APIRouter(prefix='/charities', tags=['Charities'])
 
 
-@charities_router.post("/")
+@charities_router.post("/", response_model=ResponseBaseSchema, status_code=HTTP_201_CREATED)
 async def create_charity(organisation_data: CharityInputSchema, charity_service: CharityService = Depends()):
     """Creates new organisation.
 
@@ -39,4 +39,12 @@ async def edit_charity(org_id: UUID,
                                   CharityOutputSchema.from_orm(
                                       await charity_service.edit_organisation(org_id, organisation_data)
                                   )],
+                              errors=[])
+
+
+@charities_router.delete("/{org_id}")
+async def delete_charity(org_id: UUID, charity_service: CharityService = Depends()):
+    await charity_service.delete_organisation(org_id)
+    return ResponseBaseSchema(status_code=HTTP_200_OK,
+                              data={"detail": "Organisation has been deleted successfully."},
                               errors=[])

@@ -21,10 +21,13 @@ import pytest_asyncio
 from app import create_app
 from app.celery_base import create_celery_app
 from auth.services import AuthService
+from charity.models import CharityOrganisation, CharityUserAssociation
+from charity.schemas import CharityInputSchema
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
+from common.tests.test_data.charity.charity_requests import response_create_organisation_endpoint, CHARITY_INIT
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
@@ -464,3 +467,61 @@ class TestMixin:
         mocker.patch('users.utils.aws_s3.S3Client.delete_file_objects', side_effect=async_mock)
         async_mock.return_value = user_pictures_mock_data.S3Client_delete_images_in_s3_valid_response
         return async_mock
+
+    @staticmethod
+    async def _initialize_charity(user: User, db_session: AsyncSession) -> CharityOrganisation:
+        """
+        Initializes charityOrganisation in database.
+        Args:
+                user: instance of User business logic class.
+                db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+            newly created CharityOrganisation object.
+        """
+        organisation = CharityOrganisation(**CHARITY_INIT)
+        association = CharityUserAssociation()
+        association.user = user
+        organisation.users_association.append(association)
+
+        db_session.add(organisation)
+        await db_session.commit()
+        await db_session.refresh(organisation)
+        return organisation
+
+    @pytest_asyncio.fixture
+    async def charity(self, user_crud: UserCRUD, db_session: AsyncSession) -> CharityOrganisation:
+        """
+            Create authenticated test charity data and store it in test database.
+
+            Returns:
+            CharityOrganisation object and not authenticated User object.
+            """
+
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        organisation = await self._initialize_charity(user=user, db_session=db_session)
+        return organisation
+
+    @pytest_asyncio.fixture
+    async def authenticated_user_charity(self,
+                                         user_crud: UserCRUD,
+                                         db_session: AsyncSession,
+                                         auth_service: AuthService,
+                                         client: fixture, ) -> CharityOrganisation:
+        """
+        Create authenticated test charity data and store it in test database.
+
+            Returns:
+        CharityOrganisation object.
+        """
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        organisation = await self._initialize_charity(user=user, db_session=db_session)
+        await self._create_authenticated_user(user, auth_service, client)
+
+        return organisation
+
+    @pytest_asyncio.fixture
+    async def authenticated_random_test_user(self, random_test_user: User,
+                                             auth_service: AuthService,
+                                             client: fixture):
+        return await self._create_authenticated_user(random_test_user, auth_service, client)
