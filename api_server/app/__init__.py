@@ -8,8 +8,18 @@ from app.config import get_app_config
 from auth.routers import auth_router
 from auth.utils.exceptions import (
     AuthUserInvalidPasswordException,
+    EmailConfirmationExpiredJWTTokenError,
+    EmailConfirmationJWTTokenError,
+    EmailConfirmationTokenExpiredError,
+    EmailConfirmationTokenNotFoundError,
+    UserAlreadyActivatedException,
     authjwt_exception_handler,
+    email_confirmation_expired_jwt_token_handler,
+    email_confirmation_invalid_jwt_token_handler,
+    email_confirmation_token_expired_handler,
+    email_confirmation_token_not_found_error_handler,
     invalid_auth_credentials_handler,
+    user_already_activated_handler,
 )
 from charity.routers import charities_router
 from charity.utils.exceptions import OrganisationHTTPException, organisation_exception_handler
@@ -65,7 +75,6 @@ def app_route_includer(app: FastAPI) -> FastAPI:
     """
     app.include_router(users_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(auth_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
-    app.include_router(charities_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     return app
 
 
@@ -88,4 +97,9 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(UserPictureResolutionError, user_picture_resolution_error_handler)
     app.add_exception_handler(UserPictureNotFoundError, user_picture_not_found_error_handler)
     app.add_exception_handler(OrganisationHTTPException, organisation_exception_handler)
+    app.add_exception_handler(UserAlreadyActivatedException, user_already_activated_handler)
+    app.add_exception_handler(EmailConfirmationTokenNotFoundError, email_confirmation_token_not_found_error_handler)
+    app.add_exception_handler(EmailConfirmationTokenExpiredError, email_confirmation_token_expired_handler)
+    app.add_exception_handler(EmailConfirmationJWTTokenError, email_confirmation_invalid_jwt_token_handler)
+    app.add_exception_handler(EmailConfirmationExpiredJWTTokenError, email_confirmation_expired_jwt_token_handler)
     return app

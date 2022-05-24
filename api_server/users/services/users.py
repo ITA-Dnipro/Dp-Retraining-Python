@@ -6,6 +6,9 @@ from fastapi import Depends
 from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from auth.cruds import EmailConfirmationTokenCRUD
+from auth.tasks import send_email_comfirmation_letter
+from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
 from db import get_session
 from users.cruds import UserCRUD
 from users.models import User
@@ -25,6 +28,7 @@ class AbstractUserService(metaclass=abc.ABCMeta):
         self.session = session
         self.Authorize = Authorize
         self.user_crud = UserCRUD(session=self.session)
+        self.email_confirmation_token_crud = EmailConfirmationTokenCRUD(session=self.session)
 
     async def get_users(self) -> list[User]:
         """Get User objects from database.
@@ -124,7 +128,21 @@ class UserService(AbstractUserService):
         return await self.user_crud._get_user_by_id(id_)
 
     async def _add_user(self, user: UserInputSchema) -> User:
-        return await self.user_crud._add_user(user)
+        user = await self.user_crud._add_user(user)
+        # Creating EmailConfirmationToken.
+        jwt_token = create_email_cofirmation_token(user)
+        db_email_confirmation_token = await self.email_confirmation_token_crud.add_email_confirmation_token(
+            id_=user.id,
+            token=jwt_token,
+        )
+        # Start of the sending confirmation email task.
+        send_email_comfirmation_letter.apply_async(
+            kwargs={
+                'email_confirmation_token': db_email_confirmation_token,
+            },
+            serializers='pickle',
+        )
+        return user
 
     async def _update_user(self, id_: str, user: UserUpdateSchema) -> None:
         self.Authorize.jwt_required()
