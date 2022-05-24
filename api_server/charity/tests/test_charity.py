@@ -1,34 +1,33 @@
-import pytest
-
-from charity.models import CharityOrganisation
-from common.tests.test_data.charity.charity_requests import (
-    response_create_organisation_endpoint,
-    EDIT_CHARITY,
-    EMPTY_REQUEST
-)
-from common.tests.test_data.charity.charity_responses import (
-    get_successful_organisation_creating,
-    UNAUTHORIZED,
-    get_successfully_edited_charity_data,
-    NOT_VALID_REQUEST,
-    NOT_PERMITTED,
-    SUCCESSFUL_CHARITY_DELETION
-)
 from fastapi import FastAPI
+
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import (
     HTTP_200_OK,
-    HTTP_401_UNAUTHORIZED,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
-    HTTP_403_FORBIDDEN
+    HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
 )
+import pytest
 
-from users.models import User
-
+from charity.models import CharityOrganisation
 from common.tests.generics import TestMixin
+from common.tests.test_data.charity.charity_requests import (
+    EDIT_CHARITY,
+    EMPTY_REQUEST,
+    response_create_organisation_endpoint,
+)
+from common.tests.test_data.charity.charity_responses import (
+    NOT_PERMITTED,
+    NOT_VALID_REQUEST,
+    SUCCESSFUL_CHARITY_DELETION,
+    UNAUTHORIZED,
+    get_successful_organisation_creating,
+    get_successfully_edited_charity_data,
+)
+from users.models import User
 
 
 class TestCaseCharity(TestMixin):

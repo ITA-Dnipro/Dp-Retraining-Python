@@ -7,7 +7,7 @@ from fastapi_jwt_auth import AuthJWT
 from sqlalchemy import select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN
+from starlette.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 
 from charity.models import CharityOrganisation, CharityUserAssociation
 from charity.schemas import CharityInputSchema, CharityUpdateSchema

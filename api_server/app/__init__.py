@@ -12,7 +12,7 @@ from auth.utils.exceptions import (
     invalid_auth_credentials_handler,
 )
 from charity.routers import charities_router
-from charity.utils.exceptions import organisation_exception_handler, OrganisationHTTPException
+from charity.utils.exceptions import OrganisationHTTPException, organisation_exception_handler
 from common.constants.api import ApiConstants
 from users.routers import users_router
 from users.utils.exceptions import (

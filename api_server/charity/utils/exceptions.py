@@ -1,7 +1,8 @@
+from fastapi import HTTPException, Request
+
 from starlette.responses import JSONResponse
 
 from common.schemas.responses import ResponseBaseSchema
-from fastapi import HTTPException, Request
 
 
 class OrganisationHTTPException(HTTPException):
