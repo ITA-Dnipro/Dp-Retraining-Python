@@ -36,10 +36,10 @@ def get_charities_list(org_ids: [list, tuple], title_list: [list, tuple]) -> dic
     data = []
     for id_, title in zip(org_ids, title_list):
         data.append({'description': 'Some good organisation',
-                      'id': str(id_),
-                      'organisation_email': 'org@mail.org',
-                      'phone_number': '+380707813196',
-                      'title': title})
+                     'id': str(id_),
+                     'organisation_email': 'org@mail.org',
+                     'phone_number': '+380707813196',
+                     'title': title})
     return {'data': data,
             'errors': [],
             'status_code': 200}
