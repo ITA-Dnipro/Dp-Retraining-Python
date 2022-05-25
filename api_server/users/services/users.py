@@ -6,12 +6,9 @@ from fastapi import Depends
 from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.ext.asyncio import AsyncSession
 
-<<<<<<< HEAD
-=======
 from auth.cruds import EmailConfirmationTokenCRUD
 from auth.tasks import send_email_comfirmation_letter
 from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 from db import get_session
 from users.cruds import UserCRUD
 from users.models import User
@@ -31,10 +28,7 @@ class AbstractUserService(metaclass=abc.ABCMeta):
         self.session = session
         self.Authorize = Authorize
         self.user_crud = UserCRUD(session=self.session)
-<<<<<<< HEAD
-=======
         self.email_confirmation_token_crud = EmailConfirmationTokenCRUD(session=self.session)
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 
     async def get_users(self) -> list[User]:
         """Get User objects from database.
@@ -134,9 +128,6 @@ class UserService(AbstractUserService):
         return await self.user_crud._get_user_by_id(id_)
 
     async def _add_user(self, user: UserInputSchema) -> User:
-<<<<<<< HEAD
-        return await self.user_crud._add_user(user)
-=======
         user = await self.user_crud._add_user(user)
         # Creating EmailConfirmationToken.
         jwt_token = create_email_cofirmation_token(user)
@@ -152,7 +143,6 @@ class UserService(AbstractUserService):
             serializers='pickle',
         )
         return user
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 
     async def _update_user(self, id_: str, user: UserUpdateSchema) -> None:
         self.Authorize.jwt_required()

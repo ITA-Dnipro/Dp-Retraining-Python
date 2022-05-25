@@ -20,11 +20,8 @@ import pytest_asyncio
 
 from app import create_app
 from app.celery_base import create_celery_app
-<<<<<<< HEAD
-=======
 from auth.cruds import EmailConfirmationTokenCRUD
 from auth.models import EmailConfirmationToken
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 from auth.services import AuthService
 from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
 from common.constants.api import ApiConstants
@@ -470,8 +467,6 @@ class TestMixin:
         mocker.patch('users.utils.aws_s3.S3Client.delete_file_objects', side_effect=async_mock)
         async_mock.return_value = user_pictures_mock_data.S3Client_delete_images_in_s3_valid_response
         return async_mock
-<<<<<<< HEAD
-=======
 
     @pytest_asyncio.fixture(autouse=True)
     async def email_confirmation_token_crud(self, db_session: AsyncSession) -> EmailConfirmationTokenCRUD:
@@ -523,4 +518,3 @@ class TestMixin:
         await email_confirmation_token_crud._expire_email_confirmation_token_by_id(test_email_confirmation_token.id)
         await db_session.refresh(test_email_confirmation_token)
         return test_email_confirmation_token
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236

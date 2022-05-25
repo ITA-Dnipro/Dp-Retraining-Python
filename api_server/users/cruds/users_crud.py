@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 from datetime import datetime
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 from uuid import UUID
 import abc
 
@@ -88,8 +85,6 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         """
         return await self._get_user_by_username(username)
 
-<<<<<<< HEAD
-=======
     async def get_user_by_email(self, email: str) -> User:
         """Get User object from database filtered by email.
 
@@ -101,7 +96,6 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         """
         return await self._get_user_by_email(email)
 
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
     @abc.abstractclassmethod
     async def _get_users(self) -> None:
         pass
@@ -126,13 +120,10 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
     async def _get_user_by_username(self, username: str) -> None:
         pass
 
-<<<<<<< HEAD
-=======
     @abc.abstractclassmethod
     async def _get_user_by_email(self, email: str) -> None:
         pass
 
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
 
 class UserCRUD(AbstractUserCRUD):
 
@@ -192,8 +183,6 @@ class UserCRUD(AbstractUserCRUD):
     async def _get_user_by_username(self, username: str) -> None:
         user = await self._select_user(column='username', value=username)
         return user
-<<<<<<< HEAD
-=======
 
     async def _get_user_by_email(self, email: str) -> None:
         return await self._select_user(column='email', value=email)
@@ -217,4 +206,3 @@ class UserCRUD(AbstractUserCRUD):
             )
         )
         await self.session.commit()
->>>>>>> 319d4a43fdfb69c4ec694514bdb1862a1c89f236
