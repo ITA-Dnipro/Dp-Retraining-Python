@@ -29,7 +29,7 @@ from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
-from common.tests.test_data.charity.charity_requests import CHARITY_INIT
+from common.tests.test_data.charity.charity_requests import initialize_charity_data
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
@@ -471,7 +471,7 @@ class TestMixin:
         return async_mock
 
     @staticmethod
-    async def _initialize_charity(user: User, db_session: AsyncSession) -> CharityOrganisation:
+    async def _initialize_charity(user: User, db_session: AsyncSession, charity_title: str) -> CharityOrganisation:
         """
         Initializes charityOrganisation in database.
         Args:
@@ -481,7 +481,7 @@ class TestMixin:
         Returns:
             newly created CharityOrganisation object.
         """
-        organisation = CharityOrganisation(**CHARITY_INIT)
+        organisation = CharityOrganisation(**initialize_charity_data(charity_title))
         association = CharityUserAssociation()
         association.user = user
         organisation.users_association.append(association)
@@ -501,7 +501,11 @@ class TestMixin:
             """
 
         user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        organisation = await self._initialize_charity(user=user, db_session=db_session)
+        organisation = await self._initialize_charity(
+            user=user,
+            db_session=db_session,
+            charity_title="Charity Organisation"
+        )
         return organisation
 
     @pytest_asyncio.fixture
@@ -517,7 +521,8 @@ class TestMixin:
         CharityOrganisation object.
         """
         user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        organisation = await self._initialize_charity(user=user, db_session=db_session)
+        organisation = await self._initialize_charity(user=user, db_session=db_session,
+                                                      charity_title="Charity Organisation")
         await self._create_authenticated_user(user, auth_service, client)
 
         return organisation
@@ -527,6 +532,14 @@ class TestMixin:
                                              auth_service: AuthService,
                                              client: fixture):
         return await self._create_authenticated_user(random_test_user, auth_service, client)
+
+    @pytest_asyncio.fixture
+    async def many_charities(self, user_crud: UserCRUD, db_session: AsyncSession):
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        charity_titles = ("organisation D", "organisation B", "organisation A", "organisation Y")
+        organisations = [await self._initialize_charity(user=user, db_session=db_session, charity_title=title)
+                         for title in charity_titles]
+        return organisations
 
     @pytest_asyncio.fixture(autouse=True)
     async def email_confirmation_token_crud(self, db_session: AsyncSession) -> EmailConfirmationTokenCRUD:

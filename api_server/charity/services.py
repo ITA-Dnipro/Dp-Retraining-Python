@@ -1,4 +1,5 @@
 from abc import ABCMeta
+from typing import List
 from uuid import UUID
 
 from fastapi import Depends
@@ -30,7 +31,29 @@ class AbstractCharityService(metaclass=ABCMeta):
         self.session = session
         self.Authorize = authorize
 
-    async def add_organisation(self, org: CharityInputSchema):
+    async def get_exact_organisation(self, org_id: UUID) -> CharityOrganisation:
+        """
+        Retrieves definite charity organisation.
+
+        Args:
+            org_id: id of organisation we want to retrieve
+        Returns:
+            CharityOrganisation object.
+        """
+        return await self._get_organisation_by_id(org_id)
+
+    async def get_organisations_list(self) -> List[CharityOrganisation]:
+        """
+        Retrieves all charity organisations
+
+        Args:
+
+        Returns:
+            list of CharityOrganisation objects.
+        """
+        return await self._get_organisations_list()
+
+    async def add_organisation(self, org: CharityInputSchema) -> CharityOrganisation:
         """
         Add CharityOrganisation object to the database.
 
@@ -42,7 +65,7 @@ class AbstractCharityService(metaclass=ABCMeta):
         """
         return await self._add_organisation(org)
 
-    async def edit_organisation(self, org_id, org_schema: CharityUpdateSchema):
+    async def edit_organisation(self, org_id: UUID, org_schema: CharityUpdateSchema) -> CharityOrganisation:
         """
         Edit CharityOrganisation object.
 
@@ -55,7 +78,7 @@ class AbstractCharityService(metaclass=ABCMeta):
         """
         return await self._edit_organisation(org_id, org_schema)
 
-    async def delete_organisation(self, org_id):
+    async def delete_organisation(self, org_id: UUID):
         """
         Delete CharityOrganisation object.
 
@@ -63,20 +86,27 @@ class AbstractCharityService(metaclass=ABCMeta):
             org_id: id of organisation we want to delete.
 
         Returns:
-            Deleted CharityOrganisation object.
         """
         return await self._delete_organisation(org_id)
 
     @classmethod
-    async def _add_organisation(cls, org):
+    async def _get_organisation_by_id(cls, org_id: UUID) -> CharityOrganisation:
         pass
 
     @classmethod
-    async def _edit_organisation(cls, org_id, org):
+    async def _get_organisations_list(cls) -> List[CharityOrganisation]:
         pass
 
     @classmethod
-    async def _delete_organisation(cls, org_id):
+    async def _add_organisation(cls, org: CharityInputSchema) -> CharityOrganisation:
+        pass
+
+    @classmethod
+    async def _edit_organisation(cls, org_id: UUID, org: CharityUpdateSchema) -> CharityOrganisation:
+        pass
+
+    @classmethod
+    async def _delete_organisation(cls, org_id: UUID):
         pass
 
 
@@ -104,7 +134,7 @@ class CharityService(AbstractCharityService):
         await self.session.refresh(organisation)
         return organisation
 
-    async def _get_organisation_by_id(self, org_id: str) -> CharityOrganisation:
+    async def _get_organisation_by_id(self, org_id: UUID) -> CharityOrganisation:
         try:
             organisation = (await self.session.execute(select(CharityOrganisation)
                                                        .where(CharityOrganisation.id == org_id))).scalar_one()
@@ -113,7 +143,7 @@ class CharityService(AbstractCharityService):
                                             detail="This organisation hasn't been found")
         return organisation
 
-    async def _get_charity_or_permission_error(self, org_id: str) -> CharityOrganisation:
+    async def _get_charity_or_permission_error(self, org_id: UUID) -> CharityOrganisation:
         self.Authorize.jwt_required()
         current_user_id = self.Authorize.get_raw_jwt()["user_data"]["id"]
 
@@ -126,7 +156,7 @@ class CharityService(AbstractCharityService):
 
         return organisation
 
-    async def _edit_organisation(self, org_id: str, org_schema: CharityUpdateSchema):
+    async def _edit_organisation(self, org_id: UUID, org_schema: CharityUpdateSchema) -> CharityOrganisation:
 
         await self._get_charity_or_permission_error(org_id)
 
@@ -138,9 +168,13 @@ class CharityService(AbstractCharityService):
 
         return await self._get_organisation_by_id(org_id)
 
-    async def _delete_organisation(self, org_id: str):
+    async def _delete_organisation(self, org_id: UUID):
         organisation = await self._get_charity_or_permission_error(org_id)
         # future refactor: if we implement many managers on org, we should delete association table recursively
         await self.session.delete(organisation.users_association[0])
         await self.session.delete(organisation)
         await self.session.commit()
+
+    async def _get_organisations_list(self) -> List[CharityOrganisation]:
+        return (await self.session.execute(select(CharityOrganisation)
+                                           .order_by(CharityOrganisation.title))).scalars().all()
