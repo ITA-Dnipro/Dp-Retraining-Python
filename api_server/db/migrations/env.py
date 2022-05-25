@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.config import get_app_config
 from auth.models import EmailConfirmationToken
+from charity.models import CharityOrganisation, CharityUserAssociation
 from common.constants.api import ApiConstants
 from db import Base
 from users.models import User, UserPicture
