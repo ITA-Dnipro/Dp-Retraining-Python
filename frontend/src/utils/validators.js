@@ -1,8 +1,3 @@
-const validateByRegex = (string, pattern) => {
-    const re = new RegExp(pattern);
-    return re.test(string);
-}
-
 export const validateName = (name) => {
     let errors = []
     let validated = true;
@@ -15,7 +10,7 @@ export const validateName = (name) => {
 
 export const validateEmail = (email) => {
     let errors = []
-    const re = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+    const re = /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/im;
     let validated = email.match(re) ? true: false;
     if (!validated) {
         errors.push('Wrong email format');
@@ -25,7 +20,7 @@ export const validateEmail = (email) => {
 
 export const validatePhoneNumber = (phoneNumber) => {
     let errors = []
-    const re = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+    const re = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
     let validated = phoneNumber.match(re) ? true: false;
     if (!validated) {
         errors.push('Wrong phone number format');
