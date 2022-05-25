@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import FastAPI
 
 from httpx import AsyncClient
@@ -9,21 +11,26 @@ from starlette.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
 )
 import pytest
 
 from charity.models import CharityOrganisation
 from common.tests.generics import TestMixin
 from common.tests.test_data.charity.charity_requests import (
+    DUMMY_UUID,
     EDIT_CHARITY,
     EMPTY_REQUEST,
     response_create_organisation_endpoint,
 )
 from common.tests.test_data.charity.charity_responses import (
+    NOT_FOUND,
     NOT_PERMITTED,
     NOT_VALID_REQUEST,
     SUCCESSFUL_CHARITY_DELETION,
     UNAUTHORIZED,
+    get_charities_list,
+    get_full_charity_description,
     get_successful_organisation_creating,
     get_successfully_edited_charity_data,
 )
@@ -89,11 +96,11 @@ class TestCaseCharity(TestMixin):
                                                                    charity: CharityOrganisation
                                                                    ):
         """
-        Test PUT '/charities/{org_id}' endpoint with NOT authenticated user.
+        Test PATCH '/charities/{org_id}' endpoint with NOT authenticated user.
         """
 
         url = app.url_path_for('edit_charity', org_id=charity.id)
-        response = await client.put(url, json=EDIT_CHARITY)
+        response = await client.patch(url, json=EDIT_CHARITY)
         assert response.status_code == HTTP_401_UNAUTHORIZED
         assert response.json() == UNAUTHORIZED
 
@@ -104,7 +111,7 @@ class TestCaseCharity(TestMixin):
                                                            authenticated_user_charity: CharityOrganisation
                                                            ):
         """
-        Test PUT '/charities/{org_id}' endpoint with authenticated user.
+        Test PATCH '/charities/{org_id}' endpoint with authenticated user.
         Args:
                    app: pytest fixture, an instance of FastAPI.
                    client: pytest fixture, an instance of AsyncClient for http requests.
@@ -116,7 +123,7 @@ class TestCaseCharity(TestMixin):
         """
 
         url = app.url_path_for('edit_charity', org_id=authenticated_user_charity.id)
-        response = await client.put(url, json=EDIT_CHARITY)
+        response = await client.patch(url, json=EDIT_CHARITY)
         assert response.status_code == HTTP_200_OK
         assert response.json() == get_successfully_edited_charity_data(authenticated_user_charity.id)
 
@@ -126,7 +133,7 @@ class TestCaseCharity(TestMixin):
                                                   client: AsyncClient,
                                                   authenticated_user_charity: CharityOrganisation):
         """
-        Test PUT '/charities/{org_id}' endpoint with authenticated user and empty request.
+        Test PATCH '/charities/{org_id}' endpoint with authenticated user and empty request.
         Args:
                    app: pytest fixture, an instance of FastAPI.
                    client: pytest fixture, an instance of AsyncClient for http requests.
@@ -138,7 +145,7 @@ class TestCaseCharity(TestMixin):
         """
 
         url = app.url_path_for('edit_charity', org_id=authenticated_user_charity.id)
-        response = await client.put(url, json=EMPTY_REQUEST)
+        response = await client.patch(url, json=EMPTY_REQUEST)
         assert response.status_code == HTTP_400_BAD_REQUEST
         assert response.json() == NOT_VALID_REQUEST
 
@@ -150,7 +157,7 @@ class TestCaseCharity(TestMixin):
                                                                    authenticated_random_test_user: User
                                                                    ):
         """
-        Test PUT '/charities/{org_id}' endpoint with random authenticated user that is not related to this charity.
+        Test PATCH '/charities/{org_id}' endpoint with random authenticated user that is not related to this charity.
         Args:
                    app: pytest fixture, an instance of FastAPI.
                    client: pytest fixture, an instance of AsyncClient for http requests.
@@ -162,7 +169,7 @@ class TestCaseCharity(TestMixin):
         """
 
         url = app.url_path_for('edit_charity', org_id=charity.id)
-        response = await client.put(url, json=EDIT_CHARITY)
+        response = await client.patch(url, json=EDIT_CHARITY)
         assert response.status_code == HTTP_403_FORBIDDEN
         assert response.json() == NOT_PERMITTED
 
@@ -211,3 +218,68 @@ class TestCaseCharity(TestMixin):
         response = await client.delete(url)
         assert response.status_code == HTTP_200_OK
         assert response.json() == SUCCESSFUL_CHARITY_DELETION
+
+    @pytest.mark.asyncio
+    async def test_get_definite_should_be_ok(self,
+                                             app: FastAPI,
+                                             client: AsyncClient,
+                                             charity: CharityOrganisation
+                                             ):
+        """
+        Test GET '/charities/{org_id}' endpoint.
+        Args:
+                   app: pytest fixture, an instance of FastAPI.
+                   client: pytest fixture, an instance of AsyncClient for http requests.
+                   charity: pytest fixture, add CharityOrganisation to database with non-authenticated user
+        Returns:
+
+        """
+
+        url = app.url_path_for('show_charity_organisation', org_id=charity.id)
+        response = await client.get(url)
+        assert response.status_code == HTTP_200_OK
+        assert response.json() == get_full_charity_description(charity.id)
+
+    @pytest.mark.asyncio
+    async def test_get_nonexistent_charity_should_not_be_found(self,
+                                                               app: FastAPI,
+                                                               client: AsyncClient,
+                                                               charity: CharityOrganisation
+                                                               ):
+        """
+        Test GET '/charities/{org_id}' endpoint.
+        Args:
+                   app: pytest fixture, an instance of FastAPI.
+                   client: pytest fixture, an instance of AsyncClient for http requests.
+                   charity: pytest fixture, add CharityOrganisation to database with non-authenticated user
+        Returns:
+
+        """
+
+        url = app.url_path_for('show_charity_organisation', org_id=DUMMY_UUID)
+        response = await client.get(url)
+        assert response.status_code == HTTP_404_NOT_FOUND
+        assert response.json() == NOT_FOUND
+
+    @pytest.mark.asyncio
+    async def test_show_existed_charities_should_be_ok(self,
+                                                       app: FastAPI,
+                                                       client: AsyncClient,
+                                                       many_charities: List[CharityOrganisation]
+                                                       ):
+        """
+        Test GET '/charities/' endpoint.
+        Args:
+                   app: pytest fixture, an instance of FastAPI.
+                   client: pytest fixture, an instance of AsyncClient for http requests.
+                   charity: pytest fixture, add CharityOrganisation to database with non-authenticated user
+        Returns:
+
+        """
+
+        url = app.url_path_for('show_charities_list')
+        response = await client.get(url)
+        charity_titles = ("organisation A", "organisation B", "organisation D", "organisation Y")
+
+        assert response.status_code == HTTP_200_OK
+        assert response.json() == get_charities_list(charity_titles)

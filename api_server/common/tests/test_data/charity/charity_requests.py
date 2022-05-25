@@ -3,12 +3,18 @@ EDIT_CHARITY = {
     "phone_number": "+380408904888",
 }
 
-CHARITY_INIT = {"title": "Charity Organisation",
-                "description": "Some good organisation",
-                "phone_number": "+380707813196",
-                "organisation_email": "org@mail.org"
-                }
 EMPTY_REQUEST = {}
+
+
+DUMMY_UUID = "57c2588b-a744-4a82-837f-4f04ffd4932e"
+
+
+def initialize_charity_data(title: str) -> dict:
+    return {"title": title,
+            "description": "Some good organisation",
+            "phone_number": "+380707813196",
+            "organisation_email": "org@mail.org"
+            }
 
 
 def response_create_organisation_endpoint(user_id) -> dict:
