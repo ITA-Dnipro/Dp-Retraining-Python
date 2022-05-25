@@ -12,9 +12,29 @@ RESPONSE_USER_TEST_DATA = {
     'profile_picture': None,
 }
 # GET
-RESPONSE_USERS_EMPTY_DB = {'data': [], 'errors': [], 'status_code': 200}
+RESPONSE_USERS_EMPTY_DB = {
+    'data': {
+        'current_page': 1,
+        'has_next': False,
+        'has_previous': False,
+        'items': [],
+        'next_page': None,
+        'previous_page': None,
+        'total_pages': 0
+    },
+    'errors': [],
+    'status_code': 200
+}
 RESPONSE_GET_USERS = {
-    'data': [RESPONSE_USER_TEST_DATA],
+    'data': {
+        'current_page': 1,
+        'has_next': False,
+        'has_previous': False,
+        'items': [RESPONSE_USER_TEST_DATA],
+        'next_page': None,
+        'previous_page': None,
+        'total_pages': 1
+    },
     'errors': [],
     'status_code': 200,
 }

@@ -67,3 +67,11 @@ class S3ClientConstants(enum.Enum):
     )
     SUCCESSFUL_DELETE_MSG = 'File object successfully deleted {file_path}.'
     GMT_TIMEZONE = 'GMT'
+
+
+class UserRouteConstants(enum.Enum):
+    """User route constants."""
+    ZERO_NUMBER = 0
+    DEFAULT_START_PAGE = 1
+    DEFAULT_PAGE_SIZE = 20
+    MAX_PAGINATION_PAGE_SIZE = 101
