@@ -30,7 +30,6 @@ from common.tests.test_data.charity.charity_responses import (
     SUCCESSFUL_CHARITY_DELETION,
     UNAUTHORIZED,
     get_charities_list,
-    get_full_charity_description,
     get_successful_organisation_creating,
     get_successfully_edited_charity_data,
 )
@@ -238,7 +237,7 @@ class TestCaseCharity(TestMixin):
         url = app.url_path_for('show_charity_organisation', org_id=charity.id)
         response = await client.get(url)
         assert response.status_code == HTTP_200_OK
-        assert response.json() == get_full_charity_description(charity.id)
+        assert response.json() == get_charities_list((charity.id,), (charity.title,))
 
     @pytest.mark.asyncio
     async def test_get_nonexistent_charity_should_not_be_found(self,
@@ -272,7 +271,7 @@ class TestCaseCharity(TestMixin):
         Args:
                    app: pytest fixture, an instance of FastAPI.
                    client: pytest fixture, an instance of AsyncClient for http requests.
-                   charity: pytest fixture, add CharityOrganisation to database with non-authenticated user
+                   many_charities: pytest fixture, add CharityOrganisation to database with non-authenticated user
         Returns:
 
         """
@@ -280,6 +279,11 @@ class TestCaseCharity(TestMixin):
         url = app.url_path_for('show_charities_list')
         response = await client.get(url)
         charity_titles = ("organisation A", "organisation B", "organisation D", "organisation Y")
+        charity_ids = []
+        for title in charity_titles:
+            for charity in many_charities:
+                if title == charity.title:
+                    charity_ids.append(charity.id)
 
         assert response.status_code == HTTP_200_OK
-        assert response.json() == get_charities_list(charity_titles)
+        assert response.json() == get_charities_list(charity_ids, charity_titles)

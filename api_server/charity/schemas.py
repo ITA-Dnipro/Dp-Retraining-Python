@@ -19,14 +19,6 @@ class AllOptional(ModelMetaclass):
         return super().__new__(self, name, bases, namespaces, **kwargs)
 
 
-class CharityShortDescriptionSchema(BaseModel):
-    title: str = Field(description="Name of organisation")
-    description: str = Field(description="Short description of organisation")
-
-    class Config:
-        orm_mode = True
-
-
 class CharityDefaultSchema(BaseModel):
     title: str = Field(description="Name of organisation")
     description: str = Field(description="Short description of organisation")

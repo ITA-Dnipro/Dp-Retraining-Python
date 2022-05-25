@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED
 
-from charity.schemas import CharityInputSchema, CharityOutputSchema, CharityShortDescriptionSchema, CharityUpdateSchema
+from charity.schemas import CharityInputSchema, CharityOutputSchema, CharityUpdateSchema
 from charity.services import CharityService
 from common.schemas.responses import ResponseBaseSchema
 
@@ -43,7 +43,7 @@ async def show_charities_list(charity_service: CharityService = Depends()):
     """
     return ResponseBaseSchema(status_code=HTTP_200_OK,
                               data=[
-                                  CharityShortDescriptionSchema.from_orm(charity)
+                                  CharityOutputSchema.from_orm(charity)
                                   for charity in await charity_service.get_organisations_list()],
                               errors=[])
 
