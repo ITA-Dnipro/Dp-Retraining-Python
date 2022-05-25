@@ -45,11 +45,11 @@ def get_charities_list(org_ids: [list, tuple], title_list: [list, tuple], phones
             'status_code': 200}
 
 
-def get_successfully_edited_charity_data(org_id):
+def get_successfully_edited_charity_data(org_id, email, phone):
     return {'data': [{'description': 'Very good organisation',
                       'id': str(org_id),
-                      'organisation_email': 'org@mail.org',
-                      'phone_number': '+380408904888',
+                      'organisation_email': email,
+                      'phone_number': phone,
                       'title': 'Charity Organisation'}],
             'errors': [],
             'status_code': 200}

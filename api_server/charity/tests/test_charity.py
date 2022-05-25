@@ -124,7 +124,10 @@ class TestCaseCharity(TestMixin):
         url = app.url_path_for('edit_charity', org_id=authenticated_user_charity.id)
         response = await client.patch(url, json=EDIT_CHARITY)
         assert response.status_code == HTTP_200_OK
-        assert response.json() == get_successfully_edited_charity_data(authenticated_user_charity.id)
+        assert response.json() == get_successfully_edited_charity_data(authenticated_user_charity.id,
+                                                                       authenticated_user_charity.organisation_email,
+                                                                       EDIT_CHARITY["phone_number"],
+                                                                       )
 
     @pytest.mark.asyncio
     async def test_pass_empty_request_should_deny(self,
@@ -237,7 +240,12 @@ class TestCaseCharity(TestMixin):
         url = app.url_path_for('show_charity_organisation', org_id=charity.id)
         response = await client.get(url)
         assert response.status_code == HTTP_200_OK
-        assert response.json() == get_charities_list((charity.id,), (charity.title,))
+        assert response.json() == get_charities_list(
+            (charity.id,),
+            (charity.title,),
+            (charity.phone_number,),
+            (charity.organisation_email,)
+        )
 
     @pytest.mark.asyncio
     async def test_get_nonexistent_charity_should_not_be_found(self,
