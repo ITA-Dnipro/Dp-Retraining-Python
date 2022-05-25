@@ -39,7 +39,7 @@ async def show_charities_list(charity_service: CharityService = Depends()):
         charity_service: dependency as business logic instance
 
     Returns:
-        ResponseBaseSchema object with list of CharityOutputSchema object as response data.
+        ResponseBaseSchema object with CharityOutputSchema object as response data.
     """
     return ResponseBaseSchema(status_code=HTTP_200_OK,
                               data=[
