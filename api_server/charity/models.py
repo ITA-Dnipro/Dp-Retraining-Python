@@ -33,7 +33,7 @@ class CharityOrganisation(Base):
     description = Column(String(250), unique=True)
     organisation_email = Column(String(120), unique=True)
     phone_number = Column(String(15), unique=True)
-    created_at = Column(DateTime, default=datetime.now(), unique=True)
+    created_at = Column(DateTime, default=datetime.now())
 
     users_association = relationship('CharityUserAssociation', back_populates='charity', lazy="selectin")
     users = association_proxy('users_association', 'user')

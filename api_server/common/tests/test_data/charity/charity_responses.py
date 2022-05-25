@@ -32,13 +32,13 @@ def get_successful_organisation_creating(org_id) -> dict:
             'status_code': 201}
 
 
-def get_charities_list(org_ids: [list, tuple], title_list: [list, tuple]) -> dict:
+def get_charities_list(org_ids: [list, tuple], title_list: [list, tuple], phones, mails) -> dict:
     data = []
-    for id_, title in zip(org_ids, title_list):
+    for id_, title, phone, mail in zip(org_ids, title_list, phones, mails):
         data.append({'description': 'Some good organisation',
                      'id': str(id_),
-                     'organisation_email': 'org@mail.org',
-                     'phone_number': '+380707813196',
+                     'organisation_email': mail,
+                     'phone_number': phone,
                      'title': title})
     return {'data': data,
             'errors': [],

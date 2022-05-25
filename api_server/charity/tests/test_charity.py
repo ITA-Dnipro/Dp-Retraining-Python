@@ -280,10 +280,14 @@ class TestCaseCharity(TestMixin):
         response = await client.get(url)
         charity_titles = ("organisation A", "organisation B", "organisation D", "organisation Y")
         charity_ids = []
+        charity_phones = []
+        charity_mails = []
         for title in charity_titles:
             for charity in many_charities:
                 if title == charity.title:
                     charity_ids.append(charity.id)
+                    charity_phones.append(charity.phone_number)
+                    charity_mails.append(charity.organisation_email)
 
         assert response.status_code == HTTP_200_OK
-        assert response.json() == get_charities_list(charity_ids, charity_titles)
+        assert response.json() == get_charities_list(charity_ids, charity_titles, charity_phones,charity_mails)
