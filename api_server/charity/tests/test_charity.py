@@ -290,4 +290,4 @@ class TestCaseCharity(TestMixin):
                     charity_mails.append(charity.organisation_email)
 
         assert response.status_code == HTTP_200_OK
-        assert response.json() == get_charities_list(charity_ids, charity_titles, charity_phones,charity_mails)
+        assert response.json() == get_charities_list(charity_ids, charity_titles, charity_phones, charity_mails)
