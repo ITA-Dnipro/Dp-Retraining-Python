@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
+from common.constants.users import UserRouteConstants
 from common.schemas.responses import ResponseBaseSchema
 from users.routers.user_pictures import user_pictures_router
-from users.schemas import UserInputSchema, UserOutputSchema, UserUpdateSchema
+from users.schemas import UserInputSchema, UserOutputSchema, UserPaginatedOutputSchema, UserUpdateSchema
 from users.services import UserService
 
 users_router = APIRouter(prefix='/users', tags=['Users'])
@@ -12,10 +13,23 @@ users_router.include_router(user_pictures_router, prefix='/{user_id}')
 
 
 @users_router.get('/', response_model=ResponseBaseSchema)
-async def get_users(user_service: UserService = Depends()) -> ResponseBaseSchema:
+async def get_users(
+        page: int = Query(
+            default=UserRouteConstants.DEFAULT_START_PAGE.value,
+            gt=UserRouteConstants.ZERO_NUMBER.value,
+        ),
+        page_size: int = Query(
+            default=UserRouteConstants.DEFAULT_PAGE_SIZE.value,
+            gt=UserRouteConstants.ZERO_NUMBER.value,
+            lt=UserRouteConstants.MAX_PAGINATION_PAGE_SIZE.value,
+        ),
+        user_service: UserService = Depends()
+) -> ResponseBaseSchema:
     """GET '/users' endpoint view function.
 
     Args:
+        page: pagination page.
+        page_size: pagination page size, how many items to show per page.
         user_service: dependency as business logic instance.
 
     Returns:
@@ -23,7 +37,7 @@ async def get_users(user_service: UserService = Depends()) -> ResponseBaseSchema
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
-        data=[UserOutputSchema.from_orm(user) for user in await user_service.get_users()],
+        data=UserPaginatedOutputSchema.from_orm(await user_service.get_users(page, page_size)),
         errors=[],
     )
 

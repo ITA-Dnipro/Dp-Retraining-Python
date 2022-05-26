@@ -5,7 +5,7 @@ import abc
 from fastapi import status
 
 from passlib.hash import argon2
-from sqlalchemy import update
+from sqlalchemy import func, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.future import select
 
@@ -127,10 +127,10 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
 
 class UserCRUD(AbstractUserCRUD):
 
-    async def _get_users(self) -> None:
+    async def _get_users(self, page: int, page_size: int) -> None:
         self._log.debug('Getting all users from the db.')
-        users = await self.session.execute(select(User))
-        return users.scalars().all()
+        q = select(User).limit(page_size).offset((page - 1) * page_size)
+        return (await self.session.execute(q)).scalars().all()
 
     async def _user_exists(self, column: str, value: UUID | str) -> bool:
         user = await self.session.execute(select(User).where(User.__table__.columns[column] == value))
@@ -206,3 +206,11 @@ class UserCRUD(AbstractUserCRUD):
             )
         )
         await self.session.commit()
+
+    async def _get_total_of_users(self) -> int:
+        """Counts number of users in User table.
+
+        Returns:
+        Quantity of user objects in User table.
+        """
+        return (await self.session.execute(select(func.count(User.id)))).scalar_one()

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Alert } from 'react-bootstrap';
 import axiosInstance from "../../axiosApi";
+import {Button} from "react-bootstrap";
+import {Link} from "react-router-dom";
 
 const EditProfile = () => {
     const [editStatus, setEditStatus] = useState('');
+    const [errorMessage, setErrorMessage] = useState('Unknown Error');
     const [editFirstName, setEditFirstName] = useState('');
     const [editLastName, setEditLastName] = useState('');
     const [editUsername, setEditUsername] = useState('');
@@ -18,10 +21,32 @@ const EditProfile = () => {
     let editStatusMessage;
     let userId = localStorage.getItem('user_id');
 
+    const alertSuccess = () => {
+        return (
+            <>
+            <Alert key={'success'} variant={'success'}>Changes saved!</Alert>
+            <Button as={Link} to="/profile" variant="outline-success">
+              Return to Profile
+            </Button>
+            </>
+        )
+    }
+
+    const alertFail = () => {
+        return (
+            <>
+            <Alert key={'danger'} variant={'danger'}>{ errorMessage }</Alert>
+            <Button as={Link} to="/profile" variant="outline-danger">
+              Cancel Changes
+            </Button>
+            </>
+        )
+    } 
+
     if (editStatus === 'success') {
-        editStatusMessage = <Alert key={'success'} variant={'success'}>Profile is edited!</Alert>
+        editStatusMessage = alertSuccess()
     } else if (editStatus === 'fail') {
-        editStatusMessage = <Alert key={'danger'} variant={'danger'}>Edit failed!</Alert>
+        editStatusMessage = alertFail()
     }
 
     useEffect(() => {
@@ -62,13 +87,19 @@ const EditProfile = () => {
                 console.log('Edit failed');
                 console.log(error);
                 setEditStatus('fail');
+
+                if (error.response.data.detail === undefined) {
+                    setErrorMessage(error.response.data.errors[0].detail)
+                } else {
+                    setErrorMessage(error.response.data.detail[0].msg)
+                }
             });
     }
 
     return (
         <div id="entry-container">
             <div id="entry-wrapper" className="col-lg-4 mx-auto my-4">
-                <div className="card border-warning mb-3">
+                <div className="card border-dark mb-3">
                     <div className="card-header"><h4>Profile Edit</h4></div>
                     <div className="card-body">
                         <form onSubmit={onEditSubmit}>
@@ -106,7 +137,7 @@ const EditProfile = () => {
                                        onChange={onEditPhoneNumberChange}
                                 />
                             </div>
-                            <button type="submit" className="btn btn-warning btn-block my-2"
+                            <button type="submit" className="btn btn-dark btn-block my-2"
                                 id="edit-submit">Save Changes
                             </button>
                             {editStatusMessage}
