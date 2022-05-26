@@ -11,4 +11,3 @@ elif [  $RUN_FOR_EVER = "False" ]
     then
         cd /usr/src/app/ && celery -A app.celery_base:app worker -l INFO --detach && python run.py
 fi
-

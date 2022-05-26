@@ -29,6 +29,7 @@ class User(Base):
     email_confirmation_token = relationship(
         'EmailConfirmationToken', back_populates='user', lazy='selectin', cascade='all, delete',
     )
+    charities = relationship('CharityUserAssociation', back_populates='user', lazy="selectin")
 
     __mapper_args__ = {'eager_defaults': True}
 

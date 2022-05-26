@@ -20,3 +20,4 @@ frontend/.pnp.js
 
 # misc
 .DS_Store
+/venv/

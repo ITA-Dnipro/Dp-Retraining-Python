@@ -14,6 +14,7 @@ from users.cruds import UserCRUD
 from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
 from users.utils.jwt.user import jwt_user_validator
+from users.utils.pagination import PaginationPage
 from utils.logging import setup_logging
 
 
@@ -30,13 +31,17 @@ class AbstractUserService(metaclass=abc.ABCMeta):
         self.user_crud = UserCRUD(session=self.session)
         self.email_confirmation_token_crud = EmailConfirmationTokenCRUD(session=self.session)
 
-    async def get_users(self) -> list[User]:
+    async def get_users(self, page: int, page_size: int) -> list[User]:
         """Get User objects from database.
+
+        Args:
+            page: number of result page.
+            page_size: number of items per page.
 
         Returns:
         list of User objects.
         """
-        return await self._get_users()
+        return await self._get_users(page, page_size)
 
     async def get_user_by_id(self, id_: UUID) -> User:
         """Get User object from database filtered by id.
@@ -95,7 +100,7 @@ class AbstractUserService(metaclass=abc.ABCMeta):
         return await self._get_user_by_username(username)
 
     @abc.abstractclassmethod
-    async def _get_users(self) -> None:
+    async def _get_users(self, page: int, page_size: int) -> None:
         pass
 
     @abc.abstractclassmethod
@@ -121,8 +126,10 @@ class AbstractUserService(metaclass=abc.ABCMeta):
 
 class UserService(AbstractUserService):
 
-    async def _get_users(self) -> None:
-        return await self.user_crud._get_users()
+    async def _get_users(self, page: int, page_size: int) -> None:
+        users = await self.user_crud._get_users(page, page_size)
+        total_users = await self.user_crud._get_total_of_users()
+        return PaginationPage(items=users, page=page, page_size=page_size, total=total_users)
 
     async def _get_user_by_id(self, id_: str) -> None:
         return await self.user_crud._get_user_by_id(id_)
