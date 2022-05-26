@@ -8,14 +8,20 @@ from app.config import get_app_config
 from auth.routers import auth_router
 from auth.utils.exceptions import (
     AuthUserInvalidPasswordException,
+    ChangePasswordTokenNotFoundError,
+    ChangePasswordTokenSpamCreationException,
     EmailConfirmationExpiredJWTTokenError,
     EmailConfirmationJWTTokenError,
     EmailConfirmationTokenExpiredError,
     EmailConfirmationTokenNotFoundError,
+    EmailConfirmationTokenSpamCreationException,
     UserAlreadyActivatedException,
     authjwt_exception_handler,
+    change_password_token_anti_creation_spam_handler,
+    change_password_token_not_found_handler,
     email_confirmation_expired_jwt_token_handler,
     email_confirmation_invalid_jwt_token_handler,
+    email_confirmation_token_anti_creation_spam_handler,
     email_confirmation_token_expired_handler,
     email_confirmation_token_not_found_error_handler,
     invalid_auth_credentials_handler,
@@ -103,4 +109,11 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(EmailConfirmationTokenExpiredError, email_confirmation_token_expired_handler)
     app.add_exception_handler(EmailConfirmationJWTTokenError, email_confirmation_invalid_jwt_token_handler)
     app.add_exception_handler(EmailConfirmationExpiredJWTTokenError, email_confirmation_expired_jwt_token_handler)
+    app.add_exception_handler(
+        ChangePasswordTokenSpamCreationException, change_password_token_anti_creation_spam_handler,
+    )
+    app.add_exception_handler(
+        EmailConfirmationTokenSpamCreationException, email_confirmation_token_anti_creation_spam_handler,
+    )
+    app.add_exception_handler(ChangePasswordTokenNotFoundError, change_password_token_not_found_handler)
     return app

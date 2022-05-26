@@ -4,7 +4,7 @@ from sqlalchemy import Column, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from auth.models import EmailConfirmationToken  # noqa
+from auth.models import ChangePasswordToken, EmailConfirmationToken  # noqa
 from common.constants.users import UserModelConstants, UserPictureModelConstants
 from db import Base
 
@@ -28,6 +28,9 @@ class User(Base):
     )
     email_confirmation_token = relationship(
         'EmailConfirmationToken', back_populates='user', lazy='selectin', cascade='all, delete',
+    )
+    change_password_token = relationship(
+        'ChangePasswordToken', back_populates='user', lazy='selectin', cascade='all, delete',
     )
     charities = relationship('CharityUserAssociation', back_populates='user', lazy="selectin")
 

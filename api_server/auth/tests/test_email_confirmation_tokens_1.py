@@ -32,7 +32,7 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         Returns:
         Nothing.
         """
-        url = app.url_path_for('post_user_email_confiramation')
+        url = app.url_path_for('post_user_email_confirmation')
         response = await client.post(
             url,
             json=request_test_auth_email_confirmation_data.POST_EMAIL_CONFIRMATION_VALID_EMAIL,
@@ -60,7 +60,7 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         Returns:
         Nothing.
         """
-        url = app.url_path_for('post_user_email_confiramation')
+        url = app.url_path_for('post_user_email_confirmation')
         # Sleeping for N seconds to create different jwt token from pytest fixture.
         time.sleep(EmailConfirmationTokenConstants.ONE_SECOND.value)
         response = await client.post(
@@ -91,7 +91,7 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         Returns:
         Nothing.
         """
-        url = app.url_path_for('post_user_email_confiramation')
+        url = app.url_path_for('post_user_email_confirmation')
         response = await client.post(
             url,
             json=request_test_auth_email_confirmation_data.POST_EMAIL_CONFIRMATION_INVALID_EMAIL,

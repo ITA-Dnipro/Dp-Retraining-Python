@@ -4,6 +4,8 @@ from auth.schemas import (
     AuthUserInputSchema,
     AuthUserLogoutSchema,
     AuthUserOutputSchema,
+    ChangePasswordTokenInputSchema,
+    ChangePasswordTokenOutputSchema,
     EmailConfirmationTokenInputSchema,
     EmailConfirmationTokenOutputSchema,
     EmailConfirmationTokenSuccessSchema,
@@ -93,7 +95,7 @@ async def get_user_email_confiramation(token: str, auth_service: AuthService = D
         auth_service: dependency as business logic instance.
 
     Returns:
-    ResponseBaseSchema object with UserOutputSchema object as response data.
+    ResponseBaseSchema object with EmailConfirmationTokenSuccessSchema object as response data.
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
@@ -103,7 +105,7 @@ async def get_user_email_confiramation(token: str, auth_service: AuthService = D
 
 
 @auth_router.post('/email-confirmation', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
-async def post_user_email_confiramation(
+async def post_user_email_confirmation(
         email: EmailConfirmationTokenInputSchema, auth_service: AuthService = Depends(),
 ) -> ResponseBaseSchema:
     """POST '/auth/email-confirmation' endpoint view function.
@@ -113,10 +115,30 @@ async def post_user_email_confiramation(
         auth_service: dependency as business logic instance.
 
     Returns:
-    ResponseBaseSchema object with UserOutputSchema object as response data.
+    ResponseBaseSchema object with EmailConfirmationTokenOutputSchema object as response data.
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_201_CREATED,
         data=EmailConfirmationTokenOutputSchema.from_orm(await auth_service.resend_user_email_confirmation(email)),
+        errors=[],
+    )
+
+
+@auth_router.post('/forgot-password', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
+async def post_forgot_password(
+        email: ChangePasswordTokenInputSchema, auth_service: AuthService = Depends(),
+) -> ResponseBaseSchema:
+    """POST '/auth/forgot-password' endpoint view function.
+
+    Args:
+        email: object validated with ChangePasswordTokenInputSchema.
+        auth_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with ChangePasswordTokenOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_201_CREATED,
+        data=ChangePasswordTokenOutputSchema.from_orm(await auth_service.forgot_password(email)),
         errors=[],
     )

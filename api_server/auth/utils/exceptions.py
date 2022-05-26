@@ -74,7 +74,22 @@ class EmailConfirmationJWTTokenError(HTTPException):
 
 
 class EmailConfirmationExpiredJWTTokenError(HTTPException):
-    """"""
+    """Custom EmailConfirmationToken expired JWT token payload exception."""
+    pass
+
+
+class ChangePasswordTokenSpamCreationException(HTTPException):
+    """Custom ChangePasswordToken anti token creation spam exception."""
+    pass
+
+
+class EmailConfirmationTokenSpamCreationException(HTTPException):
+    """Custom EmailConfirmationToken anti token creation spam exception."""
+    pass
+
+
+class ChangePasswordTokenNotFoundError(HTTPException):
+    """Custom ChangePasswordToken"""
     pass
 
 
@@ -171,6 +186,71 @@ def email_confirmation_expired_jwt_token_handler(request: Request, exc: EmailCon
 
     Returns:
     http response for raised EmailConfirmationExpiredJWTTokenError.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )
+
+
+def change_password_token_anti_creation_spam_handler(request: Request, exc: ChangePasswordTokenSpamCreationException):
+    """Handler for ChangePasswordTokenSpamCreationException exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised ChangePasswordTokenSpamCreationException.
+
+    Returns:
+    http response for raised ChangePasswordTokenSpamCreationException.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )
+
+
+def email_confirmation_token_anti_creation_spam_handler(
+        request: Request, exc: EmailConfirmationTokenSpamCreationException,
+        ):
+    """Handler for EmailConfirmationTokenSpamCreationException exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised EmailConfirmationTokenSpamCreationException.
+
+    Returns:
+    http response for raised EmailConfirmationTokenSpamCreationException.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )
+
+
+def change_password_token_not_found_handler(request: Request, exc: ChangePasswordTokenNotFoundError):
+    """Handler for ChangePasswordTokenNotFoundError exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised ChangePasswordTokenNotFoundError.
+
+    Returns:
+    http response for raised ChangePasswordTokenNotFoundError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,
