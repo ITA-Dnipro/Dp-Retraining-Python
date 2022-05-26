@@ -59,3 +59,17 @@ class UserOutputSchema(UserBaseSchema):
 class UserUpdateSchema(UserBaseSchema):
     """User Update schema for User model."""
     pass
+
+
+class UserPaginatedOutputSchema(BaseModel):
+    """User paginated output schema for User model."""
+    current_page: int
+    has_next: bool
+    has_previous: bool
+    items: list[UserOutputSchema]
+    next_page: int | None
+    previous_page: int | None
+    total_pages: int
+
+    class Config:
+        orm_mode = True
