@@ -122,10 +122,10 @@ class CharityService(AbstractCharityService):
     async def _add_organisation(self, org: CharityInputSchema) -> CharityOrganisation:
         self.Authorize.jwt_required()
         organisation_data = org.dict()
-        user_id = organisation_data.pop("user_id")
+        user_id = self.Authorize.get_raw_jwt()["user_data"]["id"]
         organisation = CharityOrganisation(**organisation_data)
         association = CharityUserAssociation()
-        user = await self._get_user(user_id)
+        user = await self._get_user(UUID(user_id))
 
         association.user = user
         organisation.users_association.append(association)
