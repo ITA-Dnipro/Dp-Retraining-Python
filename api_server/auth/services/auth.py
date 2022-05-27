@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
 from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.schemas import AuthUserInputSchema, ChangePasswordTokenInputSchema, EmailConfirmationTokenInputSchema
-from auth.tasks import send_email_comfirmation_letter
+from auth.tasks import send_change_password_letter, send_email_comfirmation_letter
 from auth.utils.change_password_tokens import create_change_password_token
 from auth.utils.email_confirmation_tokens import create_email_cofirmation_token, decode_jwt_token
 from auth.utils.exceptions import (
@@ -376,6 +376,12 @@ class AuthService(AbstractAuthService):
         db_change_password_token = await self.change_password_token_crud.add_change_password_token(
             id_=user.id,
             token=jwt_token,
+        )
+        send_change_password_letter.apply_async(
+            kwargs={
+                'token': db_change_password_token,
+            },
+            serializers='pickle',
         )
         return db_change_password_token
 
