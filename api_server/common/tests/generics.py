@@ -1,3 +1,4 @@
+from datetime import timedelta
 from unittest.mock import AsyncMock
 from uuid import uuid4
 import os
@@ -26,7 +27,7 @@ from auth.services import AuthService
 from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
 from charity.models import CharityOrganisation, CharityUserAssociation
 from common.constants.api import ApiConstants
-from common.constants.auth import AuthJWTConstants
+from common.constants.auth import AuthJWTConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.charity.charity_requests import initialize_charity_data
@@ -556,19 +557,26 @@ class TestMixin:
     @pytest_asyncio.fixture
     async def test_email_confirmation_token(
             self, email_confirmation_token_crud: EmailConfirmationTokenCRUD, user_crud: UserCRUD,
+            db_session: AsyncSession,
     ) -> EmailConfirmationToken:
         """A pytest fixture that creates test EmailConfirmationToken object and storing it in the test databases.
 
         Args:
             email_confirmation_token_crud: instance of database crud logic class.
             user_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
         An instance of EmailConfirmationToken object.
         """
         user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         token = create_email_cofirmation_token(user)
-        return await email_confirmation_token_crud.add_email_confirmation_token(id_=user.id, token=token)
+        db_token = await email_confirmation_token_crud.add_email_confirmation_token(id_=user.id, token=token)
+        db_token.created_at = db_token.created_at - timedelta(**EmailConfirmationTokenConstants.TIMEDELTA_10_MIN.value)
+        db_session.add(db_token)
+        await db_session.commit()
+        await db_session.refresh(db_token)
+        return db_token
 
     @pytest_asyncio.fixture
     async def test_activated_email_confirmation_token(
