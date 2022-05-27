@@ -37,7 +37,7 @@ class CharityOutputSchema(CharityDefaultSchema):
 
 
 class CharityInputSchema(CharityDefaultSchema):
-    user_id: UUID = Field()
+    pass
 
 
 class CharityUpdateSchema(CharityDefaultSchema, metaclass=AllOptional):
