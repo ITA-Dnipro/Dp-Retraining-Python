@@ -3,12 +3,13 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 from pydantic.main import ModelMetaclass
+from users.schemas import UserOutputSchema
 
 from common.constants.charities import CharitySchemaConstants
 
 
 class AllOptional(ModelMetaclass):
-    def __new__(self, name, bases, namespaces, **kwargs):
+    def __new__(mcs, name, bases, namespaces, **kwargs):
         annotations = namespaces.get('__annotations__', {})
         for base in bases:
             annotations.update(base.__annotations__)
@@ -16,7 +17,7 @@ class AllOptional(ModelMetaclass):
             if not field.startswith('__'):
                 annotations[field] = Optional[annotations[field]]
         namespaces['__annotations__'] = annotations
-        return super().__new__(self, name, bases, namespaces, **kwargs)
+        return super().__new__(mcs, name, bases, namespaces, **kwargs)
 
 
 class CharityDefaultSchema(BaseModel):
@@ -37,8 +38,21 @@ class CharityOutputSchema(CharityDefaultSchema):
 
 
 class CharityInputSchema(CharityDefaultSchema):
-    user_id: UUID = Field()
+    pass
 
 
 class CharityUpdateSchema(CharityDefaultSchema, metaclass=AllOptional):
     pass
+
+
+class AddManagerSchema(BaseModel):
+    user_id: UUID
+    is_supermanager: bool
+
+
+class ManagerResponseSchema(BaseModel):
+    is_supermanager: bool
+    user: UserOutputSchema
+
+    class Config:
+        orm_mode = True

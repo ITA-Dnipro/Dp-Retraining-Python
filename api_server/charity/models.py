@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, String
+from sqlalchemy import Column, DateTime, ForeignKey, String, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
@@ -15,7 +15,7 @@ class CharityUserAssociation(Base):
     __tablename__ = 'charity_user_association'
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-
+    is_supermanager = Column(Boolean, default=False)
     charity_id = Column(UUID(as_uuid=True), ForeignKey('CharityOrganisations.id'), nullable=False)
     users_id = Column(UUID(as_uuid=True), ForeignKey('Users.id'), nullable=False)
     charity = relationship('CharityOrganisation', back_populates='users_association', lazy="selectin")
@@ -30,7 +30,7 @@ class CharityOrganisation(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     title = Column(String, unique=True)
-    description = Column(String(250), unique=True)
+    description = Column(String(250))
     organisation_email = Column(String(120), unique=True)
     phone_number = Column(String(15), unique=True)
     created_at = Column(DateTime, default=datetime.now())
