@@ -102,6 +102,45 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 0
 
+    @pytest.mark.asyncio
+    async def test_post_auth_email_confirmation_valid_payload_2_times_in_row(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_user: User,
+    ) -> None:
+        """Test POST '/auth/email-confirmation' endpoint with user added to database and valid payload.Making 2 requests
+        in a row, first successful and second get anti spam exception.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            test_user: pytest fixture, add user to database.
+
+        Returns:
+        Nothing.
+        """
+        # First request.
+        url = app.url_path_for('post_user_email_confirmation')
+        response = await client.post(
+            url,
+            json=request_test_auth_email_confirmation_data.POST_EMAIL_CONFIRMATION_VALID_EMAIL,
+        )
+        response_data = response.json()
+        expected_result = response_auth_email_confirmation_data.POST_VALID_RESPONSE_EMAIL_CONFIRMATION_TOKEN_TEST_DATA
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_201_CREATED
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
+        # Second request.
+        url = app.url_path_for('post_user_email_confirmation')
+        response = await client.post(
+            url,
+            json=request_test_auth_email_confirmation_data.POST_EMAIL_CONFIRMATION_VALID_EMAIL,
+        )
+        response_data = response.json()
+        expected_result = response_auth_email_confirmation_data.POST_EMAIL_CONFIRMATION_ANTI_SPAM_TEST_DATA
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
+
 
 class TestCaseGetAuthEmailConfirmation(TestMixin):
 

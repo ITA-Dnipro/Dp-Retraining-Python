@@ -34,3 +34,10 @@ GET_EMAIL_CONFIRMATION_USER_ALREADY_ACTIVATED = {
     ],
     'status_code': 400
 }
+POST_EMAIL_CONFIRMATION_ANTI_SPAM_TEST_DATA = {
+    'data': [],
+    'errors': [
+        {'detail': 'Cannot create EmailConfirmationToken please check your email inbox and try again in: 5 minutes.'}
+    ],
+    'status_code': 400
+}

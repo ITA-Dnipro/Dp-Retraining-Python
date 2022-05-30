@@ -21,13 +21,13 @@ import pytest_asyncio
 
 from app import create_app
 from app.celery_base import create_celery_app
-from auth.cruds import EmailConfirmationTokenCRUD
-from auth.models import EmailConfirmationToken
+from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
+from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.services import AuthService
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
 from charity.models import CharityOrganisation, CharityUserAssociation
 from common.constants.api import ApiConstants
-from common.constants.auth import AuthJWTConstants, EmailConfirmationTokenConstants
+from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.charity.charity_requests import initialize_charity_data
@@ -604,3 +604,44 @@ class TestMixin:
         await email_confirmation_token_crud._expire_email_confirmation_token_by_id(test_email_confirmation_token.id)
         await db_session.refresh(test_email_confirmation_token)
         return test_email_confirmation_token
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def change_password_token_crud(self, db_session: AsyncSession) -> ChangePasswordTokenCRUD:
+        """A pytest fixture that creates instance of change_password_token_crud business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of ChangePasswordTokenCRUD business logic class.
+        """
+        return ChangePasswordTokenCRUD(session=db_session)
+
+    @pytest_asyncio.fixture
+    async def test_change_password_token(
+            self, change_password_token_crud: ChangePasswordTokenCRUD, user_crud: UserCRUD,
+            db_session: AsyncSession,
+    ) -> ChangePasswordToken:
+        """A pytest fixture that creates test ChangePasswordToken object and storing it in the test databases.
+
+        Args:
+            change_password_token_crud: instance of database crud logic class.
+            user_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of EmailConfirmationToken object.
+        """
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        jwt_token_payload = create_token_payload(
+            data=str(user.id),
+            time_amount=ChangePasswordTokenConstants.TOKEN_EXPIRE_1.value,
+            time_unit=ChangePasswordTokenConstants.DAYS.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
+        db_token = await change_password_token_crud.add_change_password_token(id_=user.id, token=jwt_token)
+        db_token.created_at = db_token.created_at - timedelta(**ChangePasswordTokenConstants.TIMEDELTA_10_MIN.value)
+        db_session.add(db_token)
+        await db_session.commit()
+        await db_session.refresh(db_token)
+        return db_token
