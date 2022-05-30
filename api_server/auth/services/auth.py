@@ -403,7 +403,7 @@ class AuthService(AbstractAuthService):
         jwt_token_payload = create_token_payload(
             data=str(user.id),
             time_amount=ChangePasswordTokenConstants.TOKEN_EXPIRE_1.value,
-            time_unit=EmailConfirmationTokenConstants.MINUTES.value,
+            time_unit=EmailConfirmationTokenConstants.DAYS.value,
         )
         jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
         db_change_password_token = await self.change_password_token_crud.add_change_password_token(

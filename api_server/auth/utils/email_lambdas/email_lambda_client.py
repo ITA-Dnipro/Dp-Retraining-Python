@@ -25,7 +25,7 @@ class EmailLambdaClient:
         return await self._send_email()
 
     @retry(
-        wait=wait_fixed(EmailLambdaClientConstants.WAIT_1_SECOND.value),
+        wait=wait_fixed(EmailLambdaClientConstants.SECOND_1.value),
         stop=stop_after_attempt(EmailLambdaClientConstants.TIMES_5.value),
     )
     async def _send_email(self) -> dict:

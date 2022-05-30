@@ -60,6 +60,7 @@ class TestCasePostAuthForgotPassword(TestMixin):
         Nothing.
         """
         url = app.url_path_for('post_forgot_password')
+        time.sleep(1.5)
         response = await client.post(
             url,
             json=request_test_auth_change_password_data.POST_FORGOT_PASSWORD_VALID_EMAIL,
