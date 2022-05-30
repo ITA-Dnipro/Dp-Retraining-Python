@@ -20,11 +20,15 @@ class EmailConfirmationTokenSchemaConstants(enum.Enum):
     EMAIL_REGEX = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 
 
-class EmailConfirmationTokenConstants(enum.Enum):
-    """EmailConfirmationToken constants."""
+class JWTTokenConstants(enum.Enum):
+    """Generic JWT token constants."""
 
     ALGORITHM_HS512 = 'HS512'
     ENCODING_UTF_8 = 'UTF-8'
+
+
+class EmailConfirmationTokenConstants(enum.Enum):
+    """EmailConfirmationToken constants."""
 
     # Time units.
     DAYS = 'days'

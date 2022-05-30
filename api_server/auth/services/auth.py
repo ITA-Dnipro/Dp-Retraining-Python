@@ -10,18 +10,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
 from auth.models import ChangePasswordToken, EmailConfirmationToken
-from auth.schemas import AuthUserInputSchema, ChangePasswordTokenInputSchema, EmailConfirmationTokenInputSchema
+from auth.schemas import (
+    AuthUserInputSchema,
+    ChangePasswordInputSchema,
+    EmailConfirmationTokenInputSchema,
+    ForgetPasswordInputSchema,
+)
 from auth.tasks import send_change_password_letter, send_email_comfirmation_letter
-from auth.utils.change_password_tokens import create_change_password_token
-from auth.utils.email_confirmation_tokens import create_email_cofirmation_token, decode_jwt_token
 from auth.utils.exceptions import (
     AuthUserInvalidPasswordException,
+    ChangePasswordTokenExpiredError,
     ChangePasswordTokenSpamCreationException,
-    EmailConfirmationExpiredJWTTokenError,
     EmailConfirmationTokenExpiredError,
     EmailConfirmationTokenSpamCreationException,
+    ExpiredJWTTokenError,
     UserAlreadyActivatedException,
 )
+from auth.utils.jwt_tokens import create_jwt_token, create_token_payload, decode_jwt_token
 from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.exceptions.auth import (
     AuthExceptionMsgs,
@@ -117,47 +122,62 @@ class AbstractAuthService(metaclass=abc.ABCMeta):
         """
         return await self._resend_user_email_confirmation(email)
 
-    async def forgot_password(self, email: ChangePasswordTokenInputSchema) -> ChangePasswordToken:
+    async def forgot_password(self, email: ForgetPasswordInputSchema) -> ChangePasswordToken:
         """Creates ChangePasswordToken object and sends email with link to change user's password.
 
         Args:
-            email: object validated with ChangePasswordTokenInputSchema.
+            email: object validated with ForgetPasswordInputSchema.
 
         Returns:
         Newly created ChangePasswordToken object.
         """
         return await self._forgot_password(email)
 
+    async def change_password(self, pass_data: ChangePasswordInputSchema) -> dict:
+        """Verifies incoming JWT token and updates User object 'password' field information.
+
+        Args:
+            pass_data: JWT token encoded with user's information.
+
+        Returns:
+        dict with user's change password success message.
+        """
+        return await self._change_password(pass_data)
+
     @classmethod
-    async def _login(user: AuthUserInputSchema) -> None:
+    async def _login(cls, user: AuthUserInputSchema) -> None:
         pass
 
     @classmethod
-    async def _verify_password(self, password: str, password_hash: str) -> None:
+    async def _verify_password(cls, password: str, password_hash: str) -> None:
         pass
 
     @classmethod
-    async def _me(self) -> None:
+    async def _me(cls) -> None:
         pass
 
     @classmethod
-    async def _logout(self) -> None:
+    async def _logout(cls) -> None:
         pass
 
     @classmethod
-    async def _refresh_token(self) -> None:
+    async def _refresh_token(cls) -> None:
         pass
 
     @classmethod
-    async def _get_user_email_confirmation(self, token: str) -> None:
+    async def _get_user_email_confirmation(cls, token: str) -> None:
         pass
 
     @classmethod
-    async def _resend_user_email_confirmation(self, email: EmailConfirmationTokenInputSchema) -> None:
+    async def _resend_user_email_confirmation(cls, email: EmailConfirmationTokenInputSchema) -> None:
         pass
 
     @classmethod
-    async def _forgot_password(cls, email: ChangePasswordTokenInputSchema) -> None:
+    async def _forgot_password(cls, email: ForgetPasswordInputSchema) -> None:
+        pass
+
+    @classmethod
+    async def _change_password(cls, pass_data: ChangePasswordInputSchema) -> None:
         pass
 
 
@@ -256,7 +276,7 @@ class AuthService(AbstractAuthService):
 
     async def _get_user_email_confirmation(self, token: str):
         email_confirmation_token = await self.email_confirmation_token_crud.get_email_confirmation_by_token(token)
-        await self._validate_token(email_confirmation_token)
+        await self._validate_email_confirmation_token(email_confirmation_token)
         await self.email_confirmation_token_crud._expire_email_confirmation_token_by_id(email_confirmation_token.id)
         await self.email_confirmation_token_crud._activate_user_by_id(email_confirmation_token.user.id)
         EmailConfirmationTokenConstants.SUCCESSFUL_EMAIL_CONFIRMATION_MSG.value['message'] = (
@@ -270,7 +290,12 @@ class AuthService(AbstractAuthService):
         user = await self.user_crud.get_user_by_email(email.email)
         await self._check_user_is_activated(user)
         await self._prevent_email_confirmation_token_spam_creation(user.id)
-        jwt_token = create_email_cofirmation_token(user)
+        jwt_token_payload = create_token_payload(
+            data=str(user.id),
+            time_amount=EmailConfirmationTokenConstants.TOKEN_EXPIRE_7.value,
+            time_unit=EmailConfirmationTokenConstants.MINUTES.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
         db_email_confirmation_token = await self.email_confirmation_token_crud.add_email_confirmation_token(
             id_=user.id,
             token=jwt_token,
@@ -302,7 +327,7 @@ class AuthService(AbstractAuthService):
             )
         return bool(user.activated_at)
 
-    async def _validate_token(self, token: EmailConfirmationToken) -> None:
+    async def _validate_email_confirmation_token(self, token: EmailConfirmationToken) -> None:
         """Validates EmailConfirmationToken not to be expired and user's not to be already activated.
 
         Args:
@@ -312,11 +337,11 @@ class AuthService(AbstractAuthService):
         Nothing.
         """
         await self._validate_token_user_activation(token)
-        await self._validate_db_token_expiration(token)
-        await self._validate_jwt_token_expiration(token)
+        await self._validate_email_confirmation_token_expiration(token)
+        await self._validate_email_confirmation_jwt_token_expiration(token)
 
-    async def _validate_db_token_expiration(self, token: EmailConfirmationToken) -> bool:
-        """Check if token has expired_at filled aleready.
+    async def _validate_email_confirmation_token_expiration(self, token: EmailConfirmationToken) -> bool:
+        """Check if token has 'expired_at' field filled already.
 
         Args:
             token: An EmailConfirmationToken object.
@@ -353,26 +378,34 @@ class AuthService(AbstractAuthService):
             self._log.debug(exc)
             raise exc
 
-    async def _validate_jwt_token_expiration(self, token: EmailConfirmationToken) -> None:
+    async def _validate_email_confirmation_jwt_token_expiration(self, token: EmailConfirmationToken) -> None:
         """Decodes jwt token and check expiration date set in token.
 
         Args:
             token: An EmailConfirmationToken object.
+
+        Raise:
+            ExpiredJWTTokenError in case JWT token expired.
 
         Returns:
         Nothing.
         """
         try:
             decode_jwt_token(token=token.token, key=token.user.password)
-        except EmailConfirmationExpiredJWTTokenError as exc:
+        except ExpiredJWTTokenError as exc:
             await self.email_confirmation_token_crud._expire_email_confirmation_token_by_id(token.id)
             self._log.debug(exc)
             raise exc
 
-    async def _forgot_password(self, email: ChangePasswordTokenInputSchema) -> ChangePasswordToken:
+    async def _forgot_password(self, email: ForgetPasswordInputSchema) -> ChangePasswordToken:
         user = await self.user_crud.get_user_by_email(email.email)
         await self._prevent_change_password_token_spam_creation(user.id)
-        jwt_token = create_change_password_token(user)
+        jwt_token_payload = create_token_payload(
+            data=str(user.id),
+            time_amount=ChangePasswordTokenConstants.TOKEN_EXPIRE_1.value,
+            time_unit=EmailConfirmationTokenConstants.MINUTES.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
         db_change_password_token = await self.change_password_token_crud.add_change_password_token(
             id_=user.id,
             token=jwt_token,
@@ -450,3 +483,66 @@ class AuthService(AbstractAuthService):
                         time_units=EmailConfirmationTokenConstants.MINUTES.value,
                     ),
                 )
+
+    async def _change_password(self, pass_data: ChangePasswordInputSchema) -> dict:
+        db_token = await self.change_password_token_crud._get_change_password_by_token(pass_data.token)
+        await self._validate_change_password_token(db_token)
+        await self.change_password_token_crud._expire_change_password_token_by_id(db_token.id)
+        password_hash = await self.user_crud._hash_password(pass_data.password)
+        await self.user_crud._update_user_password(id_=db_token.user.id, pass_hash=password_hash)
+        ChangePasswordTokenConstants.SUCCESSFUL_CHANGE_PASSWORD_MSG.value['message'] = (
+            ChangePasswordTokenConstants.SUCCESSFUL_CHANGE_PASSWORD_MSG.value['message'].format(
+                email=db_token.user.email,
+            )
+        )
+        return ChangePasswordTokenConstants.SUCCESSFUL_CHANGE_PASSWORD_MSG.value
+
+    async def _validate_change_password_token(self, token: ChangePasswordToken) -> None:
+        """Validates ChangePasswordToken not to be expired in db and inside JWT token payload.
+
+        Args:
+            token: An EmailConfirmationToken object.
+
+        Returns:
+        Nothing.
+        """
+        await self._validate_change_password_token_expiration(token)
+        await self._validate_change_password_jwt_token_expiration(token)
+
+    async def _validate_change_password_token_expiration(self, token: ChangePasswordToken) -> bool:
+        """Check if token has 'expired_at' field filled already.
+
+        Args:
+            token: An ChangePasswordToken object.
+
+        Raise:
+            ChangePasswordTokenExpiredError if 'token.expired_at' field filled with data.
+
+        Returns:
+        bool of content 'token.expired_at' field.
+        """
+        if token.expired_at:
+            raise ChangePasswordTokenExpiredError(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ChangePasswordTokenExceptionMsgs.TOKEN_EXPIRED.value,
+            )
+        return bool(token.expired_at)
+
+    async def _validate_change_password_jwt_token_expiration(self, token: ChangePasswordToken) -> None:
+        """Decodes jwt token and check expiration date set in token.
+
+        Args:
+            token: An ChangePasswordToken object.
+
+        Raise:
+            ExpiredJWTTokenError in case JWT token expired.
+
+        Returns:
+        Nothing.
+        """
+        try:
+            decode_jwt_token(token=token.token, key=token.user.password)
+        except ExpiredJWTTokenError as exc:
+            await self.change_password_token_crud._expire_change_password_token_by_id(token.id)
+            self._log.debug(exc)
+            raise exc

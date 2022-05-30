@@ -4,11 +4,13 @@ from auth.schemas import (
     AuthUserInputSchema,
     AuthUserLogoutSchema,
     AuthUserOutputSchema,
-    ChangePasswordTokenInputSchema,
-    ChangePasswordTokenOutputSchema,
+    ChangePasswordInputSchema,
+    ChangePasswordOutputSchema,
     EmailConfirmationTokenInputSchema,
     EmailConfirmationTokenOutputSchema,
     EmailConfirmationTokenSuccessSchema,
+    ForgetPasswordInputSchema,
+    ForgetPasswordOutputSchema,
 )
 from auth.services import AuthService
 from common.schemas.responses import ResponseBaseSchema
@@ -126,19 +128,39 @@ async def post_user_email_confirmation(
 
 @auth_router.post('/forgot-password', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
 async def post_forgot_password(
-        email: ChangePasswordTokenInputSchema, auth_service: AuthService = Depends(),
+        email: ForgetPasswordInputSchema, auth_service: AuthService = Depends(),
 ) -> ResponseBaseSchema:
     """POST '/auth/forgot-password' endpoint view function.
 
     Args:
-        email: object validated with ChangePasswordTokenInputSchema.
+        email: object validated with ForgetPasswordInputSchema.
         auth_service: dependency as business logic instance.
 
     Returns:
-    ResponseBaseSchema object with ChangePasswordTokenOutputSchema object as response data.
+    ResponseBaseSchema object with ForgetPasswordOutputSchema object as response data.
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_201_CREATED,
-        data=ChangePasswordTokenOutputSchema.from_orm(await auth_service.forgot_password(email)),
+        data=ForgetPasswordOutputSchema.from_orm(await auth_service.forgot_password(email)),
+        errors=[],
+    )
+
+
+@auth_router.post('/change-password', response_model=ResponseBaseSchema)
+async def post_change_password(
+        pass_data: ChangePasswordInputSchema, auth_service: AuthService = Depends(),
+) -> ResponseBaseSchema:
+    """POST '/auth/change-password' endpoint view function.
+
+    Args:
+        pass_data: object validated with ChangePasswordInputSchema.
+        auth_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with ChangePasswordOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_201_CREATED,
+        data=ChangePasswordOutputSchema(**await auth_service.change_password(pass_data)),
         errors=[],
     )

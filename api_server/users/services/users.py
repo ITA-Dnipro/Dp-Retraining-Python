@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.cruds import EmailConfirmationTokenCRUD
 from auth.tasks import send_email_comfirmation_letter
-from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
+from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
+from common.constants.auth.email_confirmation_tokens import EmailConfirmationTokenConstants
 from db import get_session
 from users.cruds import UserCRUD
 from users.models import User
@@ -137,7 +138,12 @@ class UserService(AbstractUserService):
     async def _add_user(self, user: UserInputSchema) -> User:
         user = await self.user_crud._add_user(user)
         # Creating EmailConfirmationToken.
-        jwt_token = create_email_cofirmation_token(user)
+        jwt_token_payload = create_token_payload(
+            data=str(user.id),
+            time_amount=EmailConfirmationTokenConstants.TOKEN_EXPIRE_7.value,
+            time_unit=EmailConfirmationTokenConstants.MINUTES.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
         db_email_confirmation_token = await self.email_confirmation_token_crud.add_email_confirmation_token(
             id_=user.id,
             token=jwt_token,

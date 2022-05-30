@@ -91,7 +91,7 @@ class ChangePasswordTokenCRUD(AbstractChangePasswordTokenCRUD, UserCRUD):
             return change_password_token.scalar_one()
 
     async def _get_change_password_by_token(self, token: str) -> ChangePasswordToken:
-        return await self._select_email_confirmation_token(column='token', value=token)
+        return await self._select_change_password_token(column='token', value=token)
 
     async def _get_last_non_expired_change_password_token_by_user_id(self, user_id: UUID) -> ChangePasswordToken:
         q = select(
@@ -103,3 +103,23 @@ class ChangePasswordTokenCRUD(AbstractChangePasswordTokenCRUD, UserCRUD):
         )
         change_password_token = await self.session.execute(q)
         return change_password_token.scalars().one_or_none()
+
+    async def _expire_change_password_token_by_id(self, id_: UUID) -> None:
+        """Expires specific ChangePasswordToken object by setting 'expired_at' field with current time.
+
+        Args:
+            id_: UUID of ChangePasswordToken object.
+
+        Returns:
+        Nothing.
+        """
+        await self.session.execute(
+            update(
+                ChangePasswordToken
+            ).where(
+                ChangePasswordToken.id == id_
+            ).values(
+                expired_at=datetime.utcnow()
+            )
+        )
+        await self.session.commit()

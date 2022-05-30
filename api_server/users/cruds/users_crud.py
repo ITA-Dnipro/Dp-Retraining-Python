@@ -214,3 +214,24 @@ class UserCRUD(AbstractUserCRUD):
         Quantity of user objects in User table.
         """
         return (await self.session.execute(select(func.count(User.id)))).scalar_one()
+
+    async def _update_user_password(self, id_, pass_hash: str) -> None:
+        """Updates user's 'password' field data in table.
+
+        Args:
+            id_: UUID of user.
+            pass_hash: hashed password string.
+
+        Returns:
+        Nothing.
+        """
+        await self.session.execute(
+            update(
+                User
+            ).where(
+                User.id == id_
+            ).values(
+                password=pass_hash
+            )
+        )
+        await self.session.commit()

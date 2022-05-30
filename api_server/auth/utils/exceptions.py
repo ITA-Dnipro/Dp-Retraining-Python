@@ -68,13 +68,13 @@ class EmailConfirmationTokenExpiredError(HTTPException):
     pass
 
 
-class EmailConfirmationJWTTokenError(HTTPException):
-    """Custom EmailConfirmationToken invalid JWT token exception."""
+class JWTTokenError(HTTPException):
+    """Custom invalid JWT token exception."""
     pass
 
 
-class EmailConfirmationExpiredJWTTokenError(HTTPException):
-    """Custom EmailConfirmationToken expired JWT token payload exception."""
+class ExpiredJWTTokenError(HTTPException):
+    """Custom expired JWT token payload exception."""
     pass
 
 
@@ -89,7 +89,12 @@ class EmailConfirmationTokenSpamCreationException(HTTPException):
 
 
 class ChangePasswordTokenNotFoundError(HTTPException):
-    """Custom ChangePasswordToken"""
+    """Custom ChangePasswordToken not found exception."""
+    pass
+
+
+class ChangePasswordTokenExpiredError(HTTPException):
+    """Custom ChangePasswordToken expired in database exception."""
     pass
 
 
@@ -156,15 +161,15 @@ def email_confirmation_token_expired_handler(request: Request, exc: EmailConfirm
     )
 
 
-def email_confirmation_invalid_jwt_token_handler(request: Request, exc: EmailConfirmationJWTTokenError):
-    """Handler for EmailConfirmationJWTTokenError exception that makes http response.
+def invalid_jwt_token_handler(request: Request, exc: JWTTokenError):
+    """Handler for JWTTokenError exception that makes http response.
 
     Args:
         request: FastAPI Request object.
-        exc: raised EmailConfirmationJWTTokenError.
+        exc: raised JWTTokenError.
 
     Returns:
-    http response for raised EmailConfirmationJWTTokenError.
+    http response for raised JWTTokenError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,
@@ -177,15 +182,15 @@ def email_confirmation_invalid_jwt_token_handler(request: Request, exc: EmailCon
     )
 
 
-def email_confirmation_expired_jwt_token_handler(request: Request, exc: EmailConfirmationExpiredJWTTokenError):
-    """Handler for EmailConfirmationExpiredJWTTokenError exception that makes http response.
+def expired_jwt_token_handler(request: Request, exc: ExpiredJWTTokenError):
+    """Handler for ExpiredJWTTokenError exception that makes http response.
 
     Args:
         request: FastAPI Request object.
-        exc: raised EmailConfirmationExpiredJWTTokenError.
+        exc: raised ExpiredJWTTokenError.
 
     Returns:
-    http response for raised EmailConfirmationExpiredJWTTokenError.
+    http response for raised ExpiredJWTTokenError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,
@@ -251,6 +256,27 @@ def change_password_token_not_found_handler(request: Request, exc: ChangePasswor
 
     Returns:
     http response for raised ChangePasswordTokenNotFoundError.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )
+
+
+def change_password_token_expired_in_db_handler(request: Request, exc: ChangePasswordTokenExpiredError):
+    """Handler for ChangePasswordTokenExpiredError exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised ChangePasswordTokenExpiredError.
+
+    Returns:
+    http response for raised ChangePasswordTokenExpiredError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,

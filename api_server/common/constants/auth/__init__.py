@@ -10,6 +10,7 @@ from common.constants.auth.email_confirmation_tokens import (
     EmailConfirmationTokenConstants,
     EmailConfirmationTokenModelConstants,
     EmailConfirmationTokenSchemaConstants,
+    JWTTokenConstants,
 )
 from common.constants.auth.email_lambda_client import EmailLambdaClientConstants
 
@@ -24,4 +25,5 @@ __all__ = [
     'ChangePasswordTokenConstants',
     'ChangePasswordLetterConstants',
     'EmailLambdaClientConstants',
+    'JWTTokenConstants',
 ]

@@ -24,7 +24,7 @@ from app.celery_base import create_celery_app
 from auth.cruds import EmailConfirmationTokenCRUD
 from auth.models import EmailConfirmationToken
 from auth.services import AuthService
-from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
+from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
 from charity.models import CharityOrganisation, CharityUserAssociation
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants, EmailConfirmationTokenConstants
@@ -570,8 +570,13 @@ class TestMixin:
         An instance of EmailConfirmationToken object.
         """
         user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        token = create_email_cofirmation_token(user)
-        db_token = await email_confirmation_token_crud.add_email_confirmation_token(id_=user.id, token=token)
+        jwt_token_payload = create_token_payload(
+            data=str(user.id),
+            time_amount=EmailConfirmationTokenConstants.TOKEN_EXPIRE_7.value,
+            time_unit=EmailConfirmationTokenConstants.MINUTES.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
+        db_token = await email_confirmation_token_crud.add_email_confirmation_token(id_=user.id, token=jwt_token)
         db_token.created_at = db_token.created_at - timedelta(**EmailConfirmationTokenConstants.TIMEDELTA_10_MIN.value)
         db_session.add(db_token)
         await db_session.commit()
