@@ -35,6 +35,7 @@ class ChangePasswordTokenConstants(enum.Enum):
     MIN_TOKEN_LIFETIME = 5
     MIN_TOKEN_LIFETIME_TIMEDELTA = {MINUTES: MIN_TOKEN_LIFETIME}
     TIMEDELTA_10_MIN = {MINUTES: 10}
+    HALF_SECOND = 0.5
 
     # Responses.
     SUCCESSFUL_CHANGE_PASSWORD_MSG = {'message': "User with email: '{email}' successfully changed password."}

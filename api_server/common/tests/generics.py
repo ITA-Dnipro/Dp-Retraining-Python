@@ -645,3 +645,53 @@ class TestMixin:
         await db_session.commit()
         await db_session.refresh(db_token)
         return db_token
+
+    @pytest_asyncio.fixture
+    async def test_db_expired_change_password_token(
+            self,
+            test_change_password_token: ChangePasswordToken,
+            change_password_token_crud: ChangePasswordTokenCRUD,
+            db_session: AsyncSession,
+    ) -> ChangePasswordToken:
+        """A pytest fixture that creates expired test ChangePasswordToken object and storing it in the test databases.
+
+        Args:
+            test_change_password_token: pytest fixture that creates test ChangePasswordToken object.
+            change_password_token_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        A ChangePasswordToken object with filled 'expired_at' field.
+        """
+        await change_password_token_crud._expire_change_password_token_by_id(test_change_password_token.id)
+        await db_session.refresh(test_change_password_token)
+        return test_change_password_token
+
+    @pytest_asyncio.fixture
+    async def test_jwt_expired_change_password_token(
+            self,
+            test_change_password_token: ChangePasswordToken,
+            change_password_token_crud: ChangePasswordTokenCRUD,
+            db_session: AsyncSession,
+    ) -> ChangePasswordToken:
+        """A pytest fixture that creates test ChangePasswordToken object with expired jwt token.
+
+        Args:
+            test_change_password_token: pytest fixture that creates test ChangePasswordToken object.
+            change_password_token_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        A ChangePasswordToken object with filled 'expired_at' field.
+        """
+        jwt_token_payload = create_token_payload(
+            data=str(test_change_password_token.user.id),
+            time_amount=ChangePasswordTokenConstants.HALF_SECOND.value,
+            time_unit=ChangePasswordTokenConstants.SECONDS.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=test_change_password_token.user.password)
+        test_change_password_token.token = jwt_token
+        db_session.add(test_change_password_token)
+        await db_session.commit()
+        await db_session.refresh(test_change_password_token)
+        return test_change_password_token

@@ -160,7 +160,7 @@ async def post_change_password(
     ResponseBaseSchema object with ChangePasswordOutputSchema object as response data.
     """
     return ResponseBaseSchema(
-        status_code=status.HTTP_201_CREATED,
+        status_code=status.HTTP_200_OK,
         data=ChangePasswordOutputSchema(**await auth_service.change_password(pass_data)),
         errors=[],
     )
