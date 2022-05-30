@@ -47,7 +47,7 @@ class ChangePasswordLetter:
         return change_password_template
 
     @property
-    def payloda_data(self):
+    def payload_data(self):
         return {
             'source': self._server_config.get('AWS_SES_EMAIL_SOURCE'),
             'to_address': self.db_token.user.email,

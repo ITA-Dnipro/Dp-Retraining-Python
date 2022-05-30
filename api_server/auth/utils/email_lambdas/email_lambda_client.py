@@ -33,7 +33,7 @@ class EmailLambdaClient:
             try:
                 response = await client.post(
                     url=self._server_config.get('AWS_EMAIL_LAMBDA_URL'),
-                    json=self.letter.payloda_data,
+                    json=self.letter.payload_data,
                 )
             except Exception as exc:
                 self._log.warning(exc)
