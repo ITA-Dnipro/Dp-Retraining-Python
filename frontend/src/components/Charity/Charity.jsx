@@ -1,6 +1,27 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from "react-router-dom";
+import axiosInstance from "../../axiosApi";
 import "./Charity.css";
 
 const Charity = () => {
+
+    const [charityInfo, setCharityInfo] = useState({});
+
+    const params = useParams();
+
+    useEffect(() => {
+        axiosInstance.get(
+            `charities/${params.charityId}`
+            )
+            .then(response => {
+                console.log(response);
+                setCharityInfo(response.data.data[0]);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }, []);
+
     return (
         <>
             <div className="charity">
@@ -8,11 +29,10 @@ const Charity = () => {
                     <div className="charityCover">
                     </div>
                     <div className="charityInfo">
-                        <span className="charityTitle">Charity Title</span>
-                        <span className="charityDescriptionKey">Description:</span>
-                        <span className="charityDescriptionValue">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Corporis dolor inventore dolores libero, minima sunt labore at aut ipsum accusantium quas distinctio, veniam molestiae quasi! Repudiandae quas ab eius animi! Lorem ipsum dolor sit amet consectetur adipisicing elit.</span>
-                        <span className="email"><b>Email:</b> testcharity@gmail.com</span>
-                        <span className="phone"><b>Phone number:</b> +380987654321</span>
+                        <span className="charityTitle">{charityInfo.title}</span>
+                        <span className="charityDescription"><b>Description:</b>{charityInfo.description}</span>
+                        <span className="email"><b>Email:</b>{charityInfo.organisation_email}</span>
+                        <span className="phone"><b>Phone number:</b>{charityInfo.phone_number}</span>
                     </div>
                 </div>
             </div>
