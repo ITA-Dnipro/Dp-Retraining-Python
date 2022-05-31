@@ -4,8 +4,9 @@ import './App.css';
 import Header from './components/Header/Header';
 import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
-import Posts from './components/Posts';
-import Charities from './components/Charities';
+import Posts from './components/Posts/Posts';
+import Post from './components/Posts/Post';
+import Charities from './components/Charity/Charities';
 import Home from './components/Home';
 import Profile from './components/Profile/Profile';
 import Charity from './components/Charity/Charity';
@@ -34,6 +35,7 @@ const App = () => {
           <Route exact path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/posts" element={<Posts />} />
+          <Route path="/posts/:postId" element={<Post />} />
           <Route path="/charities" element={<Charities />} />
           <Route path="/charities/:charityId" element={<Charity />} />
           <Route path="/profile" element={<Profile />} />

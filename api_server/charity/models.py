@@ -30,7 +30,7 @@ class CharityOrganisation(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     title = Column(String, unique=True)
-    description = Column(String(250), unique=True)
+    description = Column(String(250))
     organisation_email = Column(String(120), unique=True)
     phone_number = Column(String(15), unique=True)
     created_at = Column(DateTime, default=datetime.now())
