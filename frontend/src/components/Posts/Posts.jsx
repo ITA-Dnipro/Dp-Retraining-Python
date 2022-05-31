@@ -40,7 +40,6 @@ const Posts = () => {
             "balance": 90
         },
     ]);
-//    const [isCreationFormVisible, setIsCreationFormVisible] = useState(false);
 
     useEffect(() => {
         loadCharities();
@@ -53,7 +52,7 @@ const Posts = () => {
     const postCard = (id, title, description) => {
         return (
             <div key={id} className="charity-card d-flex flex-row mx-auto my-4 border border-dark rounded">
-                <div className="col-4 mx-auto my-2">
+                <div className="col-4 mx-auto mb-2 mt-3">
                     <PostIcon width="46" height="46" />
                 </div>
                 <div className="col-6 mx-auto my-2">
