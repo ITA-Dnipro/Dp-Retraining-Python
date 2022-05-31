@@ -5,7 +5,7 @@ import Header from './components/Header/Header';
 import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
 import Posts from './components/Posts';
-import Charities from './components/Charities';
+import Charities from './components/Charity/Charities';
 import Home from './components/Home';
 import Profile from './components/Profile/Profile';
 import Charity from './components/Charity/Charity';
