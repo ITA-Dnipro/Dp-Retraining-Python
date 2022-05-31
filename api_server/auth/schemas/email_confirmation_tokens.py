@@ -26,7 +26,7 @@ class EmailConfirmationTokenInputSchema(EmailConfirmationTokenBaseSchema):
 class EmailConfirmationTokenOutputSchema(EmailConfirmationTokenBaseSchema):
     """EmailConfirmationToken Output Schema."""
 
-    id: UUID = Field(description="Unique identifier of a EmailConfirmationToken object.")
+    id: UUID = Field(description='Unique identifier of a EmailConfirmationToken object.')
     token: str = Field(
         description='JWT token of EmailConfirmationToken object.',
         max_length=EmailConfirmationTokenSchemaConstants.CHAR_SIZE_2048.value,

@@ -127,3 +127,14 @@ class EmailConfirmationTokenCRUD(AbstractEmailConfirmationTokenCRUD, UserCRUD):
 
     async def _get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
         return await self._select_email_confirmation_token(column='token', value=token)
+
+    async def _get_last_non_expired_email_confirmation_token_by_user_id(self, user_id: UUID) -> EmailConfirmationToken:
+        q = select(
+            EmailConfirmationToken
+        ).where(
+            EmailConfirmationToken.user_id == user_id
+        ).where(
+            EmailConfirmationToken.expired_at == None # noqa
+        )
+        email_confirmation_token = await self.session.execute(q)
+        return email_confirmation_token.scalars().one_or_none()

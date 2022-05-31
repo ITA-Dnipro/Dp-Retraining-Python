@@ -1,10 +1,11 @@
-name: User email confirmation lambda deploy
+name: Email sending lambda deploy
 
 on:
   push:
     branches:
-      - "USER-38_create_user_email_confirmation_logic"
-      - "dev"
+      - 'USER-38_create_user_email_confirmation_logic'
+      - 'dev'
+      - 'AUTH-58_add_forget_and_change_password_endpoints'
 
 jobs:
   deploy-lambda:
@@ -16,8 +17,8 @@ jobs:
       - name: Default deploy
         uses: appleboy/lambda-action@master
         with:
-          function_name: 'email_confirmation'
-          source: ./api_server/auth/utils/email_confirmation_tokens/email_confirmation_lambda.py
+          function_name: 'email_send_lambda'
+          source: ./api_server/auth/utils/email_lambdas/email_lambda.py
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ secrets.EMAIL_CONFIRMATION_LAMBDA_REGION }}
