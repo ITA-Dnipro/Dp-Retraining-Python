@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
+import { Alert, Button } from 'react-bootstrap';
 import axiosInstance from "../../axiosApi";
 import CharityIcon from './CharityIcon';
-import { Alert, Button } from 'react-bootstrap';
+import CharityCreationForm from './CharityCreationForm';
 
 const Charities = () => {
     const [charitiesState, setCharitiesState] = useState([]);
@@ -60,14 +61,21 @@ const Charities = () => {
         setIsCreationFormVisible(true);
     }
 
+    const onCharityCreated = () => {
+        loadCharities();
+    }
+
     return (
         <div>
             <div className="col-4 col-lg-2 mx-auto pt-4">
-                <Button variant="secondary" size="lg" className="w-100 my-2" onClick={onCreateButtonClick}>
-                    Create
-                </Button>
+                <div className={isCreationFormVisible ? "d-none" : ""}>
+                    <Button variant="secondary" size="lg" className="w-100 my-2" onClick={onCreateButtonClick}>
+                        Create
+                    </Button>
+                </div>
                 <div className={isCreationFormVisible ? "" : "d-none"}>
-                    creation form placeholder
+                    <CharityCreationForm setFormVisibility={setIsCreationFormVisible}
+                                         onCharityCreated={onCharityCreated} />
                 </div>
                 {charityList()}
             </div>
