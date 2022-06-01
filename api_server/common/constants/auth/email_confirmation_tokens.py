@@ -1,23 +1,6 @@
 import enum
 
 
-class AuthJWTConstants(enum.Enum):
-    """Auth JWT constants."""
-    ALGORITHM_HS256 = 'HS256'
-    ACCESS_TOKEN_NAME = 'access'
-    REFRESH_TOKEN_NAME = 'refresh'
-    # Time units.
-    DAYS = 'days'
-    MINUTES = 'minutes'
-    SECONDS = 'seconds'
-    TOKEN_EXPIRE_7 = 7
-    TOKEN_EXPIRE_30 = 30
-    TOKEN_EXPIRE_60 = 60
-    ACCESS_TOKEN_COOKIE_NAME = 'access_token_cookie'
-    REFRESH_TOKEN_COOKIE_NAME = 'refresh_token_cookie'
-    LOGOUT_MSG = 'Successfully logout.'
-
-
 class EmailConfirmationTokenModelConstants(enum.Enum):
     """EmailConfirmationToken model constants."""
     CHAR_SIZE_2048 = 2048
@@ -37,11 +20,15 @@ class EmailConfirmationTokenSchemaConstants(enum.Enum):
     EMAIL_REGEX = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 
 
-class EmailConfirmationTokenConstants(enum.Enum):
-    """EmailConfirmationToken constants."""
+class JWTTokenConstants(enum.Enum):
+    """Generic JWT token constants."""
 
     ALGORITHM_HS512 = 'HS512'
     ENCODING_UTF_8 = 'UTF-8'
+
+
+class EmailConfirmationTokenConstants(enum.Enum):
+    """EmailConfirmationToken constants."""
 
     # Time units.
     DAYS = 'days'
@@ -49,6 +36,9 @@ class EmailConfirmationTokenConstants(enum.Enum):
     SECONDS = 'seconds'
     TOKEN_EXPIRE_7 = 7
     ONE_SECOND = 1
+    MIN_TOKEN_LIFETIME = 5
+    MIN_TOKEN_LIFETIME_TIMEDELTA = {MINUTES: MIN_TOKEN_LIFETIME}
+    TIMEDELTA_10_MIN = {MINUTES: 10}
 
     # Responses.
     SUCCESSFUL_EMAIL_CONFIRMATION_MSG = {'message': "User with email: '{email}' successfully activated."}
@@ -306,9 +296,3 @@ class EmailConfirmationLetterConstants(enum.Enum):
     </body>
     </html>
     ''' # noqa
-
-
-class EmailConfirmationLambdaClientConstants(enum.Enum):
-    """EmailConfirmationLambdaClient constants."""
-    WAIT_1_SECOND = 1
-    TIMES_5 = 5
