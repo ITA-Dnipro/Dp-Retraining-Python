@@ -3,9 +3,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 from pydantic.main import ModelMetaclass
-from users.schemas import UserOutputSchema
 
 from common.constants.charities import CharitySchemaConstants
+from users.schemas import UserOutputSchema
 
 
 class AllOptional(ModelMetaclass):

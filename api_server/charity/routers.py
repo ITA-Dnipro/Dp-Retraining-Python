@@ -4,8 +4,13 @@ from fastapi import APIRouter, Depends
 
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED
 
-from charity.schemas import CharityInputSchema, CharityOutputSchema, CharityUpdateSchema, AddManagerSchema, \
-    ManagerResponseSchema
+from charity.schemas import (
+    AddManagerSchema,
+    CharityInputSchema,
+    CharityOutputSchema,
+    CharityUpdateSchema,
+    ManagerResponseSchema,
+)
 from charity.services import CharityService
 from common.schemas.responses import ResponseBaseSchema
 
@@ -25,9 +30,7 @@ async def show_charity_organisation(org_id: UUID, charity_service: CharityServic
         ResponseBaseSchema object with CharityOutputSchema object as response data.
     """
     return ResponseBaseSchema(status_code=HTTP_200_OK,
-                              data=[
-                                  CharityOutputSchema.from_orm(await charity_service.get_exact_organisation(org_id))
-                              ],
+                              data=CharityOutputSchema.from_orm(await charity_service.get_exact_organisation(org_id)),
                               errors=[])
 
 
@@ -62,10 +65,9 @@ async def create_charity(organisation_data: CharityInputSchema, charity_service:
         ResponseBaseSchema object with CharityOutputSchema object as response data.
     """
     return ResponseBaseSchema(status_code=HTTP_201_CREATED,
-                              data=[
-                                  CharityOutputSchema.from_orm(
+                              data=CharityOutputSchema.from_orm(
                                       await charity_service.add_organisation(organisation_data)
-                                  )],
+                                  ),
                               errors=[])
 
 
@@ -106,7 +108,7 @@ async def delete_charity(org_id: UUID, charity_service: CharityService = Depends
     """
     await charity_service.delete_organisation(org_id)
     return ResponseBaseSchema(status_code=HTTP_200_OK,
-                              data=[{"detail": "Organisation has been deleted successfully."}],
+                              data={"detail": "Organisation has been deleted successfully."},
                               errors=[])
 
 
@@ -144,5 +146,12 @@ async def show_managers_of_this_organisation(organisation_id: UUID, charity_serv
 
 
 @charities_router.delete("/{organisation_id}/managers/{user_id}", response_model=ResponseBaseSchema)
-async def delete_manager_from_organisation(organisation_id: UUID, user_id: UUID):
-    pass
+async def delete_manager_from_organisation(
+        organisation_id: UUID,
+        user_id: UUID,
+        charity_service: CharityService = Depends()
+):
+    await charity_service.delete_manager_from_organisation(organisation_id, user_id)
+    return ResponseBaseSchema(status_code=HTTP_200_OK,
+                              data={"detail": "Manager has been deleted successfully"},
+                              errors=[])
