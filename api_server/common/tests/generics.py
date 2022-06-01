@@ -283,7 +283,7 @@ class TestMixin:
         Returns:
         An instance of AuthService business logic class.
         """
-        return AuthService(session=db_session, Authorize=AuthJWT())
+        return AuthService(session=db_session)
 
     @pytest_asyncio.fixture
     async def authenticated_test_user(
@@ -312,6 +312,7 @@ class TestMixin:
         Returns:
         newly created User object.
         """
+        Authorize = AuthJWT()
         user_claims = {
             'user_data': {
                 'id': str(user.id),
@@ -319,18 +320,15 @@ class TestMixin:
                 'phone': user.phone_number,
             },
         }
-        access_token = await auth_service._create_jwt_token(
+        access_token = Authorize.create_access_token(
             subject=user.username,
-            token_type=AuthJWTConstants.ACCESS_TOKEN_NAME.value,
-            time_unit=AuthJWTConstants.MINUTES.value,
-            time_amount=AuthJWTConstants.TOKEN_EXPIRE_60.value,
+            expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFTETIME_60_MINUTES.value),
             user_claims=user_claims,
+            fresh=True,
         )
-        refresh_token = await auth_service._create_jwt_token(
+        refresh_token = Authorize.create_refresh_token(
             subject=user.username,
-            token_type=AuthJWTConstants.REFRESH_TOKEN_NAME.value,
-            time_unit=AuthJWTConstants.DAYS.value,
-            time_amount=AuthJWTConstants.TOKEN_EXPIRE_7.value,
+            expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFETIME_7_DAYS.value),
             user_claims=user_claims,
         )
         client.cookies.update({AuthJWTConstants.ACCESS_TOKEN_COOKIE_NAME.value: access_token})

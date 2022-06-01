@@ -15,4 +15,6 @@ class AuthJWTConstants(enum.Enum):
     TOKEN_EXPIRE_60 = 60
     ACCESS_TOKEN_COOKIE_NAME = 'access_token_cookie'
     REFRESH_TOKEN_COOKIE_NAME = 'refresh_token_cookie'
-    LOGOUT_MSG = 'Successfully logout.'
+    LOGOUT_MSG = {'message': 'Successfully logout.'}
+    TOKEN_LIFTETIME_60_MINUTES = {MINUTES: TOKEN_EXPIRE_30}
+    TOKEN_LIFETIME_7_DAYS = {DAYS: TOKEN_EXPIRE_7}
