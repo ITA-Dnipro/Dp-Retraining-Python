@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import { Alert } from 'react-bootstrap';
 import axiosInstance from '../../axiosApi';
 import { validateName, validateEmail, validatePhoneNumber} from '../../utils/validators';
+import { signupPath } from '../../constants/apiRoutes';
 
 const Signup = () => {
     const [registrationStatus, setRegistrationStatus] = useState('');
@@ -124,7 +125,7 @@ const Signup = () => {
         });
 
         axiosInstance.post(
-            '/users/',
+            signupPath,
             payload
         )
             .then(response => {
