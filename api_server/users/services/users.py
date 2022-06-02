@@ -7,7 +7,7 @@ from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.cruds import EmailConfirmationTokenCRUD
-from auth.tasks import send_email_comfirmation_letter
+from auth.tasks import send_email_confirmation_letter
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
 from common.constants.auth.email_confirmation_tokens import EmailConfirmationTokenConstants
 from db import get_session
@@ -149,7 +149,7 @@ class UserService(AbstractUserService):
             token=jwt_token,
         )
         # Start of the sending confirmation email task.
-        send_email_comfirmation_letter.apply_async(
+        send_email_confirmation_letter.apply_async(
             kwargs={
                 'email_confirmation_token': db_email_confirmation_token,
             },

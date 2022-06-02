@@ -322,7 +322,7 @@ class TestMixin:
         }
         access_token = Authorize.create_access_token(
             subject=user.username,
-            expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFTETIME_60_MINUTES.value),
+            expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFETIME_60_MINUTES.value),
             user_claims=user_claims,
             fresh=True,
         )

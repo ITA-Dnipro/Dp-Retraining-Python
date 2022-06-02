@@ -17,7 +17,7 @@ class EmailLambdaClient:
         self._log = setup_logging(self.__class__.__name__)
 
     async def send_email(self) -> dict:
-        """Makes POST http request to AWS labda that sends email letter.
+        """Makes POST http request to AWS lambda that sends email letter.
 
         Returns:
         Response from boto3 ses client.

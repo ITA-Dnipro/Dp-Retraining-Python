@@ -43,7 +43,7 @@ class TestCasePostAuthForgotPassword(TestMixin):
         assert (await db_session.execute(select(func.count(ChangePasswordToken.id)))).scalar_one() == 1
 
     @pytest.mark.asyncio
-    async def test_post_auth_forgot_password_valid_payload_non_expired_token_alredy_exists(
+    async def test_post_auth_forgot_password_valid_payload_non_expired_token_already_exists(
             self, app: FastAPI, client: AsyncClient, db_session: AsyncSession,
             test_change_password_token: ChangePasswordToken,
     ) -> None:
@@ -79,7 +79,7 @@ class TestCasePostAuthForgotPassword(TestMixin):
             self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_user: User,
     ) -> None:
         """Test POST '/auth/forgot-password' endpoint with user added to database and valid payload. Making 2 requests
-        in a row, first successful and second get anti spam exception.
+        in a row, first successful and second get anti-spam exception.
 
         Args:
             app: pytest fixture, an instance of FastAPI.

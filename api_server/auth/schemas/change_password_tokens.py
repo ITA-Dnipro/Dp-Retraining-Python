@@ -57,5 +57,5 @@ class ChangePasswordInputSchema(ChangePasswordBaseSchema):
 class ChangePasswordOutputSchema(ForgetPasswordBaseSchema):
     """ChangePassword Output Schema."""
     message: str = Field(
-        description="A user's succesfull password change message.",
+        description="A user's successful password change message.",
     )

@@ -33,7 +33,7 @@ async def login(
     Args:
         user_credentials: object validated with AuthUserInputSchema.
         auth_service: dependency as business logic instance.
-        Authorize: dependency of AuthJWT libriary for JWT tokens.
+        Authorize: dependency of AuthJWT library for JWT tokens.
 
     Returns:
     ResponseBaseSchema object with AuthUserOutputSchema object as response data.
@@ -42,7 +42,7 @@ async def login(
     user_claims = {'user_data': {'id': str(user.id)}}
     access_token = Authorize.create_access_token(
         subject=user.username,
-        expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFTETIME_60_MINUTES.value),
+        expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFETIME_60_MINUTES.value),
         user_claims=user_claims,
         fresh=True,
     )
@@ -67,7 +67,7 @@ async def auth_me(auth_service: AuthService = Depends(), Authorize: AuthJWT = De
 
     Args:
         auth_service: dependency as business logic instance.
-        Authorize: dependency of AuthJWT libriary for JWT tokens.
+        Authorize: dependency of AuthJWT library for JWT tokens.
 
     Returns:
     ResponseBaseSchema object with UserOutputSchema object as response data.
@@ -87,7 +87,7 @@ async def logout(auth_service: AuthService = Depends(), Authorize: AuthJWT = Dep
 
     Args:
         auth_service: dependency as business logic instance.
-        Authorize: dependency of AuthJWT libriary for JWT tokens.
+        Authorize: dependency of AuthJWT library for JWT tokens.
 
     Returns:
     ResponseBaseSchema object with AuthUserLogoutSchema object as response data.
@@ -107,7 +107,7 @@ async def refresh(auth_service: AuthService = Depends(), Authorize: AuthJWT = De
 
     Args:
         auth_service: dependency as business logic instance.
-        Authorize: dependency of AuthJWT libriary for JWT tokens.
+        Authorize: dependency of AuthJWT library for JWT tokens.
 
     Returns:
     ResponseBaseSchema object with AuthUserOutputSchema object as response data.
@@ -117,7 +117,7 @@ async def refresh(auth_service: AuthService = Depends(), Authorize: AuthJWT = De
     user_claims = {'user_data': Authorize.get_raw_jwt()['user_data']}
     access_token = Authorize.create_access_token(
         subject=username,
-        expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFTETIME_60_MINUTES.value),
+        expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFETIME_60_MINUTES.value),
         user_claims=user_claims,
         fresh=False,
     )
@@ -137,7 +137,7 @@ async def refresh(auth_service: AuthService = Depends(), Authorize: AuthJWT = De
 
 
 @auth_router.get('/email-confirmation', response_model=ResponseBaseSchema)
-async def get_user_email_confiramation(token: str, auth_service: AuthService = Depends()) -> ResponseBaseSchema:
+async def get_user_email_confirmation(token: str, auth_service: AuthService = Depends()) -> ResponseBaseSchema:
     """GET '/auth/email-confirmation' endpoint view function.
 
     Args:

@@ -2,12 +2,12 @@
 [![Status](https://github.com/ITA-Dnipro/Dp-Retraining-Python/actions/workflows/dev_checks.yml/badge.svg)](https://github.com/ITA-Dnipro/Dp-Retraining-Python/actions/workflows/dev_checks.yml)
 
 A retraining project to get familiar with various technologies.
-## How to setup and run
+## How to set up and run
 ### How to get project:
 ```
 git clone https://github.com/ITA-Dnipro/Dp-Retraining-Python.git
 ```
-## How to setup .env files:
+## How to set up .env files:
 ### Manual setup
 You can manually create and put env variables inside .env file in each folder where .env.example file is present.
 ### Make file setup

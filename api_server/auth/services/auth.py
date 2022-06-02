@@ -14,7 +14,7 @@ from auth.schemas import (
     EmailConfirmationTokenInputSchema,
     ForgetPasswordInputSchema,
 )
-from auth.tasks import send_change_password_letter, send_email_comfirmation_letter
+from auth.tasks import send_change_password_letter, send_email_confirmation_letter
 from auth.utils.exceptions import (
     AuthUserInvalidPasswordException,
     ChangePasswordTokenExpiredError,
@@ -141,7 +141,7 @@ class AuthService:
             id_=user.id,
             token=jwt_token,
         )
-        send_email_comfirmation_letter.apply_async(
+        send_email_confirmation_letter.apply_async(
             kwargs={
                 'email_confirmation_token': db_email_confirmation_token,
             },
@@ -284,8 +284,8 @@ class AuthService:
         """
         token = await self.change_password_token_crud._get_last_non_expired_change_password_token_by_user_id(user_id)
         if token:
-            MINUMUM_TOKEN_LIFETIME = timedelta(**ChangePasswordTokenConstants.MIN_TOKEN_LIFETIME_TIMEDELTA.value)
-            token_fresh = await self.check_token_freshness(token.created_at, MINUMUM_TOKEN_LIFETIME)
+            MINIMUM_TOKEN_LIFETIME = timedelta(**ChangePasswordTokenConstants.MIN_TOKEN_LIFETIME_TIMEDELTA.value)
+            token_fresh = await self.check_token_freshness(token.created_at, MINIMUM_TOKEN_LIFETIME)
             if token_fresh:
                 raise ChangePasswordTokenSpamCreationException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -296,7 +296,7 @@ class AuthService:
                 )
 
     async def check_token_freshness(self, token_date: datetime, token_time_limit: timedelta) -> bool:
-        """Checks token fressness by comparing creation datetime with specified time limit.
+        """Checks token freshness by comparing creation datetime with specified time limit.
 
         Args:
             token_date: Token creation datetime.
@@ -325,8 +325,8 @@ class AuthService:
             user_id,
         )
         if token:
-            MINUMUM_TOKEN_LIFETIME = timedelta(**EmailConfirmationTokenConstants.MIN_TOKEN_LIFETIME_TIMEDELTA.value)
-            token_fresh = await self.check_token_freshness(token.created_at, MINUMUM_TOKEN_LIFETIME)
+            MINIMUM_TOKEN_LIFETIME = timedelta(**EmailConfirmationTokenConstants.MIN_TOKEN_LIFETIME_TIMEDELTA.value)
+            token_fresh = await self.check_token_freshness(token.created_at, MINIMUM_TOKEN_LIFETIME)
             if token_fresh:
                 raise EmailConfirmationTokenSpamCreationException(
                     status_code=status.HTTP_400_BAD_REQUEST,

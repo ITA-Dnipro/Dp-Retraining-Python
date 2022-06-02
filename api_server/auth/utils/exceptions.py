@@ -54,7 +54,7 @@ def invalid_auth_credentials_handler(request: Request, exc: AuthUserInvalidPassw
 
 
 class UserAlreadyActivatedException(HTTPException):
-    """Custom User alredy activated exception."""
+    """Custom User already activated exception."""
     pass
 
 
@@ -79,12 +79,12 @@ class ExpiredJWTTokenError(HTTPException):
 
 
 class ChangePasswordTokenSpamCreationException(HTTPException):
-    """Custom ChangePasswordToken anti token creation spam exception."""
+    """Custom ChangePasswordToken anti-spam token creation exception."""
     pass
 
 
 class EmailConfirmationTokenSpamCreationException(HTTPException):
-    """Custom EmailConfirmationToken anti token creation spam exception."""
+    """Custom EmailConfirmationToken anti-spam token creation exception."""
     pass
 
 
