@@ -5,7 +5,7 @@ import boto3
 
 
 def send_email(event, context):
-    """Sends email letter to the recepient.
+    """Sends email letter to the recipient.
 
     Args:
         event: AWS lambda event.

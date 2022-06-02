@@ -1,4 +1,10 @@
 from auth.schemas.auth import AuthUserInputSchema, AuthUserLogoutSchema, AuthUserOutputSchema
+from auth.schemas.change_password_tokens import (
+    ChangePasswordInputSchema,
+    ChangePasswordOutputSchema,
+    ForgetPasswordInputSchema,
+    ForgetPasswordOutputSchema,
+)
 from auth.schemas.email_confirmation_tokens import (
     EmailConfirmationTokenInputSchema,
     EmailConfirmationTokenOutputSchema,
@@ -12,4 +18,8 @@ __all__ = [
     'EmailConfirmationTokenInputSchema',
     'EmailConfirmationTokenOutputSchema',
     'EmailConfirmationTokenSuccessSchema',
+    'ForgetPasswordInputSchema',
+    'ForgetPasswordOutputSchema',
+    'ChangePasswordInputSchema',
+    'ChangePasswordOutputSchema',
 ]

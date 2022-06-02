@@ -48,7 +48,7 @@ class EmailConfirmationLetter:
         return email_confirmation_template
 
     @property
-    def payloda_data(self):
+    def payload_data(self):
         return {
             'source': self._server_config.get('AWS_SES_EMAIL_SOURCE'),
             'to_address': self.email_confirmation_token.user.email,

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from unittest.mock import AsyncMock
 from uuid import uuid4
 import os
@@ -20,16 +21,16 @@ import pytest_asyncio
 
 from app import create_app
 from app.celery_base import create_celery_app
-from auth.cruds import EmailConfirmationTokenCRUD
-from auth.models import EmailConfirmationToken
+from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
+from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.services import AuthService
-from auth.utils.email_confirmation_tokens import create_email_cofirmation_token
+from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
 from charity.models import CharityOrganisation, CharityUserAssociation
 from common.constants.api import ApiConstants
-from common.constants.auth import AuthJWTConstants
+from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
-from common.tests.test_data.charity.charity_requests import initialize_charity_data
+from common.tests.test_data.charity.charity_requests import ADDITIONAL_USER_TEST_DATA, initialize_charity_data
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
@@ -282,7 +283,7 @@ class TestMixin:
         Returns:
         An instance of AuthService business logic class.
         """
-        return AuthService(session=db_session, Authorize=AuthJWT())
+        return AuthService(session=db_session)
 
     @pytest_asyncio.fixture
     async def authenticated_test_user(
@@ -311,6 +312,7 @@ class TestMixin:
         Returns:
         newly created User object.
         """
+        Authorize = AuthJWT()
         user_claims = {
             'user_data': {
                 'id': str(user.id),
@@ -318,18 +320,15 @@ class TestMixin:
                 'phone': user.phone_number,
             },
         }
-        access_token = await auth_service._create_jwt_token(
+        access_token = Authorize.create_access_token(
             subject=user.username,
-            token_type=AuthJWTConstants.ACCESS_TOKEN_NAME.value,
-            time_unit=AuthJWTConstants.MINUTES.value,
-            time_amount=AuthJWTConstants.TOKEN_EXPIRE_60.value,
+            expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFETIME_60_MINUTES.value),
             user_claims=user_claims,
+            fresh=True,
         )
-        refresh_token = await auth_service._create_jwt_token(
+        refresh_token = Authorize.create_refresh_token(
             subject=user.username,
-            token_type=AuthJWTConstants.REFRESH_TOKEN_NAME.value,
-            time_unit=AuthJWTConstants.DAYS.value,
-            time_amount=AuthJWTConstants.TOKEN_EXPIRE_7.value,
+            expires_time=timedelta(**AuthJWTConstants.TOKEN_LIFETIME_7_DAYS.value),
             user_claims=user_claims,
         )
         client.cookies.update({AuthJWTConstants.ACCESS_TOKEN_COOKIE_NAME.value: access_token})
@@ -471,7 +470,8 @@ class TestMixin:
         return async_mock
 
     @staticmethod
-    async def _initialize_charity(user: User, db_session: AsyncSession, charity_title: str) -> CharityOrganisation:
+    async def _initialize_charity(user: User, db_session: AsyncSession, charity_title: str, is_director: bool,
+                                  is_supermanager: bool) -> CharityOrganisation:
         """
         Initializes charityOrganisation in database.
         Args:
@@ -484,6 +484,8 @@ class TestMixin:
         organisation = CharityOrganisation(**initialize_charity_data(charity_title))
         association = CharityUserAssociation()
         association.user = user
+        association.is_director = is_director
+        association.is_supermanager = is_supermanager
         organisation.users_association.append(association)
 
         db_session.add(organisation)
@@ -494,7 +496,7 @@ class TestMixin:
     @pytest_asyncio.fixture
     async def charity(self, user_crud: UserCRUD, db_session: AsyncSession) -> CharityOrganisation:
         """
-            Create authenticated test charity data and store it in test database.
+            Create test charity data and store it in test database.
 
             Returns:
             CharityOrganisation object and not authenticated User object.
@@ -504,25 +506,69 @@ class TestMixin:
         organisation = await self._initialize_charity(
             user=user,
             db_session=db_session,
-            charity_title="Charity Organisation"
+            charity_title="Charity Organisation",
+            is_director=True,
+            is_supermanager=True
         )
         return organisation
 
     @pytest_asyncio.fixture
-    async def authenticated_user_charity(self,
-                                         user_crud: UserCRUD,
-                                         db_session: AsyncSession,
-                                         auth_service: AuthService,
-                                         client: fixture, ) -> CharityOrganisation:
+    async def charity_with_authenticated_manager(self,
+                                                 user_crud: UserCRUD,
+                                                 db_session: AsyncSession,
+                                                 auth_service: AuthService,
+                                                 client: fixture, ) -> CharityOrganisation:
         """
         Create authenticated test charity data and store it in test database.
 
             Returns:
-        CharityOrganisation object.
+        CharityOrganisation object with authenticated user.
         """
+        additional_user = await self._create_user(user_crud, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
         user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        organisation = await self._initialize_charity(user=user, db_session=db_session,
-                                                      charity_title="Charity Organisation")
+        organisation = await self._initialize_charity(user=user,
+                                                      db_session=db_session,
+                                                      charity_title="Charity Organisation",
+                                                      is_supermanager=False,
+                                                      is_director=False)
+        association = CharityUserAssociation()
+        association.user = additional_user
+        association.charity = organisation
+        association.is_supermanager = False
+
+        db_session.add(association)
+        await db_session.commit()
+
+        await self._create_authenticated_user(user, auth_service, client)
+
+        return organisation
+
+    @pytest_asyncio.fixture
+    async def charity_with_authenticated_director(self,
+                                                  user_crud: UserCRUD,
+                                                  db_session: AsyncSession,
+                                                  auth_service: AuthService,
+                                                  client: fixture, ) -> CharityOrganisation:
+        """
+        Create authenticated test charity data and store it in test database.
+
+            Returns:
+        CharityOrganisation object with authenticated user.
+        """
+        additional_user = await self._create_user(user_crud, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        organisation = await self._initialize_charity(user=user,
+                                                      db_session=db_session,
+                                                      charity_title="Charity Organisation",
+                                                      is_supermanager=True,
+                                                      is_director=True)
+        association = CharityUserAssociation()
+        association.user = additional_user
+        association.charity = organisation
+        association.is_supermanager = True
+
+        db_session.add(association)
+        await db_session.commit()
         await self._create_authenticated_user(user, auth_service, client)
 
         return organisation
@@ -534,11 +580,20 @@ class TestMixin:
         return await self._create_authenticated_user(random_test_user, auth_service, client)
 
     @pytest_asyncio.fixture
-    async def many_charities(self, user_crud: UserCRUD, db_session: AsyncSession):
+    async def many_charities(
+            self,
+            user_crud: UserCRUD,
+            db_session: AsyncSession,
+            auth_service: AuthService,
+            client: fixture
+    ):
         user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         charity_titles = ("organisation D", "organisation B", "organisation A", "organisation Y")
-        organisations = [await self._initialize_charity(user=user, db_session=db_session, charity_title=title)
-                         for title in charity_titles]
+        organisations = [
+            await self._initialize_charity(user=user, db_session=db_session, charity_title=title, is_director=True,
+                                           is_supermanager=True)
+            for title in charity_titles]
+        await self._create_authenticated_user(user, auth_service, client)
         return organisations
 
     @pytest_asyncio.fixture(autouse=True)
@@ -556,19 +611,31 @@ class TestMixin:
     @pytest_asyncio.fixture
     async def test_email_confirmation_token(
             self, email_confirmation_token_crud: EmailConfirmationTokenCRUD, user_crud: UserCRUD,
+            db_session: AsyncSession,
     ) -> EmailConfirmationToken:
         """A pytest fixture that creates test EmailConfirmationToken object and storing it in the test databases.
 
         Args:
             email_confirmation_token_crud: instance of database crud logic class.
             user_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
         An instance of EmailConfirmationToken object.
         """
         user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        token = create_email_cofirmation_token(user)
-        return await email_confirmation_token_crud.add_email_confirmation_token(id_=user.id, token=token)
+        jwt_token_payload = create_token_payload(
+            data=str(user.id),
+            time_amount=EmailConfirmationTokenConstants.TOKEN_EXPIRE_7.value,
+            time_unit=EmailConfirmationTokenConstants.MINUTES.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
+        db_token = await email_confirmation_token_crud.add_email_confirmation_token(id_=user.id, token=jwt_token)
+        db_token.created_at = db_token.created_at - timedelta(**EmailConfirmationTokenConstants.TIMEDELTA_10_MIN.value)
+        db_session.add(db_token)
+        await db_session.commit()
+        await db_session.refresh(db_token)
+        return db_token
 
     @pytest_asyncio.fixture
     async def test_activated_email_confirmation_token(
@@ -591,3 +658,94 @@ class TestMixin:
         await email_confirmation_token_crud._expire_email_confirmation_token_by_id(test_email_confirmation_token.id)
         await db_session.refresh(test_email_confirmation_token)
         return test_email_confirmation_token
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def change_password_token_crud(self, db_session: AsyncSession) -> ChangePasswordTokenCRUD:
+        """A pytest fixture that creates instance of change_password_token_crud business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of ChangePasswordTokenCRUD business logic class.
+        """
+        return ChangePasswordTokenCRUD(session=db_session)
+
+    @pytest_asyncio.fixture
+    async def test_change_password_token(
+            self, change_password_token_crud: ChangePasswordTokenCRUD, user_crud: UserCRUD,
+            db_session: AsyncSession,
+    ) -> ChangePasswordToken:
+        """A pytest fixture that creates test ChangePasswordToken object and storing it in the test databases.
+
+        Args:
+            change_password_token_crud: instance of database crud logic class.
+            user_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of EmailConfirmationToken object.
+        """
+        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        jwt_token_payload = create_token_payload(
+            data=str(user.id),
+            time_amount=ChangePasswordTokenConstants.TOKEN_EXPIRE_1.value,
+            time_unit=ChangePasswordTokenConstants.DAYS.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
+        db_token = await change_password_token_crud.add_change_password_token(id_=user.id, token=jwt_token)
+        db_token.created_at = db_token.created_at - timedelta(**ChangePasswordTokenConstants.TIMEDELTA_10_MIN.value)
+        db_session.add(db_token)
+        await db_session.commit()
+        await db_session.refresh(db_token)
+        return db_token
+
+    @pytest_asyncio.fixture
+    async def test_db_expired_change_password_token(
+            self,
+            test_change_password_token: ChangePasswordToken,
+            change_password_token_crud: ChangePasswordTokenCRUD,
+            db_session: AsyncSession,
+    ) -> ChangePasswordToken:
+        """A pytest fixture that creates expired test ChangePasswordToken object and storing it in the test databases.
+
+        Args:
+            test_change_password_token: pytest fixture that creates test ChangePasswordToken object.
+            change_password_token_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        A ChangePasswordToken object with filled 'expired_at' field.
+        """
+        await change_password_token_crud._expire_change_password_token_by_id(test_change_password_token.id)
+        await db_session.refresh(test_change_password_token)
+        return test_change_password_token
+
+    @pytest_asyncio.fixture
+    async def test_jwt_expired_change_password_token(
+            self,
+            test_change_password_token: ChangePasswordToken,
+            change_password_token_crud: ChangePasswordTokenCRUD,
+            db_session: AsyncSession,
+    ) -> ChangePasswordToken:
+        """A pytest fixture that creates test ChangePasswordToken object with expired jwt token.
+
+        Args:
+            test_change_password_token: pytest fixture that creates test ChangePasswordToken object.
+            change_password_token_crud: instance of database crud logic class.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        A ChangePasswordToken object with filled 'expired_at' field.
+        """
+        jwt_token_payload = create_token_payload(
+            data=str(test_change_password_token.user.id),
+            time_amount=ChangePasswordTokenConstants.HALF_SECOND.value,
+            time_unit=ChangePasswordTokenConstants.SECONDS.value,
+        )
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=test_change_password_token.user.password)
+        test_change_password_token.token = jwt_token
+        db_session.add(test_change_password_token)
+        await db_session.commit()
+        await db_session.refresh(test_change_password_token)
+        return test_change_password_token

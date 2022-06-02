@@ -17,7 +17,7 @@ def save_user_picture_in_aws_s3_bucket(
 
     Args:
         db_user_picture: UserPicture instance.
-        image_data: bytes content of uploaed image.
+        image_data: bytes content of uploaded image.
         content_type: image's content-type.
         file_extension: image file extension.
 
@@ -54,7 +54,7 @@ def update_user_picture_in_aws_s3_bucket(
 
     Args:
         db_user_picture: UserPicture instance.
-        image_data: bytes content of uploaed image.
+        image_data: bytes content of uploaded image.
         content_type: image's content-type.
         file_extension: image file extension.
 

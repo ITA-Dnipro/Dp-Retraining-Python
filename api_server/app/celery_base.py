@@ -5,7 +5,7 @@ from common.constants.celery import CeleryConstants
 
 
 def create_celery_app(config_name=CeleryConstants.DEVELOPMENT_CONFIG.value):
-    """Creates instace of Celery app bases on provided confing name.
+    """Creates instance of Celery app bases on provided confing name.
 
     Args:
         config_name: string with config name.

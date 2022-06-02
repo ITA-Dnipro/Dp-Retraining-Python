@@ -9,17 +9,25 @@ from app.config import get_app_config
 from auth.routers import auth_router
 from auth.utils.exceptions import (
     AuthUserInvalidPasswordException,
-    EmailConfirmationExpiredJWTTokenError,
-    EmailConfirmationJWTTokenError,
+    ChangePasswordTokenExpiredError,
+    ChangePasswordTokenNotFoundError,
+    ChangePasswordTokenSpamCreationException,
     EmailConfirmationTokenExpiredError,
     EmailConfirmationTokenNotFoundError,
+    EmailConfirmationTokenSpamCreationException,
+    ExpiredJWTTokenError,
+    JWTTokenError,
     UserAlreadyActivatedException,
     authjwt_exception_handler,
-    email_confirmation_expired_jwt_token_handler,
-    email_confirmation_invalid_jwt_token_handler,
+    change_password_token_anti_creation_spam_handler,
+    change_password_token_expired_in_db_handler,
+    change_password_token_not_found_handler,
+    email_confirmation_token_anti_creation_spam_handler,
     email_confirmation_token_expired_handler,
     email_confirmation_token_not_found_error_handler,
+    expired_jwt_token_handler,
     invalid_auth_credentials_handler,
+    invalid_jwt_token_handler,
     user_already_activated_handler,
 )
 from charity.routers import charities_router
@@ -115,6 +123,14 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(UserAlreadyActivatedException, user_already_activated_handler)
     app.add_exception_handler(EmailConfirmationTokenNotFoundError, email_confirmation_token_not_found_error_handler)
     app.add_exception_handler(EmailConfirmationTokenExpiredError, email_confirmation_token_expired_handler)
-    app.add_exception_handler(EmailConfirmationJWTTokenError, email_confirmation_invalid_jwt_token_handler)
-    app.add_exception_handler(EmailConfirmationExpiredJWTTokenError, email_confirmation_expired_jwt_token_handler)
+    app.add_exception_handler(JWTTokenError, invalid_jwt_token_handler)
+    app.add_exception_handler(ExpiredJWTTokenError, expired_jwt_token_handler)
+    app.add_exception_handler(
+        ChangePasswordTokenSpamCreationException, change_password_token_anti_creation_spam_handler,
+    )
+    app.add_exception_handler(
+        EmailConfirmationTokenSpamCreationException, email_confirmation_token_anti_creation_spam_handler,
+    )
+    app.add_exception_handler(ChangePasswordTokenNotFoundError, change_password_token_not_found_handler)
+    app.add_exception_handler(ChangePasswordTokenExpiredError, change_password_token_expired_in_db_handler)
     return app
