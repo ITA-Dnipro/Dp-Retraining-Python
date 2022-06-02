@@ -2,6 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
+from fastapi_jwt_auth import AuthJWT
+
 from common.constants.users import UserRouteConstants
 from common.schemas.responses import ResponseBaseSchema
 from users.routers.user_pictures import user_pictures_router
@@ -82,34 +84,44 @@ async def post_users(
 
 
 @users_router.put('/{id}', response_model=ResponseBaseSchema)
-async def put_user(id: UUID, user: UserUpdateSchema, user_service: UserService = Depends()) -> ResponseBaseSchema:
+async def put_user(
+        id: UUID, update_data: UserUpdateSchema, user_service: UserService = Depends(), Authorize: AuthJWT = Depends(),
+) -> ResponseBaseSchema:
     """PUT '/users/{id}' endpoint view function.
 
     Args:
         id: UUID of user.
-        user: Serialized UserUpdateSchema object.
+        update_data: Serialized UserUpdateSchema object.
         user_service: dependency as business logic instance.
+        Authorize: dependency of AuthJWT library for JWT tokens.
 
     Returns:
     ResponseBaseSchema object with UserOutputSchema object as response data.
     """
+    Authorize.jwt_required()
+    jwt_subject = Authorize.get_jwt_subject()
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
-        data=UserOutputSchema.from_orm(await user_service.update_user(id_=id, user=user)),
+        data=UserOutputSchema.from_orm(
+            await user_service.update_user(id_=id, jwt_subject=jwt_subject, update_data=update_data)
+        ),
         errors=[],
     )
 
 
 @users_router.delete('/{id}')
-async def delete_user(id: UUID, user_service: UserService = Depends()) -> Response:
+async def delete_user(id: UUID, user_service: UserService = Depends(), Authorize: AuthJWT = Depends()) -> Response:
     """DELETE '/users/{id}' endpoint view function.
 
     Args:
         id: UUID of user.
         user_service: dependency as business logic instance.
+        Authorize: dependency of AuthJWT library for JWT tokens.
 
     Returns:
     http response with no data and 204 status code.
     """
-    await user_service.delete_user(id_=id)
+    Authorize.jwt_required()
+    jwt_subject = Authorize.get_jwt_subject()
+    await user_service.delete_user(id_=id, jwt_subject=jwt_subject)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
