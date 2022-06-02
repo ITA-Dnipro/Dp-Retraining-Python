@@ -321,7 +321,8 @@ class CharityService(AbstractCharityService):
         current_user_id = self.Authorize.get_raw_jwt()["user_data"]["id"]
 
         await self._check_is_director(current_user_id, organisation_id)
-        await self.session.execute(delete(CharityUserAssociation)
-            .where(
-            and_(CharityUserAssociation.users_id == user_id, CharityUserAssociation.charity_id == organisation_id)))
+        await self.session.execute(delete(CharityUserAssociation).where(and_(
+            CharityUserAssociation.users_id == user_id,
+            CharityUserAssociation.charity_id == organisation_id
+        )))
         await self.session.commit()
