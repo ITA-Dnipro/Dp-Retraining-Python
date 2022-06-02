@@ -93,7 +93,7 @@ class AbstractCharityService(metaclass=ABCMeta):
 
     async def add_manager(self, organisation_id: UUID, manager: AddManagerSchema) -> CharityUserAssociation:
         """
-        Delete CharityOrganisation object.
+        Add CharityOrganisation object.
 
         Args:
             organisation_id: id of organisation we want to add manager.
@@ -118,14 +118,12 @@ class AbstractCharityService(metaclass=ABCMeta):
 
     async def delete_manager_from_organisation(self, organisation_id: UUID, user_id: UUID):
         """
-        Retrieves list of users that related to definite organisations.
+        Deletes list of users that related to definite organisations.
 
         Args:
             organisation_id: id of organisation. User will be removed from organisation with this id.
             user_id: id of manager we want to delete from organisation.
 
-        Returns:
-             InstrumentedList object.
         """
         return await self._delete_manager_from_organisation(organisation_id, user_id)
 

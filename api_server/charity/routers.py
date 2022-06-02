@@ -112,7 +112,7 @@ async def delete_charity(org_id: UUID, charity_service: CharityService = Depends
                               errors=[])
 
 
-@charities_router.post("/{organisation_id}/managers/add", response_model=ResponseBaseSchema)
+@charities_router.post("/{organisation_id}/managers", response_model=ResponseBaseSchema)
 async def add_manager(organisation_id: UUID, manager_data: AddManagerSchema,
                       charity_service: CharityService = Depends()):
     """
