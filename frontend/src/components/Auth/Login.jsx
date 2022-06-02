@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
 import { Alert } from 'react-bootstrap';
 import axiosInstance from '../../axiosApi';
+import { loginPath } from '../../constants/apiRoutes';
 
 const Login = ({setIsAuthenticated}) => {
-//    const [loginStatus, setLoginStatus] = useState('');
     const [loginUsername, setLoginUsername] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
 
@@ -18,16 +18,13 @@ const Login = ({setIsAuthenticated}) => {
         }
         console.log(payload);
         axiosInstance.post(
-                '/auth/login/',
+                loginPath,
                 payload
             )
             .then(response => {
                 const accessToken = response.data.data.access_token;
-                const refreshToken = response.data.data.refresh_token;
                 const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
                 const userId = tokenPayload.user_data.id;
-                localStorage.setItem('access_token', accessToken);
-                localStorage.setItem('refresh_token', refreshToken);
                 localStorage.setItem('user_id', userId);
                 window.location.href = '/';
             })
