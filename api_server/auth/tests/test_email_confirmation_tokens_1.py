@@ -107,7 +107,7 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
             self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_user: User,
     ) -> None:
         """Test POST '/auth/email-confirmation' endpoint with user added to database and valid payload.Making 2 requests
-        in a row, first successful and second get anti spam exception.
+        in a row, first successful and second get anti-spam exception.
 
         Args:
             app: pytest fixture, an instance of FastAPI.
@@ -161,7 +161,7 @@ class TestCaseGetAuthEmailConfirmation(TestMixin):
         Returns:
         Nothing.
         """
-        url = app.url_path_for('get_user_email_confiramation')
+        url = app.url_path_for('get_user_email_confirmation')
         request_test_auth_email_confirmation_data.GET_EMAIL_CONFIRMATION_VALID_TOKEN['token'] = (
             test_email_confirmation_token.token
         )
@@ -196,7 +196,7 @@ class TestCaseGetAuthEmailConfirmation(TestMixin):
         Returns:
         Nothing.
         """
-        url = app.url_path_for('get_user_email_confiramation')
+        url = app.url_path_for('get_user_email_confirmation')
         request_test_auth_email_confirmation_data.GET_EMAIL_CONFIRMATION_VALID_TOKEN['token'] = (
             test_activated_email_confirmation_token.token
         )

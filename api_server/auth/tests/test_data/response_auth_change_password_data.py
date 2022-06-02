@@ -30,7 +30,7 @@ POST_FORGOT_PASSWORD_ANTI_SPAM_TEST_DATA = {
 }
 POST_CHANGE_PASSWORD_TOKEN_EXPIRED_IN_DB_TEST_DATA = {
     'data': [],
-    'errors': [{'detail': 'Change password token alredy expired.'}],
+    'errors': [{'detail': 'Change password token already expired.'}],
     'status_code': 400
 }
 POST_CHANGE_PASSWORD_TOKEN_EXPIRED_IN_JWT_TEST_DATA = {

@@ -36,5 +36,5 @@ class EmailConfirmationTokenOutputSchema(EmailConfirmationTokenBaseSchema):
 class EmailConfirmationTokenSuccessSchema(BaseModel):
     """EmailConfirmationToken Success Schema."""
     message: str = Field(
-        description='A message with succesfull user activation.',
+        description='A message with successful user activation.',
     )

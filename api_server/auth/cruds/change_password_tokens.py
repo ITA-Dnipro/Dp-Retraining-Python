@@ -1,10 +1,9 @@
 from datetime import datetime
 from uuid import UUID
-import abc
 
 from fastapi import status
 
-from sqlalchemy import select, update
+from sqlalchemy import and_, select, update
 from sqlalchemy.exc import NoResultFound
 
 from auth.models import ChangePasswordToken
@@ -13,7 +12,7 @@ from users.cruds.users_crud import UserCRUD
 from utils.logging import setup_logging
 
 
-class AbstractChangePasswordTokenCRUD(metaclass=abc.ABCMeta):
+class ChangePasswordTokenCRUD(UserCRUD):
 
     def __init__(self, session) -> None:
         self._log = setup_logging(self.__class__.__name__)
@@ -30,13 +29,6 @@ class AbstractChangePasswordTokenCRUD(metaclass=abc.ABCMeta):
         newly created ChangePasswordToken object.
         """
         return await self._add_change_password_token(id_, token)
-
-    @classmethod
-    async def _add_change_password_token(self, id_: UUID, token: str) -> None:
-        pass
-
-
-class ChangePasswordTokenCRUD(AbstractChangePasswordTokenCRUD, UserCRUD):
 
     async def _add_change_password_token(self, id_: UUID, token: str) -> ChangePasswordToken:
         user = await self.get_user_by_id(id_=id_)
@@ -56,17 +48,17 @@ class ChangePasswordTokenCRUD(AbstractChangePasswordTokenCRUD, UserCRUD):
         Returns:
         Nothing.
         """
-        await self.session.execute(
-            update(
-                ChangePasswordToken
-            ).where(
-                ChangePasswordToken.user_id == id_
-            ).where(
-                ChangePasswordToken.expired_at == None # noqa
-            ).values(
-                expired_at=datetime.utcnow()
+        q = update(
+            ChangePasswordToken
+        ).where(
+            and_(
+                ChangePasswordToken.user_id == id_,
+                ChangePasswordToken.expired_at == None, # noqa
             )
+        ).values(
+            expired_at=datetime.utcnow()
         )
+        await self.session.execute(q)
         await self.session.commit()
 
     async def _change_password_token_exists(self, column: str, value: UUID | str) -> bool:
@@ -97,9 +89,10 @@ class ChangePasswordTokenCRUD(AbstractChangePasswordTokenCRUD, UserCRUD):
         q = select(
             ChangePasswordToken
         ).where(
-            ChangePasswordToken.user_id == user_id
-        ).where(
-            ChangePasswordToken.expired_at == None # noqa
+            and_(
+                ChangePasswordToken.user_id == user_id,
+                ChangePasswordToken.expired_at == None, # noqa
+            )
         )
         change_password_token = await self.session.execute(q)
         return change_password_token.scalars().one_or_none()

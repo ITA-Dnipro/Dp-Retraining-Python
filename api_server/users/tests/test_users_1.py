@@ -178,7 +178,7 @@ class TestCasePostUsers(TestMixin):
             self, app: FastAPI, client: AsyncClient, db_session: AsyncSession,
     ) -> None:
         """Test POST '/users' endpoint with valid payload and no user's data added to the db.
-        EmailConfiramtionToken created alongside with user.
+        EmailConfirmationToken created alongside with user.
 
         Args:
             app: pytest fixture, an instance of FastAPI.

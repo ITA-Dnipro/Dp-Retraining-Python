@@ -14,7 +14,7 @@ def create_token_payload(data: str, time_amount: str, time_unit: str) -> dict:
     """Creates payload to be encoded into JWT token.
 
     Args:
-        data: body of future JWT token..
+        data: body of future JWT token.
         time_amount: token lifetime amount.
         time_unit: token lifetime unit.
 
@@ -43,20 +43,20 @@ def create_jwt_token(payload: dict, key: str) -> str:
 def encode_jwt_token(
         payload: dict,
         key: str,
-        algorightm: str = JWTTokenConstants.ALGORITHM_HS512.value,
+        algorithm: str = JWTTokenConstants.ALGORITHM_HS512.value,
 ) -> str:
     """Encodes payload with key to create JWT token.
 
     Args:
         payload: to encode in JWT token.
         key: for token encoding.
-        algorightm: used in JWT token encoding.
+        algorithm: used in JWT token encoding.
 
     Returns:
     String with encoded JWT token.
     """
     return jwt.encode(
-        payload=payload, key=key, algorithm=algorightm,
+        payload=payload, key=key, algorithm=algorithm,
     ).decode(JWTTokenConstants.ENCODING_UTF_8.value)
 
 

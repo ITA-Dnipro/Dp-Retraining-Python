@@ -1,10 +1,9 @@
 from datetime import datetime
 from uuid import UUID
-import abc
 
 from fastapi import status
 
-from sqlalchemy import select, update
+from sqlalchemy import and_, select, update
 from sqlalchemy.exc import NoResultFound
 
 from auth.models import EmailConfirmationToken
@@ -13,7 +12,7 @@ from users.cruds.users_crud import UserCRUD
 from utils.logging import setup_logging
 
 
-class AbstractEmailConfirmationTokenCRUD(metaclass=abc.ABCMeta):
+class EmailConfirmationTokenCRUD(UserCRUD):
 
     def __init__(self, session) -> None:
         self._log = setup_logging(self.__class__.__name__)
@@ -30,28 +29,6 @@ class AbstractEmailConfirmationTokenCRUD(metaclass=abc.ABCMeta):
         newly created EmailConfirmationToken object.
         """
         return await self._add_email_confirmation_token(id_, token)
-
-    async def get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
-        """Get EmailConfirmationToken object from database filtered by token field.
-
-        Args:
-            token: JWT token stored in EmailConfirmationToken token field.
-
-        Returns:
-        Single EmailConfirmationToken object filtered by token field.
-        """
-        return await self._get_email_confirmation_by_token(token)
-
-    @abc.abstractclassmethod
-    async def _add_email_confirmation_token(self, id_: UUID, token: str) -> None:
-        pass
-
-    @abc.abstractclassmethod
-    async def _get_email_confirmation_by_token(self, token: str) -> None:
-        pass
-
-
-class EmailConfirmationTokenCRUD(AbstractEmailConfirmationTokenCRUD, UserCRUD):
 
     async def _add_email_confirmation_token(self, id_: UUID, token: str) -> EmailConfirmationToken:
         user = await self.get_user_by_id(id_=id_)
@@ -71,17 +48,17 @@ class EmailConfirmationTokenCRUD(AbstractEmailConfirmationTokenCRUD, UserCRUD):
         Returns:
         Nothing.
         """
-        await self.session.execute(
-            update(
-                EmailConfirmationToken
-            ).where(
-                EmailConfirmationToken.user_id == id_
-            ).where(
-                EmailConfirmationToken.expired_at == None # noqa
-            ).values(
-                expired_at=datetime.utcnow()
+        q = update(
+            EmailConfirmationToken
+        ).where(
+            and_(
+                EmailConfirmationToken.user_id == id_,
+                EmailConfirmationToken.expired_at == None, # noqa
             )
+        ).values(
+            expired_at=datetime.utcnow()
         )
+        await self.session.execute(q)
         await self.session.commit()
 
     async def _expire_email_confirmation_token_by_id(self, id_: UUID) -> None:
@@ -125,6 +102,17 @@ class EmailConfirmationTokenCRUD(AbstractEmailConfirmationTokenCRUD, UserCRUD):
             )
             return email_confirmation_token.scalar_one()
 
+    async def get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
+        """Get EmailConfirmationToken object from database filtered by token field.
+
+        Args:
+            token: JWT token stored in EmailConfirmationToken token field.
+
+        Returns:
+        Single EmailConfirmationToken object filtered by token field.
+        """
+        return await self._get_email_confirmation_by_token(token)
+
     async def _get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
         return await self._select_email_confirmation_token(column='token', value=token)
 
@@ -132,9 +120,10 @@ class EmailConfirmationTokenCRUD(AbstractEmailConfirmationTokenCRUD, UserCRUD):
         q = select(
             EmailConfirmationToken
         ).where(
-            EmailConfirmationToken.user_id == user_id
-        ).where(
-            EmailConfirmationToken.expired_at == None # noqa
+            and_(
+                EmailConfirmationToken.user_id == user_id,
+                EmailConfirmationToken.expired_at == None,  # noqa
+            )
         )
         email_confirmation_token = await self.session.execute(q)
         return email_confirmation_token.scalars().one_or_none()
