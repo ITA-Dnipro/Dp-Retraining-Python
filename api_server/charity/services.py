@@ -188,7 +188,7 @@ class CharityService(AbstractCharityService):
                                             detail="This organisation hasn't been found")
         return organisation
 
-    async def _check_is_supermanager_and_higher(self, user_id_to_check):
+    async def _check_is_supermanager_and_higher(self, user_id_to_check, organisation_id_to_check):
         """
         Checks if this user has permissions to manage organisations with supermanager rights.
 
@@ -200,9 +200,10 @@ class CharityService(AbstractCharityService):
         """
         try:
             user_charity_relation_data = (await self.session.execute(
-                select(CharityUserAssociation).where(
-                    CharityUserAssociation.users_id == user_id_to_check
-                ))).scalar_one()
+                select(CharityUserAssociation).where(and_(
+                    CharityUserAssociation.users_id == user_id_to_check,
+                    CharityUserAssociation.charity_id == organisation_id_to_check
+                )))).scalar_one()
         except NoResultFound:
             raise OrganisationHTTPException(status_code=HTTP_403_FORBIDDEN,
                                             detail="You do not have permission to perform this action")
@@ -210,7 +211,7 @@ class CharityService(AbstractCharityService):
             raise OrganisationHTTPException(status_code=HTTP_403_FORBIDDEN,
                                             detail="You do not have permission to perform this action")
 
-    async def _check_is_director(self, user_id_to_check):
+    async def _check_is_director(self, user_id_to_check, organisation_id_to_check):
         """
         Checks if this user has permissions to manage organisations with director rights.
 
@@ -222,9 +223,10 @@ class CharityService(AbstractCharityService):
         """
         try:
             charity_user_association_of_current_user = (await self.session.execute(
-                select(CharityUserAssociation).where(
-                    CharityUserAssociation.users_id == user_id_to_check
-                ))).scalar_one()
+                select(CharityUserAssociation).where(and_(
+                    CharityUserAssociation.users_id == user_id_to_check,
+                    CharityUserAssociation.charity_id == organisation_id_to_check
+                )))).scalar_one()
         except NoResultFound:
             raise OrganisationHTTPException(status_code=HTTP_403_FORBIDDEN,
                                             detail="You do not have permission to perform this action")
@@ -271,7 +273,7 @@ class CharityService(AbstractCharityService):
         self.Authorize.jwt_required()
 
         current_user_id = self.Authorize.get_raw_jwt()["user_data"]["id"]
-        await self._check_is_supermanager_and_higher(current_user_id)
+        await self._check_is_supermanager_and_higher(current_user_id, organisation_id)
 
         user = await self._get_user_by_id(candidate.user_id)
         organisation = await self._get_organisation_by_id(organisation_id)
@@ -308,7 +310,7 @@ class CharityService(AbstractCharityService):
         self.Authorize.jwt_required()
         current_user_id = self.Authorize.get_raw_jwt()["user_data"]["id"]
 
-        await self._check_is_director(current_user_id)
+        await self._check_is_director(current_user_id, org_id)
 
         await self.session.execute(delete(CharityUserAssociation).where(CharityUserAssociation.charity_id == org_id))
         await self.session.delete(await self._get_organisation_by_id(org_id))
@@ -318,8 +320,8 @@ class CharityService(AbstractCharityService):
         self.Authorize.jwt_required()
         current_user_id = self.Authorize.get_raw_jwt()["user_data"]["id"]
 
-        await self._check_is_director(current_user_id)
+        await self._check_is_director(current_user_id, organisation_id)
         await self.session.execute(delete(CharityUserAssociation)
-                                   .where(
+            .where(
             and_(CharityUserAssociation.users_id == user_id, CharityUserAssociation.charity_id == organisation_id)))
         await self.session.commit()
