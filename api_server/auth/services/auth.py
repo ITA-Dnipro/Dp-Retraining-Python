@@ -32,8 +32,8 @@ from common.exceptions.auth import (
     EmailConfirmationTokenExceptionMsgs,
 )
 from db import get_session
-from users.cruds import UserCRUD
 from users.models import User
+from users.services import UserService
 from utils.logging import setup_logging
 
 
@@ -43,7 +43,7 @@ class AuthService:
     def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
-        self.user_crud = UserCRUD(session=self.session)
+        self.user_service = UserService(session=self.session)
         self.email_confirmation_token_crud = EmailConfirmationTokenCRUD(session=self.session)
         self.change_password_token_crud = ChangePasswordTokenCRUD(session=self.session)
 
@@ -59,7 +59,7 @@ class AuthService:
         return await self._verify_user_credentials(user_credentials)
 
     async def _verify_user_credentials(self, user_credentials: AuthUserInputSchema) -> None:
-        user = await self.user_crud.get_user_by_username(username=user_credentials.username)
+        user = await self.user_service.get_user_by_username(username=user_credentials.username)
         if await self.verify_password(password=user_credentials.password, password_hash=user.password):
             return user
         raise AuthUserInvalidPasswordException(
@@ -91,7 +91,7 @@ class AuthService:
         return await self._me(username)
 
     async def _me(self, username: str) -> None:
-        return await self.user_crud.get_user_by_username(username)
+        return await self.user_service.get_user_by_username(username)
 
     async def get_user_email_confirmation(self, token: str) -> dict:
         """Verifies incoming JWT token and updates User object 'activated_at' field information.
@@ -128,7 +128,7 @@ class AuthService:
         return await self._resend_user_email_confirmation(email)
 
     async def _resend_user_email_confirmation(self, email: EmailConfirmationTokenInputSchema) -> EmailConfirmationToken:
-        user = await self.user_crud.get_user_by_email(email.email)
+        user = await self.user_service.get_user_by_email(email.email)
         await self._check_user_is_activated(user)
         await self._prevent_email_confirmation_token_spam_creation(user.id)
         jwt_token_payload = create_token_payload(
@@ -250,7 +250,7 @@ class AuthService:
         return await self._forgot_password(email)
 
     async def _forgot_password(self, email: ForgetPasswordInputSchema) -> ChangePasswordToken:
-        user = await self.user_crud.get_user_by_email(email.email)
+        user = await self.user_service.get_user_by_email(email.email)
         await self._prevent_change_password_token_spam_creation(user.id)
         jwt_token_payload = create_token_payload(
             data=str(user.id),
@@ -351,8 +351,8 @@ class AuthService:
         db_token = await self.change_password_token_crud._get_change_password_by_token(pass_data.token)
         await self._validate_change_password_token(db_token)
         await self.change_password_token_crud._expire_change_password_token_by_id(db_token.id)
-        password_hash = await self.user_crud._hash_password(pass_data.password)
-        await self.user_crud._update_user_password(id_=db_token.user.id, pass_hash=password_hash)
+        password_hash = await self.user_service._hash_password(pass_data.password)
+        await self.user_service._update_user_password(id_=db_token.user.id, pass_hash=password_hash)
         ChangePasswordTokenConstants.SUCCESSFUL_CHANGE_PASSWORD_MSG.value['message'] = (
             ChangePasswordTokenConstants.SUCCESSFUL_CHANGE_PASSWORD_MSG.value['message'].format(
                 email=db_token.user.email,

@@ -1,16 +1,12 @@
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import status
-
 from sqlalchemy import func, update
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
-from users.utils.exceptions import UserNotFoundError
 from utils.logging import setup_logging
 
 
@@ -33,22 +29,9 @@ class UserCRUD:
         q = select(User).limit(page_size).offset((page - 1) * page_size)
         return (await self.session.execute(q)).scalars().all()
 
-    async def _user_exists(self, column: str, value: UUID | str) -> bool:
-        user = await self.session.execute(select(User).where(User.__table__.columns[column] == value))
-        try:
-            user.one()
-        except NoResultFound as err:
-            err_msg = f"User with {column}: '{value}' not found."
-            self._log.debug(err_msg)
-            self._log.debug(err)
-            raise UserNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
-        return True
-
     async def _select_user(self, column: str, value: UUID | str) -> None:
-        user_exists = await self._user_exists(column=column, value=value)
-        if user_exists:
-            user = await self.session.execute(select(User).where(User.__table__.columns[column] == value))
-            return user.scalar_one()
+        user = await self.session.execute(select(User).where(User.__table__.columns[column] == value))
+        return user.scalars().one_or_none()
 
     async def get_user_by_id(self, id_: UUID) -> User:
         """Get User object from database filtered by id.
@@ -132,8 +115,7 @@ class UserCRUD:
         return await self._get_user_by_username(username)
 
     async def _get_user_by_username(self, username: str) -> None:
-        user = await self._select_user(column='username', value=username)
-        return user
+        return await self._select_user(column='username', value=username)
 
     async def get_user_by_email(self, email: str) -> User:
         """Get User object from database filtered by email.

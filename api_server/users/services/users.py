@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, status
 
 from passlib.hash import argon2
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,10 +9,12 @@ from auth.cruds import EmailConfirmationTokenCRUD
 from auth.tasks import send_email_confirmation_letter
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
 from common.constants.auth.email_confirmation_tokens import EmailConfirmationTokenConstants
+from common.exceptions.users import UserExceptionMsgs
 from db import get_session
 from users.cruds import UserCRUD
 from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
+from users.utils.exceptions import UserNotFoundError
 from users.utils.jwt.user import jwt_user_validator
 from users.utils.pagination import PaginationPage
 from utils.logging import setup_logging
@@ -55,7 +57,15 @@ class UserService:
         return await self._get_user_by_id(id_)
 
     async def _get_user_by_id(self, id_: str) -> None:
-        return await self.user_crud._get_user_by_id(id_)
+        user = await self.user_crud.get_user_by_id(id_)
+        if not user:
+            err_msg = UserExceptionMsgs.USER_NOT_FOUND.value.format(
+                column='id',
+                value=id_,
+            )
+            self._log.debug(err_msg)
+            raise UserNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return user
 
     async def add_user(self, user: UserInputSchema) -> User:
         """Add User object to the database.
@@ -153,4 +163,46 @@ class UserService:
         return await self._get_user_by_username(username)
 
     async def _get_user_by_username(self, username: str) -> None:
-        return await self.user_crud._select_user(column='username', value=username)
+        user = await self.user_crud.get_user_by_username(username)
+        if not user:
+            err_msg = UserExceptionMsgs.USER_NOT_FOUND.value.format(
+                column='username',
+                value=username,
+            )
+            self._log.debug(err_msg)
+            raise UserNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return user
+
+    async def get_user_by_email(self, email: str) -> User:
+        """Get User object from database filtered by email.
+
+        Args:
+            email: string of User's email.
+
+        Returns:
+        Single User object filtered by email.
+        """
+        return await self._get_user_by_email(email)
+
+    async def _get_user_by_email(self, email: str) -> None:
+        user = await self.user_crud._get_user_by_email(email)
+        if not user:
+            err_msg = UserExceptionMsgs.USER_NOT_FOUND.value.format(
+                column='email',
+                value=email,
+            )
+            self._log.debug(err_msg)
+            raise UserNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return user
+
+    async def _update_user_password(self, id_, pass_hash: str) -> None:
+        """Updates user's 'password' field data in table.
+
+        Args:
+            id_: UUID of user.
+            pass_hash: hashed password string.
+
+        Returns:
+        Nothing.
+        """
+        await self.user_crud._update_user_password(id_, pass_hash)
