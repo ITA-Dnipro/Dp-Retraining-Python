@@ -1,0 +1,34 @@
+.charity {
+    display: flex;
+}
+
+span {
+    margin: 5px;
+}
+
+.charityCenter {
+    max-width: 500px;
+}
+
+.charityCover {
+    height: 50px;
+    position: relative;
+}
+
+.charityDescriptionKey {
+    font-weight: bold;
+}
+
+.charityInfo {
+    display: flex;
+    margin-inline: 3rem;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: left;
+    text-align: start;
+}
+
+.charityTitle {
+    font-size: 30px;
+}
+

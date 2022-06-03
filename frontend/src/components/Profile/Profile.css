@@ -1,0 +1,74 @@
+.profile {
+    display: flex;
+}
+
+.profileCenter {
+    flex: 9;
+}
+
+.profileCover {
+    height: 190px;
+    position: relative;
+}
+
+.profileCoverImg {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.profileUserImg {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: auto;
+    top: 30px;
+    border: 3px solid white;
+}
+
+.profileInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 1rem;
+}
+
+.profileFullName {
+    font-size: 30px;
+}
+
+.profileUsernameValue {
+    margin-bottom: 0.5rem;
+}
+
+.avatarForm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.userImg:hover .profileUserImg {
+    transition: 0.3s;
+    opacity: 0.3;
+}
+
+.editAvatar {
+    transition: 0.3s;
+    opacity: 0;
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.userImg:hover .editAvatar {
+    opacity: 1;
+    transition: 0.3s;
+}
