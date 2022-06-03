@@ -1,3 +1,7 @@
+import os
+import json
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -50,6 +54,8 @@ from users.utils.exceptions import (
 )
 from utils.exceptions import integrity_error_handler
 
+load_dotenv()
+
 
 def create_app(config_name=ApiConstants.DEVELOPMENT_CONFIG.value) -> FastAPI:
     """Application factory function.
@@ -66,14 +72,10 @@ def create_app(config_name=ApiConstants.DEVELOPMENT_CONFIG.value) -> FastAPI:
     # Adding exceptions handlers.
     app_exception_handler(app)
     # Allow CORS
-    origins = [
-        "http://localhost:4500",
-        "http://localhost:3030",
-        "http://localhost:3000",
-    ]
+    allowed_origins: list = json.loads(os.getenv('API_SERVER_ALLOWED_ORIGINS'))
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
