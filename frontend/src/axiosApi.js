@@ -3,7 +3,6 @@ import { apiURL, refreshPath, logoutPath } from './constants/apiRoutes'
 
 const loginRoute = '/login/'
 const badSignatureMessage = 'Your signature are wrong or expired. Please log-in again';
-
 const expirationErrorResponseMessage = 'Signature has expired'
 
 const axiosInstance = axios.create({

@@ -16,7 +16,7 @@ const Charity = () => {
             )
             .then(response => {
                 console.log(response);
-                setCharityInfo(response.data.data[0]);
+                setCharityInfo(response.data.data);
             })
             .catch(error => {
                 console.log(error);
