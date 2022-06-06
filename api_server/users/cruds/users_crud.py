@@ -30,6 +30,7 @@ class UserCRUD:
         return (await self.session.execute(q)).scalars().all()
 
     async def _select_user(self, column: str, value: UUID | str) -> None:
+        self._log.debug(f'Getting user with "{column}": "{value}" from the db.')
         user = await self.session.execute(select(User).where(User.__table__.columns[column] == value))
         return user.scalars().one_or_none()
 
@@ -45,7 +46,6 @@ class UserCRUD:
         return await self._get_user_by_id(id_)
 
     async def _get_user_by_id(self, id_: UUID) -> None:
-        self._log.debug(f'''Getting user with id: "{id_}" from the db.''')
         return await self._select_user(column='id', value=id_)
 
     async def add_user(self, user: UserInputSchema) -> User:
@@ -83,7 +83,7 @@ class UserCRUD:
         await self.session.execute(update(User).where(User.id == id_).values(**user.dict()))
         await self.session.commit()
         # Return updated user.
-        self._log.debug(f'''User with id: "{id_}" successfully updated.''')
+        self._log.debug(f'User with id: "{id_}" successfully updated.')
         return await self._get_user_by_id(id_=id_)
 
     async def delete_user(self, id_: UUID) -> None:
@@ -97,11 +97,10 @@ class UserCRUD:
         """
         return await self._delete_user(id_)
 
-    async def _delete_user(self, id_: UUID) -> None:
-        user = await self._get_user_by_id(id_=id_)
+    async def _delete_user(self, user: User) -> None:
         await self.session.delete(user)
         await self.session.commit()
-        self._log.debug(f'''User with id: "{id_}" successfully deleted.''')
+        self._log.debug(f'User with id: "{user.id}" successfully deleted.')
 
     async def get_user_by_username(self, username: str) -> User:
         """Get User object from database filtered by username.
@@ -150,6 +149,7 @@ class UserCRUD:
             )
         )
         await self.session.commit()
+        self._log.debug(f'User with id: "{id_}" successfully activated.')
 
     async def _get_total_of_users(self) -> int:
         """Counts number of users in User table.
@@ -157,7 +157,9 @@ class UserCRUD:
         Returns:
         Quantity of user objects in User table.
         """
-        return (await self.session.execute(select(func.count(User.id)))).scalar_one()
+        total_users = (await self.session.execute(select(func.count(User.id)))).scalar_one()
+        self._log.debug(f'User table has totally: "{total_users}" users.')
+        return total_users
 
     async def _update_user_password(self, id_, pass_hash: str) -> None:
         """Updates user's 'password' field data in table.
@@ -179,3 +181,4 @@ class UserCRUD:
             )
         )
         await self.session.commit()
+        self._log.debug(f'User with id: "{id_}" successfully updated password.')

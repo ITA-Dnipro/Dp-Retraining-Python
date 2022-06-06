@@ -126,9 +126,9 @@ class UserService:
         return await self._update_user(id_, jwt_subject, update_data)
 
     async def _update_user(self, id_: UUID, jwt_subject: str, update_data: UserUpdateSchema) -> None:
-        user_exists = await self.user_crud._select_user(column='id', value=id_)
-        if user_exists:
-            if jwt_user_validator(jwt_subject=jwt_subject, username=user_exists.username):
+        user = await self.get_user_by_id(id_)
+        if user:
+            if jwt_user_validator(jwt_subject=jwt_subject, username=user.username):
                 # Updating user.
                 return await self.user_crud.update_user(id_, update_data)
 
@@ -145,11 +145,11 @@ class UserService:
         return await self._delete_user(id_, jwt_subject)
 
     async def _delete_user(self, id_: UUID, jwt_subject: str) -> None:
-        user_exists = await self.user_crud._select_user(column='id', value=id_)
-        if user_exists:
-            if jwt_user_validator(jwt_subject=jwt_subject, username=user_exists.username):
+        user = await self.get_user_by_id(id_)
+        if user:
+            if jwt_user_validator(jwt_subject=jwt_subject, username=user.username):
                 # Deleting user.
-                return await self.user_crud.delete_user(id_)
+                return await self.user_crud.delete_user(user)
 
     async def get_user_by_username(self, username: str) -> User:
         """Get User object from database filtered by username.

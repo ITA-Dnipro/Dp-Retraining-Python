@@ -25,3 +25,4 @@ class UserPictureExceptionMsgs(enum.Enum):
             max_height=UserServiceConstants.MAX_IMAGE_HEIGHT.value,
         )
     )
+    USER_PICTURE_NOT_FOUND = "UserPicture with {column}: '{value}' not found."
