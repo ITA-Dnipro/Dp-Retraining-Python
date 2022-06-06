@@ -18,8 +18,10 @@ from auth.tasks import send_change_password_letter, send_email_confirmation_lett
 from auth.utils.exceptions import (
     AuthUserInvalidPasswordException,
     ChangePasswordTokenExpiredError,
+    ChangePasswordTokenNotFoundError,
     ChangePasswordTokenSpamCreationException,
     EmailConfirmationTokenExpiredError,
+    EmailConfirmationTokenNotFoundError,
     EmailConfirmationTokenSpamCreationException,
     ExpiredJWTTokenError,
     UserAlreadyActivatedException,
@@ -93,7 +95,7 @@ class AuthService:
     async def _me(self, username: str) -> None:
         return await self.user_service.get_user_by_username(username)
 
-    async def get_user_email_confirmation(self, token: str) -> dict:
+    async def activate_user_via_email_confirmation(self, token: str) -> dict:
         """Verifies incoming JWT token and updates User object 'activated_at' field information.
 
         Args:
@@ -102,10 +104,10 @@ class AuthService:
         Returns:
         dict with user's activation success message.
         """
-        return await self._get_user_email_confirmation(token)
+        return await self._activate_user_via_email_confirmation(token)
 
-    async def _get_user_email_confirmation(self, token: str):
-        email_confirmation_token = await self.email_confirmation_token_crud.get_email_confirmation_by_token(token)
+    async def _activate_user_via_email_confirmation(self, token: str) -> dict:
+        email_confirmation_token = await self.get_email_confirmation_by_token(token)
         await self._validate_email_confirmation_token(email_confirmation_token)
         await self.email_confirmation_token_crud._expire_email_confirmation_token_by_id(email_confirmation_token.id)
         await self.email_confirmation_token_crud._activate_user_by_id(email_confirmation_token.user.id)
@@ -115,6 +117,28 @@ class AuthService:
             )
         )
         return EmailConfirmationTokenConstants.SUCCESSFUL_EMAIL_CONFIRMATION_MSG.value
+
+    async def get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
+        """Get EmailConfirmationToken object from database filtered by token.
+
+        Args:
+            token: EmailConfirmationToken token value.
+
+        Returns:
+        single EmailConfirmationToken object filtered by token.
+        """
+        return await self._get_email_confirmation_by_token(token)
+
+    async def _get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
+        email_confirmation_token = await self.email_confirmation_token_crud.get_email_confirmation_by_token(token)
+        if not email_confirmation_token:
+            err_msg = EmailConfirmationTokenExceptionMsgs.TOKEN_NOT_FOUND.value.format(
+                column='token',
+                value=token,
+            )
+            self._log.debug(err_msg)
+            raise EmailConfirmationTokenNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return email_confirmation_token
 
     async def resend_user_email_confirmation(self, email: EmailConfirmationTokenInputSchema) -> EmailConfirmationToken:
         """Resends email confirmation letter to user's inbox.
@@ -348,7 +372,7 @@ class AuthService:
         return await self._change_password(pass_data)
 
     async def _change_password(self, pass_data: ChangePasswordInputSchema) -> dict:
-        db_token = await self.change_password_token_crud._get_change_password_by_token(pass_data.token)
+        db_token = await self.get_change_password_by_token(pass_data.token)
         await self._validate_change_password_token(db_token)
         await self.change_password_token_crud._expire_change_password_token_by_id(db_token.id)
         password_hash = await self.user_service._hash_password(pass_data.password)
@@ -359,6 +383,28 @@ class AuthService:
             )
         )
         return ChangePasswordTokenConstants.SUCCESSFUL_CHANGE_PASSWORD_MSG.value
+
+    async def get_change_password_by_token(self, token: str) -> ChangePasswordToken:
+        """Get ChangePasswordToken object from database filtered by token.
+
+        Args:
+            token: ChangePasswordToken token value.
+
+        Returns:
+        single ChangePasswordToken object filtered by token.
+        """
+        return await self._get_change_password_by_token(token)
+
+    async def _get_change_password_by_token(self, token: str) -> ChangePasswordToken:
+        change_password_token = await self.change_password_token_crud._get_change_password_by_token(token)
+        if not change_password_token:
+            err_msg = ChangePasswordTokenExceptionMsgs.TOKEN_NOT_FOUND.value.format(
+                column='token',
+                value=token,
+            )
+            self._log.debug(err_msg)
+            raise ChangePasswordTokenNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return change_password_token
 
     async def _validate_change_password_token(self, token: ChangePasswordToken) -> None:
         """Validates ChangePasswordToken not to be expired in db and inside JWT token payload.

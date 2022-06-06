@@ -64,7 +64,7 @@ class UserCRUD:
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
-        self._log.debug(f'''User with id: "{user.id}" successfully created.''')
+        self._log.debug(f'User with id: "{user.id}" successfully created.')
         return user
 
     async def update_user(self, id_: UUID, user: UserUpdateSchema) -> User:

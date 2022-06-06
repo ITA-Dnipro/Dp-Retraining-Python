@@ -1,13 +1,9 @@
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import status
-
 from sqlalchemy import and_, select, update
-from sqlalchemy.exc import NoResultFound
 
 from auth.models import EmailConfirmationToken
-from auth.utils.exceptions import EmailConfirmationTokenNotFoundError
 from users.cruds.users_crud import UserCRUD
 from utils.logging import setup_logging
 
@@ -31,9 +27,8 @@ class EmailConfirmationTokenCRUD(UserCRUD):
         return await self._add_email_confirmation_token(id_, token)
 
     async def _add_email_confirmation_token(self, id_: UUID, token: str) -> EmailConfirmationToken:
-        user = await self.get_user_by_id(id_=id_)
         await self._expire_all_existing_email_confirmation_tokens(id_=id_)
-        email_confirmation_token = EmailConfirmationToken(user_id=user.id, token=token)
+        email_confirmation_token = EmailConfirmationToken(user_id=id_, token=token)
         self.session.add(email_confirmation_token)
         await self.session.commit()
         await self.session.refresh(email_confirmation_token)
@@ -81,26 +76,12 @@ class EmailConfirmationTokenCRUD(UserCRUD):
         )
         await self.session.commit()
 
-    async def _email_confirmation_token_exists(self, column: str, value: UUID | str) -> bool:
+    async def _select_email_confirmation_token(self, column: str, value: UUID | str) -> EmailConfirmationToken:
+        self._log.debug(f'Getting EmailConfirmationToken with: "{column}": "{value}" from the db.')
         email_confirmation_token = await self.session.execute(
             select(EmailConfirmationToken).where(EmailConfirmationToken.__table__.columns[column] == value),
         )
-        try:
-            email_confirmation_token.one()
-        except NoResultFound as err:
-            err_msg = f"EmailConfirmationToken with {column}: '{value}' not found."
-            self._log.debug(err_msg)
-            self._log.debug(err)
-            raise EmailConfirmationTokenNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
-        return True
-
-    async def _select_email_confirmation_token(self, column: str, value: UUID | str) -> EmailConfirmationToken:
-        email_confirmation_token_exists = await self._email_confirmation_token_exists(column=column, value=value)
-        if email_confirmation_token_exists:
-            email_confirmation_token = await self.session.execute(
-                select(EmailConfirmationToken).where(EmailConfirmationToken.__table__.columns[column] == value),
-            )
-            return email_confirmation_token.scalar_one()
+        return email_confirmation_token.scalars().one_or_none()
 
     async def get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
         """Get EmailConfirmationToken object from database filtered by token field.
