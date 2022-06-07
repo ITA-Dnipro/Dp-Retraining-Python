@@ -1,8 +1,10 @@
-from datetime import timedelta
+from contextlib import contextmanager
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
 from uuid import uuid4
 import os
 import random
+import time
 
 from fastapi import FastAPI
 
@@ -11,12 +13,15 @@ from asgi_lifespan import LifespanManager
 from celery import Celery
 from databases import Database
 from fastapi_jwt_auth import AuthJWT
+from freezegun import freeze_time
 from httpx import AsyncClient
 from pytest import fixture
 from pytest_mock.plugin import MockerFixture
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 import alembic
+import pytest
 import pytest_asyncio
 
 from app import create_app
@@ -30,6 +35,7 @@ from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
+from common.tests.test_data.auth import request_test_auth_email_confirmation_data
 from common.tests.test_data.charity.charity_requests import ADDITIONAL_USER_TEST_DATA, initialize_charity_data
 from common.tests.test_data.users import (
     request_test_user_data,
@@ -37,9 +43,10 @@ from common.tests.test_data.users import (
     user_pictures_mock_data,
 )
 from db import create_engine
-from users.cruds import UserCRUD, UserPictureCRUD
+from users.cruds import UserPictureCRUD
 from users.models import User, UserPicture
 from users.schemas import UserInputSchema
+from users.services import UserService
 from users.utils.aws_s3 import S3Client
 from users.utils.aws_s3.user_pictures import UserImageFile
 from utils.tests import find_fullpath
@@ -216,40 +223,48 @@ class TestMixin:
         alembic.command.upgrade(config, GenericTestConstants.ALEMBIC_HEAD.value)
 
     @pytest_asyncio.fixture(autouse=True)
-    async def user_crud(self, db_session: AsyncSession) -> UserCRUD:
-        """A pytest fixture that creates instance of user_crud business logic.
+    async def user_service(self, db_session: AsyncSession) -> UserService:
+        """A pytest fixture that creates instance of user_service business logic.
 
         Args:
             db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
-        An instance of UserCRUD business logic class.
+        An instance of UserService business logic class.
         """
-        return UserCRUD(session=db_session)
+        return UserService(session=db_session)
 
-    async def _create_user(self, user_crud: UserCRUD, user: UserInputSchema) -> User:
+    async def _create_user(self, user_service: UserService, user: UserInputSchema) -> User:
         """Stores user test data in test database.
 
         Args:
-            user_crud: instance of business logic class.
+            user_service: instance of business logic class.
             user: serialized UserInputSchema object.
 
         Returns:
         newly created User object.
         """
-        return await user_crud.add_user(user)
+        return await user_service.add_user(user)
 
     @pytest_asyncio.fixture
-    async def test_user(self, user_crud: UserCRUD) -> User:
+    async def test_user(self, user_service: UserService, patch_model_current_time: fixture, request: fixture) -> User:
         """Create test user data and store it in test database.
 
         Args:
-            user_crud: instance of business logic class.
+            user_service: instance of business logic class.
+            patch_model_current_time: pytest fixture that alters datetime that saves in db model.
+            request: native pytest fixture.
 
         Returns:
         newly created User object.
         """
-        return await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        if not hasattr(request, 'param'):
+            return await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        with patch_model_current_time(**request.param):
+            return await self._create_user(
+                user_service,
+                UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA),
+            )
 
     @pytest_asyncio.fixture(autouse=True)
     async def client(self, app: FastAPI) -> AsyncClient:
@@ -273,12 +288,11 @@ class TestMixin:
                 yield client
 
     @pytest_asyncio.fixture(autouse=True)
-    async def auth_service(self, db_session: AsyncSession, user_crud: fixture) -> AuthService:
+    async def auth_service(self, db_session: AsyncSession) -> AuthService:
         """A pytest fixture that creates instance of auth_service business logic.
 
         Args:
             db_session: pytest fixture that creates test sqlalchemy session.
-            user_crud: instance of business logic class.
 
         Returns:
         An instance of AuthService business logic class.
@@ -287,18 +301,18 @@ class TestMixin:
 
     @pytest_asyncio.fixture
     async def authenticated_test_user(
-            self, client: fixture, user_crud: UserCRUD, auth_service: AuthService,
+            self, client: fixture, user_service: UserService, auth_service: AuthService,
     ) -> User:
         """Create authenticated test user data and store it in test database.
 
         Args:
-            user_crud: instance of user business logic class.
+            user_service: instance of user business logic class.
             auth_service: instance of auth business logic class.
 
         Returns:
         newly created User object.
         """
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         return await self._create_authenticated_user(user, auth_service, client)
 
     async def _create_authenticated_user(self, user: User, auth_service: AuthService, client: fixture) -> User:
@@ -336,11 +350,11 @@ class TestMixin:
         return user
 
     @pytest_asyncio.fixture
-    async def random_test_user(self, user_crud: UserCRUD) -> User:
+    async def random_test_user(self, user_service: UserService) -> User:
         """Create test User object with random data and store it in test database.
 
         Args:
-            user_crud: instance of business logic class.
+            user_service: instance of business logic class.
 
         Returns:
         newly created User object with random data.
@@ -353,7 +367,7 @@ class TestMixin:
             'password': '12345678',
             'phone_number': f'+38{random.randrange(1000000000, 9999999999)}',
         }
-        return await self._create_user(user_crud, UserInputSchema(**ADD_RANDOM_USER_TEST_DATA))
+        return await self._create_user(user_service, UserInputSchema(**ADD_RANDOM_USER_TEST_DATA))
 
     @pytest_asyncio.fixture(autouse=True)
     async def user_picture_crud(self, db_session: AsyncSession) -> UserPictureCRUD:
@@ -368,31 +382,36 @@ class TestMixin:
         return UserPictureCRUD(session=db_session)
 
     @pytest_asyncio.fixture
-    async def test_user_picture(self, user_crud: UserCRUD, user_picture_crud: UserPictureCRUD) -> UserPicture:
+    async def test_user_picture(self, user_service: UserService, user_picture_crud: UserPictureCRUD) -> UserPicture:
         """Creates test UserPicture object and storing it in the test databases.
 
         Args:
+            user_service: instance of business logic class.
             user_picture_crud: instance of database crud logic class.
 
         Returns:
         newly created UserPicture object.
         """
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         return await user_picture_crud.add_user_picture(user.id)
 
     @pytest_asyncio.fixture
     async def authenticated_test_user_picture(
-            self, user_crud: UserCRUD, user_picture_crud: UserPictureCRUD, auth_service: AuthService, client: fixture,
+            self, user_service: UserService, user_picture_crud: UserPictureCRUD, auth_service: AuthService,
+            client: fixture,
     ) -> UserPicture:
         """Creates test UserPicture object and storing it in the test databases.
 
         Args:
+            user_service: instance of business logic class.
             user_picture_crud: instance of database crud logic class.
+            auth_service: instance of business logic class.
+            client: pytest fixture that creates test httpx client.
 
         Returns:
         newly created UserPicture object.
         """
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         await self._create_authenticated_user(user, auth_service, client)
         return await user_picture_crud.add_user_picture(user.id)
 
@@ -494,7 +513,7 @@ class TestMixin:
         return organisation
 
     @pytest_asyncio.fixture
-    async def charity(self, user_crud: UserCRUD, db_session: AsyncSession) -> CharityOrganisation:
+    async def charity(self, user_service: UserService, db_session: AsyncSession) -> CharityOrganisation:
         """
             Create test charity data and store it in test database.
 
@@ -502,7 +521,7 @@ class TestMixin:
             CharityOrganisation object and not authenticated User object.
             """
 
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         organisation = await self._initialize_charity(
             user=user,
             db_session=db_session,
@@ -514,7 +533,7 @@ class TestMixin:
 
     @pytest_asyncio.fixture
     async def charity_with_authenticated_manager(self,
-                                                 user_crud: UserCRUD,
+                                                 user_service: UserService,
                                                  db_session: AsyncSession,
                                                  auth_service: AuthService,
                                                  client: fixture, ) -> CharityOrganisation:
@@ -524,8 +543,8 @@ class TestMixin:
             Returns:
         CharityOrganisation object with authenticated user.
         """
-        additional_user = await self._create_user(user_crud, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        additional_user = await self._create_user(user_service, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         organisation = await self._initialize_charity(user=user,
                                                       db_session=db_session,
                                                       charity_title="Charity Organisation",
@@ -545,7 +564,7 @@ class TestMixin:
 
     @pytest_asyncio.fixture
     async def charity_with_authenticated_director(self,
-                                                  user_crud: UserCRUD,
+                                                  user_service: UserService,
                                                   db_session: AsyncSession,
                                                   auth_service: AuthService,
                                                   client: fixture, ) -> CharityOrganisation:
@@ -555,8 +574,8 @@ class TestMixin:
             Returns:
         CharityOrganisation object with authenticated user.
         """
-        additional_user = await self._create_user(user_crud, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        additional_user = await self._create_user(user_service, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         organisation = await self._initialize_charity(user=user,
                                                       db_session=db_session,
                                                       charity_title="Charity Organisation",
@@ -582,12 +601,12 @@ class TestMixin:
     @pytest_asyncio.fixture
     async def many_charities(
             self,
-            user_crud: UserCRUD,
+            user_service: UserService,
             db_session: AsyncSession,
             auth_service: AuthService,
             client: fixture
     ):
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         charity_titles = ("organisation D", "organisation B", "organisation A", "organisation Y")
         organisations = [
             await self._initialize_charity(user=user, db_session=db_session, charity_title=title, is_director=True,
@@ -609,28 +628,34 @@ class TestMixin:
         return EmailConfirmationTokenCRUD(session=db_session)
 
     @pytest_asyncio.fixture
+    @pytest.mark.parametrize(
+        'test_user',
+        [request_test_auth_email_confirmation_data.EMAIL_CONFIRMATION_TOKEN_MOCK_CREATED_AT_DATA],
+        indirect=['test_user'],
+    )
     async def test_email_confirmation_token(
-            self, email_confirmation_token_crud: EmailConfirmationTokenCRUD, user_crud: UserCRUD,
+            self, email_confirmation_token_crud: EmailConfirmationTokenCRUD, test_user: User,
             db_session: AsyncSession,
     ) -> EmailConfirmationToken:
         """A pytest fixture that creates test EmailConfirmationToken object and storing it in the test databases.
 
         Args:
             email_confirmation_token_crud: instance of database crud logic class.
-            user_crud: instance of database crud logic class.
+            user_service: instance of business logic class.
             db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
         An instance of EmailConfirmationToken object.
         """
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        # Sleeping for N seconds to create different jwt token.
+        time.sleep(EmailConfirmationTokenConstants.ONE_SECOND.value)
         jwt_token_payload = create_token_payload(
-            data=str(user.id),
+            data=str(test_user.id),
             time_amount=EmailConfirmationTokenConstants.TOKEN_EXPIRE_7.value,
             time_unit=EmailConfirmationTokenConstants.MINUTES.value,
         )
-        jwt_token = create_jwt_token(payload=jwt_token_payload, key=user.password)
-        db_token = await email_confirmation_token_crud.add_email_confirmation_token(id_=user.id, token=jwt_token)
+        jwt_token = create_jwt_token(payload=jwt_token_payload, key=test_user.password)
+        db_token = await email_confirmation_token_crud.add_email_confirmation_token(id_=test_user.id, token=jwt_token)
         db_token.created_at = db_token.created_at - timedelta(**EmailConfirmationTokenConstants.TIMEDELTA_10_MIN.value)
         db_session.add(db_token)
         await db_session.commit()
@@ -673,20 +698,20 @@ class TestMixin:
 
     @pytest_asyncio.fixture
     async def test_change_password_token(
-            self, change_password_token_crud: ChangePasswordTokenCRUD, user_crud: UserCRUD,
+            self, change_password_token_crud: ChangePasswordTokenCRUD, user_service: UserService,
             db_session: AsyncSession,
     ) -> ChangePasswordToken:
         """A pytest fixture that creates test ChangePasswordToken object and storing it in the test databases.
 
         Args:
             change_password_token_crud: instance of database crud logic class.
-            user_crud: instance of database crud logic class.
+            user_service: instance of business logic class.
             db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
         An instance of EmailConfirmationToken object.
         """
-        user = await self._create_user(user_crud, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
+        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
         jwt_token_payload = create_token_payload(
             data=str(user.id),
             time_amount=ChangePasswordTokenConstants.TOKEN_EXPIRE_1.value,
@@ -749,3 +774,37 @@ class TestMixin:
         await db_session.commit()
         await db_session.refresh(test_change_password_token)
         return test_change_password_token
+
+    @contextmanager
+    def patch_model_time(self, time_to_freeze=None, model=None, field=None, tick=True):
+        """Custom context manager that set specified datetime to sqlalchemy model's field.
+
+        Args:
+            time_to_freeze: datetime object to set in model's field.
+            model: sqlalchemy model object.
+            field: sqlalchemy model's field.
+            tick: bool.
+
+        Returns:
+        An instance of FrozenDateTimeFactory object.
+        """
+        if not time_to_freeze or not model or not field:
+            return
+        with freeze_time(time_to_freeze, tick=tick) as frozen_time:
+            def set_timestamp(mapper, connection, target):
+                now = datetime.now()
+                if hasattr(target, field.key):
+                    setattr(target, field.key, now)
+
+            event.listen(model, 'before_insert', set_timestamp, propagate=True)
+            yield frozen_time
+            event.remove(model, 'before_insert', set_timestamp)
+
+    @pytest_asyncio.fixture
+    def patch_model_current_time(self):
+        """Custom fixture to alter sqlalchemy model's fields with different datetime.
+
+        Returns:
+        An instance of FrozenDateTimeFactory object.
+        """
+        return self.patch_model_time

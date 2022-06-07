@@ -1,13 +1,9 @@
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import status
-
 from sqlalchemy import and_, select, update
-from sqlalchemy.exc import NoResultFound
 
 from auth.models import ChangePasswordToken
-from auth.utils.exceptions import ChangePasswordTokenNotFoundError
 from users.cruds.users_crud import UserCRUD
 from utils.logging import setup_logging
 
@@ -31,9 +27,8 @@ class ChangePasswordTokenCRUD(UserCRUD):
         return await self._add_change_password_token(id_, token)
 
     async def _add_change_password_token(self, id_: UUID, token: str) -> ChangePasswordToken:
-        user = await self.get_user_by_id(id_=id_)
         await self._expire_all_existing_change_password_tokens(id_=id_)
-        change_password_token = ChangePasswordToken(user_id=user.id, token=token)
+        change_password_token = ChangePasswordToken(user_id=id_, token=token)
         self.session.add(change_password_token)
         await self.session.commit()
         await self.session.refresh(change_password_token)
@@ -61,26 +56,11 @@ class ChangePasswordTokenCRUD(UserCRUD):
         await self.session.execute(q)
         await self.session.commit()
 
-    async def _change_password_token_exists(self, column: str, value: UUID | str) -> bool:
+    async def _select_change_password_token(self, column: str, value: UUID | str) -> ChangePasswordToken:
         change_password_token = await self.session.execute(
             select(ChangePasswordToken).where(ChangePasswordToken.__table__.columns[column] == value),
         )
-        try:
-            change_password_token.one()
-        except NoResultFound as err:
-            err_msg = f"ChangePasswordToken with {column}: '{value}' not found."
-            self._log.debug(err_msg)
-            self._log.debug(err)
-            raise ChangePasswordTokenNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
-        return True
-
-    async def _select_change_password_token(self, column: str, value: UUID | str) -> ChangePasswordToken:
-        change_password_token_exists = await self._change_password_token_exists(column=column, value=value)
-        if change_password_token_exists:
-            change_password_token = await self.session.execute(
-                select(ChangePasswordToken).where(ChangePasswordToken.__table__.columns[column] == value),
-            )
-            return change_password_token.scalar_one()
+        return change_password_token.scalars().one_or_none()
 
     async def _get_change_password_by_token(self, token: str) -> ChangePasswordToken:
         return await self._select_change_password_token(column='token', value=token)

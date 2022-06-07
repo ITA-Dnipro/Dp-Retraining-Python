@@ -39,6 +39,7 @@ class EmailConfirmationTokenConstants(enum.Enum):
     MIN_TOKEN_LIFETIME = 5
     MIN_TOKEN_LIFETIME_TIMEDELTA = {MINUTES: MIN_TOKEN_LIFETIME}
     TIMEDELTA_10_MIN = {MINUTES: 10}
+    TIMEDELTA_30_MIN = {MINUTES: 30}
 
     # Responses.
     SUCCESSFUL_EMAIL_CONFIRMATION_MSG = {'message': "User with email: '{email}' successfully activated."}
