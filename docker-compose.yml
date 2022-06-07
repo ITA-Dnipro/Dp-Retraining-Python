@@ -38,5 +38,7 @@ services:
     stdin_open: true
     depends_on:
       - api_server
+    volumes:
+      - ./frontend:/usr/src/app/frontend/
 volumes:
   pgdata:

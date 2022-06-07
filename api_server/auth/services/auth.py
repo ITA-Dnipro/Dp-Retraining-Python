@@ -151,6 +151,17 @@ class AuthService:
         """
         return await self._resend_user_email_confirmation(email)
 
+    async def resend_user_email_confirmation(self, email: EmailConfirmationTokenInputSchema) -> EmailConfirmationToken:
+        """Resends email confirmation letter to user's inbox.
+
+        Args:
+            email: object validated with EmailConfirmationTokenInputSchema.
+
+        Returns:
+        Newly created EmailConfirmationToken object.
+        """
+        return await self._resend_user_email_confirmation(email)
+
     async def _resend_user_email_confirmation(self, email: EmailConfirmationTokenInputSchema) -> EmailConfirmationToken:
         user = await self.user_service.get_user_by_email(email.email)
         await self._check_user_is_activated(user)
