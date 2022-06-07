@@ -94,17 +94,6 @@ class EmailConfirmationTokenCRUD(UserCRUD):
         """
         return await self._get_email_confirmation_by_token(token)
 
-    async def get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
-        """Get EmailConfirmationToken object from database filtered by token field.
-
-        Args:
-            token: JWT token stored in EmailConfirmationToken token field.
-
-        Returns:
-        Single EmailConfirmationToken object filtered by token field.
-        """
-        return await self._get_email_confirmation_by_token(token)
-
     async def _get_email_confirmation_by_token(self, token: str) -> EmailConfirmationToken:
         return await self._select_email_confirmation_token(column='token', value=token)
 
