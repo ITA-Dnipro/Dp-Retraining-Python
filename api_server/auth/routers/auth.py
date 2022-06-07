@@ -149,7 +149,9 @@ async def get_user_email_confirmation(token: str, auth_service: AuthService = De
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
-        data=EmailConfirmationTokenSuccessSchema(**await auth_service.get_user_email_confirmation(token=token)),
+        data=EmailConfirmationTokenSuccessSchema(
+            **await auth_service.activate_user_via_email_confirmation(token=token)
+        ),
         errors=[],
     )
 

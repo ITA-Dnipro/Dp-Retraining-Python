@@ -18,6 +18,11 @@ from users.models import User
 class TestCasePostAuthEmailConfirmation(TestMixin):
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'test_user',
+        [request_test_auth_email_confirmation_data.EMAIL_CONFIRMATION_TOKEN_MOCK_CREATED_AT_DATA],
+        indirect=['test_user'],
+    )
     async def test_post_auth_email_confirmation_valid_payload(
             self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_user: User,
     ) -> None:
@@ -41,7 +46,7 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         expected_result = response_auth_email_confirmation_data.POST_VALID_RESPONSE_EMAIL_CONFIRMATION_TOKEN_TEST_DATA
         assert response_data == expected_result
         assert response.status_code == status.HTTP_201_CREATED
-        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 2
 
     @pytest.mark.asyncio
     async def test_post_auth_email_confirmation_valid_payload_non_expired_token_already_exists(
@@ -71,7 +76,7 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         expected_result = response_auth_email_confirmation_data.POST_VALID_RESPONSE_EMAIL_CONFIRMATION_TOKEN_TEST_DATA
         assert response_data == expected_result
         assert response.status_code == status.HTTP_201_CREATED
-        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 2
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 3
         assert test_email_confirmation_token.expired_at is None
         await db_session.refresh(test_email_confirmation_token)
         assert test_email_confirmation_token.expired_at is not None
@@ -100,9 +105,14 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         expected_result = response_auth_email_confirmation_data.RESPONSE_EMAIL_CONFIRMATION_USER_EMAIL_NOT_FOUND
         assert response_data == expected_result
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 0
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'test_user',
+        [request_test_auth_email_confirmation_data.EMAIL_CONFIRMATION_TOKEN_MOCK_CREATED_AT_DATA],
+        indirect=['test_user'],
+    )
     async def test_post_auth_email_confirmation_valid_payload_2_times_in_row(
             self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_user: User,
     ) -> None:
@@ -128,7 +138,7 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         expected_result = response_auth_email_confirmation_data.POST_VALID_RESPONSE_EMAIL_CONFIRMATION_TOKEN_TEST_DATA
         assert response_data == expected_result
         assert response.status_code == status.HTTP_201_CREATED
-        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 2
         # Second request.
         url = app.url_path_for('post_user_email_confirmation')
         response = await client.post(
@@ -139,7 +149,7 @@ class TestCasePostAuthEmailConfirmation(TestMixin):
         expected_result = response_auth_email_confirmation_data.POST_EMAIL_CONFIRMATION_ANTI_SPAM_TEST_DATA
         assert response_data == expected_result
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 2
 
 
 class TestCaseGetAuthEmailConfirmation(TestMixin):
@@ -173,10 +183,11 @@ class TestCaseGetAuthEmailConfirmation(TestMixin):
         expected_result = response_auth_email_confirmation_data.GET_VALID_RESPONSE_EMAIL_CONFIRMATION_TOKEN_TEST_DATA
         assert response_data == expected_result
         assert response.status_code == status.HTTP_200_OK
-        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 2
         assert test_email_confirmation_token.expired_at is None
         assert test_email_confirmation_token.user.activated_at is None
         await db_session.refresh(test_email_confirmation_token)
+        await db_session.refresh(test_email_confirmation_token.user)
         assert test_email_confirmation_token.expired_at is not None
         assert test_email_confirmation_token.user.activated_at is not None
 
@@ -208,6 +219,6 @@ class TestCaseGetAuthEmailConfirmation(TestMixin):
         expected_result = response_auth_email_confirmation_data.GET_EMAIL_CONFIRMATION_USER_ALREADY_ACTIVATED
         assert response_data == expected_result
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(EmailConfirmationToken.id)))).scalar_one() == 2
         assert test_activated_email_confirmation_token.expired_at is not None
         assert test_activated_email_confirmation_token.user.activated_at is not None

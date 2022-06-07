@@ -1,23 +1,18 @@
 from datetime import datetime
 from uuid import UUID
-import abc
 
-from fastapi import status
-
-from passlib.hash import argon2
 from sqlalchemy import func, update
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
-from users.utils.exceptions import UserNotFoundError
 from utils.logging import setup_logging
 
 
-class AbstractUserCRUD(metaclass=abc.ABCMeta):
+class UserCRUD:
 
-    def __init__(self, session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
 
@@ -28,6 +23,16 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         list of User objects.
         """
         return await self._get_users()
+
+    async def _get_users(self, page: int, page_size: int) -> None:
+        self._log.debug('Getting all users from the db.')
+        q = select(User).limit(page_size).offset((page - 1) * page_size)
+        return (await self.session.execute(q)).scalars().all()
+
+    async def _select_user(self, column: str, value: UUID | str) -> None:
+        self._log.debug(f'Getting user with "{column}": "{value}" from the db.')
+        user = await self.session.execute(select(User).where(User.__table__.columns[column] == value))
+        return user.scalars().one_or_none()
 
     async def get_user_by_id(self, id_: UUID) -> User:
         """Get User object from database filtered by id.
@@ -40,6 +45,9 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         """
         return await self._get_user_by_id(id_)
 
+    async def _get_user_by_id(self, id_: UUID) -> None:
+        return await self._select_user(column='id', value=id_)
+
     async def add_user(self, user: UserInputSchema) -> User:
         """Add User object to the database.
 
@@ -50,6 +58,14 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         newly created User object.
         """
         return await self._add_user(user)
+
+    async def _add_user(self, user: UserInputSchema) -> User:
+        user = User(**user.dict())
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+        self._log.debug(f'User with id: "{user.id}" successfully created.')
+        return user
 
     async def update_user(self, id_: UUID, user: UserUpdateSchema) -> User:
         """Updates User object in the database.
@@ -63,6 +79,13 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         """
         return await self._update_user(id_, user)
 
+    async def _update_user(self, id_: UUID, user: UserUpdateSchema) -> None:
+        await self.session.execute(update(User).where(User.id == id_).values(**user.dict()))
+        await self.session.commit()
+        # Return updated user.
+        self._log.debug(f'User with id: "{id_}" successfully updated.')
+        return await self._get_user_by_id(id_=id_)
+
     async def delete_user(self, id_: UUID) -> None:
         """Delete User object from the database.
 
@@ -73,6 +96,11 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         Nothing.
         """
         return await self._delete_user(id_)
+
+    async def _delete_user(self, user: User) -> None:
+        await self.session.delete(user)
+        await self.session.commit()
+        self._log.debug(f'User with id: "{user.id}" successfully deleted.')
 
     async def get_user_by_username(self, username: str) -> User:
         """Get User object from database filtered by username.
@@ -85,6 +113,9 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         """
         return await self._get_user_by_username(username)
 
+    async def _get_user_by_username(self, username: str) -> None:
+        return await self._select_user(column='username', value=username)
+
     async def get_user_by_email(self, email: str) -> User:
         """Get User object from database filtered by email.
 
@@ -95,94 +126,6 @@ class AbstractUserCRUD(metaclass=abc.ABCMeta):
         Single User object filtered by email.
         """
         return await self._get_user_by_email(email)
-
-    @abc.abstractclassmethod
-    async def _get_users(self) -> None:
-        pass
-
-    @abc.abstractclassmethod
-    async def _get_user_by_id(self, id_: UUID) -> None:
-        pass
-
-    @abc.abstractclassmethod
-    async def _add_user(self, user: UserInputSchema) -> None:
-        pass
-
-    @abc.abstractclassmethod
-    async def _update_user(self, id_: UUID, user: UserUpdateSchema) -> None:
-        pass
-
-    @abc.abstractclassmethod
-    async def _delete_user(self, id_: UUID) -> None:
-        pass
-
-    @abc.abstractclassmethod
-    async def _get_user_by_username(self, username: str) -> None:
-        pass
-
-    @abc.abstractclassmethod
-    async def _get_user_by_email(self, email: str) -> None:
-        pass
-
-
-class UserCRUD(AbstractUserCRUD):
-
-    async def _get_users(self, page: int, page_size: int) -> None:
-        self._log.debug('Getting all users from the db.')
-        q = select(User).limit(page_size).offset((page - 1) * page_size)
-        return (await self.session.execute(q)).scalars().all()
-
-    async def _user_exists(self, column: str, value: UUID | str) -> bool:
-        user = await self.session.execute(select(User).where(User.__table__.columns[column] == value))
-        try:
-            user.one()
-        except NoResultFound as err:
-            err_msg = f"User with {column}: '{value}' not found."
-            self._log.debug(err_msg)
-            self._log.debug(err)
-            raise UserNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
-        return True
-
-    async def _select_user(self, column: str, value: UUID | str) -> None:
-        user_exists = await self._user_exists(column=column, value=value)
-        if user_exists:
-            user = await self.session.execute(select(User).where(User.__table__.columns[column] == value))
-            return user.scalar_one()
-
-    async def _get_user_by_id(self, id_: UUID) -> None:
-        self._log.debug(f'''Getting user with id: "{id_}" from the db.''')
-        return await self._select_user(column='id', value=id_)
-
-    async def _add_user(self, user: UserInputSchema) -> User:
-        user.password = await self._hash_password(user.password)
-        user = User(**user.dict())
-        self.session.add(user)
-        await self.session.commit()
-        await self.session.refresh(user)
-        self._log.debug(f'''User with id: "{user.id}" successfully created.''')
-        return user
-
-    async def _update_user(self, id_: UUID, user: UserUpdateSchema) -> None:
-        await self.session.execute(update(User).where(User.id == id_).values(**user.dict()))
-        await self.session.commit()
-        # Return updated user.
-        self._log.debug(f'''User with id: "{id_}" successfully updated.''')
-        return await self._get_user_by_id(id_=id_)
-
-    async def _delete_user(self, id_: UUID) -> None:
-        user = await self._get_user_by_id(id_=id_)
-        await self.session.delete(user)
-        await self.session.commit()
-        self._log.debug(f'''User with id: "{id_}" successfully deleted.''')
-
-    async def _hash_password(self, password: str) -> str:
-        """Return password hashed with argon2 algorithm."""
-        password_hash = argon2.using(rounds=4).hash(password)
-        return password_hash
-
-    async def _get_user_by_username(self, username: str) -> None:
-        user = await self._select_user(column='username', value=username)
-        return user
 
     async def _get_user_by_email(self, email: str) -> None:
         return await self._select_user(column='email', value=email)
@@ -206,6 +149,7 @@ class UserCRUD(AbstractUserCRUD):
             )
         )
         await self.session.commit()
+        self._log.debug(f'User with id: "{id_}" successfully activated.')
 
     async def _get_total_of_users(self) -> int:
         """Counts number of users in User table.
@@ -213,7 +157,9 @@ class UserCRUD(AbstractUserCRUD):
         Returns:
         Quantity of user objects in User table.
         """
-        return (await self.session.execute(select(func.count(User.id)))).scalar_one()
+        total_users = (await self.session.execute(select(func.count(User.id)))).scalar_one()
+        self._log.debug(f'User table has totally: "{total_users}" users.')
+        return total_users
 
     async def _update_user_password(self, id_, pass_hash: str) -> None:
         """Updates user's 'password' field data in table.
@@ -235,3 +181,4 @@ class UserCRUD(AbstractUserCRUD):
             )
         )
         await self.session.commit()
+        self._log.debug(f'User with id: "{id_}" successfully updated password.')

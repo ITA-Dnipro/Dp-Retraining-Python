@@ -6,6 +6,7 @@ from common.constants.users import UserServiceConstants
 class UserExceptionMsgs(enum.Enum):
     """Constants for Users exception messages."""
     NO_USER_PERMISSIONS = 'User do not have permissions to perform this action.'
+    USER_NOT_FOUND = "User with {column}: '{value}' not found."
 
 
 class UserPictureExceptionMsgs(enum.Enum):
@@ -24,3 +25,4 @@ class UserPictureExceptionMsgs(enum.Enum):
             max_height=UserServiceConstants.MAX_IMAGE_HEIGHT.value,
         )
     )
+    USER_PICTURE_NOT_FOUND = "UserPicture with {column}: '{value}' not found."

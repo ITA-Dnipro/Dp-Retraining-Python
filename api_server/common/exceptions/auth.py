@@ -14,6 +14,7 @@ class EmailConfirmationTokenExceptionMsgs(enum.Enum):
         'Cannot create EmailConfirmationToken please check your email inbox and try again in: '
         '{time_amount} {time_units}.'
     )
+    TOKEN_NOT_FOUND = "EmailConfirmationToken with {column}: '{value}' not found."
 
 
 class ChangePasswordTokenExceptionMsgs(enum.Enum):
@@ -22,3 +23,4 @@ class ChangePasswordTokenExceptionMsgs(enum.Enum):
         'Cannot create ChangePasswordToken please check your email inbox and try again in: {time_amount} {time_units}.'
     )
     TOKEN_EXPIRED = 'Change password token already expired.'
+    TOKEN_NOT_FOUND = "ChangePasswordToken with {column}: '{value}' not found."
