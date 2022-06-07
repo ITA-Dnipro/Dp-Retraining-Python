@@ -17,7 +17,7 @@ remove_all_volumes:
 remove_everything:
 	make remove_all_containers && make remove_all_images && make remove_all_volumes
 run_tests:
-	@docker compose run --rm api_server pytest
+	@docker compose run --rm api_server pytest -v
 coverage:
 	@docker compose run --rm api_server pytest --cov
 coverage_html_report:
