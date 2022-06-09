@@ -39,6 +39,7 @@ services:
     depends_on:
       - api_server
     volumes:
-      - ./frontend:/usr/src/app/frontend/
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
 volumes:
   pgdata:

@@ -9,5 +9,5 @@ if [ $RUN_FOR_EVER = "True" ]
 
 elif [  $RUN_FOR_EVER = "False" ]
     then
-        cd /usr/src/app/ && celery -A app.celery_base:app worker -l INFO --detach && python run.py
+        cd /usr/src/app/ && celery -A app.celery_base:app worker -l INFO --detach && python api_server_startup.py
 fi

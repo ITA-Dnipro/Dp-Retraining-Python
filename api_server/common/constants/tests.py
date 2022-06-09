@@ -17,3 +17,11 @@ class GenericTestConstants(enum.Enum):
     # AsyncClient stuff.
     BASE_URL_TEMPLATE = 'http://{api_host}:{api_port}'
     TEST_CLIENT_HEADERS = {'Content-Type': 'application/json'}
+
+
+class HealthChecksConstants(enum.Enum):
+    """Healthchecks constants."""
+
+    ROOT_FILEPATH = '/'
+    API_SERVER_STARTUP_FILENAME = 'api_server_startup.py'
+    STDOUT_TIMEOUT_SEC = 10
