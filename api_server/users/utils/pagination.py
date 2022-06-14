@@ -1,12 +1,10 @@
 import math
 
-from users.models import User
-
 
 class PaginationPage:
     """Custom pagination page object."""
 
-    def __init__(self, items: list[User], page: int, page_size: int, total: int) -> None:
+    def __init__(self, items: list, page: int, page_size: int, total: int) -> None:
         self.current_page = page
         self.items = items
         self.previous_page = None

@@ -39,5 +39,7 @@ class CharityOrganisation(Base):
     users_association = relationship('CharityUserAssociation', back_populates='charity', lazy="selectin")
     users = association_proxy('users_association', 'user')
 
+    fundraisers = relationship('Fundraise', back_populates='charity', lazy='selectin')
+
     def __repr__(self):
         return f"Organisation {self.title}. Contact phone: {self.phone_number} and email: {self.organisation_email}"

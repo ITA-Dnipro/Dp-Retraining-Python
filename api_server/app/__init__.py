@@ -37,6 +37,7 @@ from auth.utils.exceptions import (
 from charity.routers import charities_router
 from charity.utils.exceptions import OrganisationHTTPException, organisation_exception_handler
 from common.constants.api import ApiConstants
+from fundraisers.routers import fundraisers_router
 from users.routers import users_router
 from users.utils.exceptions import (
     UserNotFoundError,
@@ -100,6 +101,7 @@ def app_route_includer(app: FastAPI) -> FastAPI:
     app.include_router(users_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(auth_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(charities_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
+    app.include_router(fundraisers_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     return app
 
 

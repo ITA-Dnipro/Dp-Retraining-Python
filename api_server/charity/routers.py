@@ -6,8 +6,8 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED
 
 from charity.schemas import (
     AddManagerSchema,
+    CharityFullOutputSchema,
     CharityInputSchema,
-    CharityOutputSchema,
     CharityUpdateSchema,
     ManagerResponseSchema,
 )
@@ -29,9 +29,11 @@ async def show_charity_organisation(org_id: UUID, charity_service: CharityServic
     Returns:
         ResponseBaseSchema object with CharityOutputSchema object as response data.
     """
-    return ResponseBaseSchema(status_code=HTTP_200_OK,
-                              data=CharityOutputSchema.from_orm(await charity_service.get_exact_organisation(org_id)),
-                              errors=[])
+    return ResponseBaseSchema(
+        status_code=HTTP_200_OK,
+        data=CharityFullOutputSchema.from_orm(await charity_service.get_exact_organisation(org_id)),
+        errors=[],
+    )
 
 
 @charities_router.get("/", response_model=ResponseBaseSchema, status_code=HTTP_200_OK)
@@ -47,7 +49,7 @@ async def show_charities_list(charity_service: CharityService = Depends()):
     """
     return ResponseBaseSchema(status_code=HTTP_200_OK,
                               data=[
-                                  CharityOutputSchema.from_orm(charity)
+                                  CharityFullOutputSchema.from_orm(charity)
                                   for charity in await charity_service.get_organisations_list()],
                               errors=[])
 
@@ -65,7 +67,7 @@ async def create_charity(organisation_data: CharityInputSchema, charity_service:
         ResponseBaseSchema object with CharityOutputSchema object as response data.
     """
     return ResponseBaseSchema(status_code=HTTP_201_CREATED,
-                              data=CharityOutputSchema.from_orm(
+                              data=CharityFullOutputSchema.from_orm(
                                       await charity_service.add_organisation(organisation_data)
                                   ),
                               errors=[])
@@ -88,7 +90,7 @@ async def edit_charity(org_id: UUID,
     """
     return ResponseBaseSchema(status_code=HTTP_200_OK,
                               data=[
-                                  CharityOutputSchema.from_orm(
+                                  CharityFullOutputSchema.from_orm(
                                       await charity_service.edit_organisation(org_id, organisation_data)
                                   )],
                               errors=[])
