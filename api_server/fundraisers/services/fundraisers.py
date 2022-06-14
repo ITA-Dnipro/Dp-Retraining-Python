@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import get_session
 from fundraisers.dao import FundraiseDAO
+from fundraisers.models import Fundraise
+from fundraisers.schemas import FundraiseInputSchema
 from users.utils.pagination import PaginationPage
 from utils.logging import setup_logging
 
@@ -31,3 +33,17 @@ class FundraiseService:
         fundraisers = await self.fundraise_dao.get_fundraisers(page, page_size)
         total_fundraisers = await self.fundraise_dao._get_total_fundraisers()
         return PaginationPage(items=fundraisers, page=page, page_size=page_size, total=total_fundraisers)
+
+    async def add_fundraise(self, fundraise: FundraiseInputSchema) -> Fundraise:
+        """Add Fundraise object to the database.
+
+        Args:
+            fundraise: FundraiseInputSchema object.
+
+        Returns:
+        Newly created Fundraise object.
+        """
+        return await self._add_fundraise(fundraise)
+
+    async def _add_fundraise(self, fundraise: FundraiseInputSchema) -> Fundraise:
+        return await self.fundraise_dao.add_fundraise(fundraise)

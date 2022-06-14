@@ -26,7 +26,7 @@ class FundraiseBaseSchema(BaseModel):
         max_digits=FundraiseSchemaConstants.NUM_PRECISION.value,
         decimal_places=FundraiseSchemaConstants.NUM_SCALE.value,
     )
-    ending_at: datetime = None
+    ending_at: datetime | None = None
 
     class Config:
         orm_mode = True
@@ -54,6 +54,11 @@ class FundraisePaginatedOutputSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class FundraiseInputSchema(FundraiseBaseSchema):
+    """Fundraise Input schema for Fundraise model."""
+    charity_id: UUID = Field(description='Unique identifier of a charity.')
 
 
 from charity.schemas import CharityOutputSchema  # noqa

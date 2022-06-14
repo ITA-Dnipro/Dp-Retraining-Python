@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, status
 
 from common.constants.fundraisers import FundraiseRouteConstants
 from common.schemas.responses import ResponseBaseSchema
-from fundraisers.schemas import FundraisePaginatedOutputSchema
+from fundraisers.schemas import FundraiseFullOutputSchema, FundraiseInputSchema, FundraisePaginatedOutputSchema
 from fundraisers.services import FundraiseService
 
 fundraisers_router = APIRouter(prefix='/fundraisers', tags=['Fundraisers'])
@@ -34,5 +34,26 @@ async def get_fundraisers(
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
         data=FundraisePaginatedOutputSchema.from_orm(await fundraise_service.get_fundraisers(page, page_size)),
+        errors=[],
+    )
+
+
+@fundraisers_router.post('/', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
+async def post_fundraisers(
+        fundraise: FundraiseInputSchema,
+        fundraise_service: FundraiseService = Depends()
+) -> ResponseBaseSchema:
+    """POST '/fundraisers' endpoint view function.
+
+    Args:
+        fundraise: Serialized FundraiseInputSchema object.
+        fundraise_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with FundraiseFullOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_201_CREATED,
+        data=FundraiseFullOutputSchema.from_orm(await fundraise_service.add_fundraise(fundraise)),
         errors=[],
     )

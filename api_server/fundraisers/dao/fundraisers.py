@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from fundraisers.models import Fundraise
+from fundraisers.schemas import FundraiseInputSchema
 from utils.logging import setup_logging
 
 
@@ -38,3 +39,22 @@ class FundraiseDAO:
         total_fundraisers = (await self.session.execute(select(func.count(Fundraise.id)))).scalar_one()
         self._log.debug(f'Fundraise table has totally: "{total_fundraisers}" fundraisers.')
         return total_fundraisers
+
+    async def add_fundraise(self, fundraise: FundraiseInputSchema) -> Fundraise:
+        """Add Fundraise object to the database.
+
+        Args:
+            fundraise: FundraiseInputSchema object.
+
+        Returns:
+        Newly created Fundraise object.
+        """
+        return await self._add_fundraise(fundraise)
+
+    async def _add_fundraise(self, fundraise: FundraiseInputSchema) -> Fundraise:
+        db_fundraise = Fundraise(**fundraise.dict())
+        self.session.add(db_fundraise)
+        await self.session.commit()
+        await self.session.refresh(db_fundraise)
+        self._log.debug(f'Fundraise with id: "{db_fundraise.id}" successfully created.')
+        return db_fundraise
