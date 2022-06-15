@@ -32,7 +32,7 @@ class Fundraise(Base):
         'CharityOrganisation', back_populates='fundraisers', uselist=False, lazy='selectin',
     )
     statuses_association = relationship(
-        'FundraiseStatusAssociation', back_populates='fundraise', lazy='selectin',
+        'FundraiseStatusAssociation', back_populates='fundraise', lazy='selectin', cascade='all, delete',
     )
     statuses = association_proxy('statuses_association', 'status')
 

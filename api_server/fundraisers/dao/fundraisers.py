@@ -79,7 +79,7 @@ class FundraiseDAO:
         fundraise_status_association.status = fundraise_status
         self.session.add(fundraise_status_association)
         await self.session.commit()
-        await self.session.refresh(fundraise)
+        await self.session.refresh(fundraise_status_association)
         self._log.debug(
             f'FundraiseStatus with name: "{fundraise_status.name}" added to Fundraise with id: {fundraise.id}.'
         )
@@ -123,3 +123,19 @@ class FundraiseDAO:
         # Return updated user.
         self._log.debug(f'Fundraise with id: "{id_}" successfully updated.')
         return await self._get_fundraise_by_id(id_=id_)
+
+    async def delete_fundraise(self, fundraise: Fundraise) -> None:
+        """Delete fundraise object from the database.
+
+        Args:
+            fundraise: Fundraise object.
+
+        Returns:
+        Nothing.
+        """
+        return await self._delete_fundraise(fundraise)
+
+    async def _delete_fundraise(self, fundraise: Fundraise) -> None:
+        await self.session.delete(fundraise)
+        await self.session.commit()
+        self._log.debug(f'Fundraise with id: "{fundraise.id}" successfully deleted.')

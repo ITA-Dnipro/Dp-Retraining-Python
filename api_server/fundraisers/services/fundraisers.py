@@ -103,3 +103,21 @@ class FundraiseService:
         usernames = [user.username for user in fundraise.charity.users]
         if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
             return await self.fundraise_dao.update_fundraise(id_, update_data)
+
+    async def delete_fundraise(self, id_: UUID, jwt_subject: str) -> None:
+        """Delete Fundraise object from the database.
+
+        Args:
+            id_: UUID of a Fundaise object.
+            jwt_subject: decoded jwt identity.
+
+        Returns:
+        Nothing.
+        """
+        return await self._delete_fundraise(id_, jwt_subject)
+
+    async def _delete_fundraise(self, id_: UUID, jwt_subject: str) -> None:
+        fundraise = await self.get_fundraise_by_id(id_)
+        usernames = [user.username for user in fundraise.charity.users]
+        if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
+            return await self.fundraise_dao.delete_fundraise(fundraise)
