@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -82,3 +84,23 @@ class FundraiseDAO:
             f'FundraiseStatus with name: "{fundraise_status.name}" added to Fundraise with id: {fundraise.id}.'
         )
         return fundraise
+
+    async def get_fundraise_by_id(self, id_: UUID) -> Fundraise | None:
+        """Get Fundraise object from database filtered by id.
+
+        Args:
+            id_: of fundraise status.
+
+        Returns:
+        single Fundraise object filtered by id.
+        """
+        return await self._get_fundraise_by_id(id_)
+
+    async def _get_fundraise_by_id(self, id_: UUID) -> Fundraise | None:
+        return await self._select_fundraise(column='id', value=id_)
+
+    async def _select_fundraise(self, column: str, value: UUID | str) -> Fundraise | None:
+        self._log.debug(f'Getting Fundraise with "{column}": "{value}" from the db.')
+        q = select(Fundraise).where(Fundraise.__table__.columns[column] == value)
+        result = await self.session.execute(q)
+        return result.scalars().one_or_none()

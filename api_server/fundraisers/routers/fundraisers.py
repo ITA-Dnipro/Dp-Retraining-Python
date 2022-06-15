@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 
 from common.constants.fundraisers import FundraiseRouteConstants
@@ -55,5 +57,26 @@ async def post_fundraisers(
     return ResponseBaseSchema(
         status_code=status.HTTP_201_CREATED,
         data=FundraiseFullOutputSchema.from_orm(await fundraise_service.add_fundraise(fundraise)),
+        errors=[],
+    )
+
+
+@fundraisers_router.get('/{id}', response_model=ResponseBaseSchema)
+async def get_fundraise(
+        id: UUID,
+        fundraise_service: FundraiseService = Depends()
+) -> ResponseBaseSchema:
+    """GET '/fundraisers/{id}' endpoint view function.
+
+    Args:
+        id: UUID of fundraise.
+        fundraise_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with FundraiseFullOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_201_CREATED,
+        data=FundraiseFullOutputSchema.from_orm(await fundraise_service.get_fundraise_by_id(id_=id)),
         errors=[],
     )

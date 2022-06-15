@@ -1,12 +1,16 @@
-from fastapi import Depends
+from uuid import UUID
+
+from fastapi import Depends, status
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.constants.prepopulates.fundraise_statuses import FundraiseStatusPopulateData
+from common.exceptions.fundraisers import FundraiseExceptionMsgs
 from db import get_session
 from fundraisers.dao import FundraiseDAO, FundraiseStatusDAO
 from fundraisers.models import Fundraise
 from fundraisers.schemas import FundraiseInputSchema
+from fundraisers.utils.exceptions import FundraiseNotFoundError
 from users.utils.pagination import PaginationPage
 from utils.logging import setup_logging
 
@@ -54,3 +58,27 @@ class FundraiseService:
         )
         await self.fundraise_dao.add_status(fundraise=db_fundraise, fundraise_status=db_fundraise_status)
         return db_fundraise
+
+    async def get_fundraise_by_id(self, id_: UUID) -> Fundraise:
+        """Get Fundraise object from database filtered by id.
+
+        Args:
+            id_: of fundraise status.
+        Raise:
+            FundraiseNotFoundError in case fundraise not found.
+
+        Returns:
+        single Fundraise object filtered by id.
+        """
+        return await self._get_fundraise_by_id(id_)
+
+    async def _get_fundraise_by_id(self, id_: UUID) -> Fundraise:
+        fundraise = await self.fundraise_dao.get_fundraise_by_id(id_)
+        if not fundraise:
+            err_msg = FundraiseExceptionMsgs.FUNDRAISE_NOT_FOUND.value.format(
+                column='id',
+                value=id_,
+            )
+            self._log.debug(err_msg)
+            raise FundraiseNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return fundraise
