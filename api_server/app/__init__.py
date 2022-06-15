@@ -39,7 +39,12 @@ from charity.routers import charities_router
 from charity.utils.exceptions import OrganisationHTTPException, organisation_exception_handler
 from common.constants.api import ApiConstants
 from fundraisers.routers import fundraisers_router
-from fundraisers.utils.exceptions import FundraiseNotFoundError, fundraise_not_found_error_handler
+from fundraisers.utils.exceptions import (
+    FundraiseNotFoundError,
+    FundraisePermissionError,
+    fundraise_no_permissions_error_handler,
+    fundraise_not_found_error_handler,
+)
 from users.routers import users_router
 from users.utils.exceptions import (
     UserNotFoundError,
@@ -143,6 +148,7 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(ChangePasswordTokenNotFoundError, change_password_token_not_found_handler)
     app.add_exception_handler(ChangePasswordTokenExpiredError, change_password_token_expired_in_db_handler)
     app.add_exception_handler(FundraiseNotFoundError, fundraise_not_found_error_handler)
+    app.add_exception_handler(FundraisePermissionError, fundraise_no_permissions_error_handler)
     return app
 
 

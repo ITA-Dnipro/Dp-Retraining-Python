@@ -1,11 +1,11 @@
 from uuid import UUID
 
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from fundraisers.models import Fundraise, FundraiseStatus, FundraiseStatusAssociation
-from fundraisers.schemas import FundraiseInputSchema
+from fundraisers.schemas import FundraiseInputSchema, FundraiseUpdateSchema
 from utils.logging import setup_logging
 
 
@@ -104,3 +104,22 @@ class FundraiseDAO:
         q = select(Fundraise).where(Fundraise.__table__.columns[column] == value)
         result = await self.session.execute(q)
         return result.scalars().one_or_none()
+
+    async def update_fundraise(self, id_: UUID, update_data: FundraiseUpdateSchema) -> Fundraise:
+        """Updates Fundraise object in the database.
+
+        Args:
+            id_: UUID of user.
+            update_data: FundraiseUpdateSchema object.
+
+        Returns:
+        updated Fundraise object.
+        """
+        return await self._update_fundraise(id_, update_data)
+
+    async def _update_fundraise(self, id_: UUID, update_data: FundraiseUpdateSchema) -> Fundraise:
+        await self.session.execute(update(Fundraise).where(Fundraise.id == id_).values(**update_data.dict()))
+        await self.session.commit()
+        # Return updated user.
+        self._log.debug(f'Fundraise with id: "{id_}" successfully updated.')
+        return await self._get_fundraise_by_id(id_=id_)

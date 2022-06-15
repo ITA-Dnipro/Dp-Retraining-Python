@@ -2,9 +2,16 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
 
+from fastapi_jwt_auth import AuthJWT
+
 from common.constants.fundraisers import FundraiseRouteConstants
 from common.schemas.responses import ResponseBaseSchema
-from fundraisers.schemas import FundraiseFullOutputSchema, FundraiseInputSchema, FundraisePaginatedOutputSchema
+from fundraisers.schemas import (
+    FundraiseFullOutputSchema,
+    FundraiseInputSchema,
+    FundraisePaginatedOutputSchema,
+    FundraiseUpdateSchema,
+)
 from fundraisers.services import FundraiseService
 
 fundraisers_router = APIRouter(prefix='/fundraisers', tags=['Fundraisers'])
@@ -78,5 +85,34 @@ async def get_fundraise(
     return ResponseBaseSchema(
         status_code=status.HTTP_201_CREATED,
         data=FundraiseFullOutputSchema.from_orm(await fundraise_service.get_fundraise_by_id(id_=id)),
+        errors=[],
+    )
+
+
+@fundraisers_router.put('/{id}', response_model=ResponseBaseSchema)
+async def put_fundraise(
+        id: UUID,
+        update_data: FundraiseUpdateSchema,
+        fundraise_service: FundraiseService = Depends(),
+        Authorize: AuthJWT = Depends(),
+) -> ResponseBaseSchema:
+    """PUT '/fundraisers/{id}' endpoint view function.
+
+    Args:
+        id: UUID of fundraise.
+        update_data: update_data: Serialized FundraiseUpdateSchema object.
+        fundraise_service: dependency as business logic instance.
+        Authorize: dependency of AuthJWT for JWT tokens.
+
+    Returns:
+    ResponseBaseSchema object with FundraiseFullOutputSchema object as response data.
+    """
+    Authorize.jwt_required()
+    jwt_subject = Authorize.get_jwt_subject()
+    return ResponseBaseSchema(
+        status_code=status.HTTP_201_CREATED,
+        data=FundraiseFullOutputSchema.from_orm(
+            await fundraise_service.update_fundraise(id_=id, jwt_subject=jwt_subject, update_data=update_data)
+        ),
         errors=[],
     )

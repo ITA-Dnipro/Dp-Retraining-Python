@@ -9,8 +9,9 @@ from common.exceptions.fundraisers import FundraiseExceptionMsgs
 from db import get_session
 from fundraisers.dao import FundraiseDAO, FundraiseStatusDAO
 from fundraisers.models import Fundraise
-from fundraisers.schemas import FundraiseInputSchema
+from fundraisers.schemas import FundraiseInputSchema, FundraiseUpdateSchema
 from fundraisers.utils.exceptions import FundraiseNotFoundError
+from fundraisers.utils.jwt import jwt_fundraise_validator
 from users.utils.pagination import PaginationPage
 from utils.logging import setup_logging
 
@@ -82,3 +83,23 @@ class FundraiseService:
             self._log.debug(err_msg)
             raise FundraiseNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
         return fundraise
+
+    async def update_fundraise(self, id_: UUID, jwt_subject: str, update_data: FundraiseUpdateSchema) -> Fundraise:
+        """Updates Fundraise object data in the db.
+
+        Args:
+            id_: UUID of a Fundaise object.
+            jwt_subject: decoded jwt identity.
+            update_data: Serialized FundraiseUpdateSchema object.
+        Raise:
+            FundraisePermissionError in case of user not present in charity users list.
+        Returns:
+        Updated Fundraise object.
+        """
+        return await self._update_fundraise(id_, jwt_subject, update_data)
+
+    async def _update_fundraise(self, id_: UUID, jwt_subject: str, update_data: FundraiseUpdateSchema) -> Fundraise:
+        fundraise = await self.get_fundraise_by_id(id_)
+        usernames = [user.username for user in fundraise.charity.users]
+        if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
+            return await self.fundraise_dao.update_fundraise(id_, update_data)

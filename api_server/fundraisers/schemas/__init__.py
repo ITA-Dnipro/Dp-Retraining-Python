@@ -4,6 +4,7 @@ from fundraisers.schemas.fundraisers import (
     FundraiseInputSchema,
     FundraiseOutputSchema,
     FundraisePaginatedOutputSchema,
+    FundraiseUpdateSchema,
 )
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     'FundraiseInputSchema',
     'FundraiseStatusOutputSchema',
     'FundraiseStatusInputSchema',
+    'FundraiseUpdateSchema',
 ]

@@ -87,6 +87,11 @@ class FundraiseInputSchema(FundraiseBaseSchema):
     charity_id: UUID = Field(description='Unique identifier of a charity.')
 
 
+class FundraiseUpdateSchema(FundraiseBaseSchema):
+    """Fundraise Update schema for Fundraise model."""
+    pass
+
+
 from charity.schemas import CharityOutputSchema  # noqa
 from fundraisers.schemas import FundraiseStatusOutputSchema  # noqa
 
