@@ -1,3 +1,4 @@
+from functools import partial
 import json
 import os
 
@@ -54,6 +55,7 @@ from users.utils.exceptions import (
     user_picture_size_error_handler,
 )
 from utils.exceptions import integrity_error_handler
+from utils.prepopulates.fundraise_statuses.events import populate_fundraise_statuses_table
 
 load_dotenv()
 
@@ -81,6 +83,8 @@ def create_app(config_name=ApiConstants.DEVELOPMENT_CONFIG.value) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    # Adding on start_up events.
+    app_on_start_up_events(app)
 
     @AuthJWT.load_config
     def get_config():
@@ -138,3 +142,15 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(ChangePasswordTokenNotFoundError, change_password_token_not_found_handler)
     app.add_exception_handler(ChangePasswordTokenExpiredError, change_password_token_expired_in_db_handler)
     return app
+
+
+def app_on_start_up_events(app: FastAPI) -> FastAPI:
+    """Add on start_up handlers to FastAPI app.
+
+    Args:
+        app: FastAPI instance.
+
+    Returns:
+    An instance of FastAPI with added start_up handlers.
+    """
+    app.add_event_handler(event_type='startup', func=partial(populate_fundraise_statuses_table, config=app.app_config))

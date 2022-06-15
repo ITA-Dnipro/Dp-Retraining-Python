@@ -8,7 +8,7 @@ from pydantic.main import ModelMetaclass
 from sqlalchemy.ext.associationproxy import _AssociationList
 
 from common.constants.charities import CharitySchemaConstants
-from common.exceptions.charities import CharityShemaExceptionMsgs
+from common.exceptions.schemas import SchemaExceptionMsgs
 
 
 class AllOptional(ModelMetaclass):
@@ -60,7 +60,7 @@ class UserOutputAssociationListSchema(_AssociationList):
         list of UserOutputSchema objects.
         """
         if not isinstance(association_list, _AssociationList):
-            raise TypeError(CharityShemaExceptionMsgs.INVALID_ASSOCIATION_LIST_TYPE.value)
+            raise TypeError(SchemaExceptionMsgs.INVALID_ASSOCIATION_LIST_TYPE.value)
         return [UserOutputSchema.from_orm(obj) for obj in association_list]
 
 

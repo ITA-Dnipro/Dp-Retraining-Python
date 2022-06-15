@@ -4,8 +4,10 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field, condecimal
+from sqlalchemy.ext.associationproxy import _AssociationList
 
 from common.constants.fundraisers import FundraiseSchemaConstants
+from common.exceptions.schemas import SchemaExceptionMsgs
 
 
 class FundraiseBaseSchema(BaseModel):
@@ -40,6 +42,30 @@ class FundraiseOutputSchema(FundraiseBaseSchema):
 class FundraiseFullOutputSchema(FundraiseOutputSchema):
     """Fundraise Output schema with all nested schemas included."""
     charity: CharityOutputSchema
+    statuses: FundraiseStatusOutputAssociationListSchema
+
+
+class FundraiseStatusOutputAssociationListSchema(_AssociationList):
+    """Custom FundraiseStatusOutput schema for sqlalchemy association_proxy field."""
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, association_list: _AssociationList) -> list[FundraiseStatusOutputSchema]:
+        """Custom validator checks if field is sqlalchemy _AssociationList object and serializing it with
+        UserOutputSchema.
+
+        Args:
+            association_list: sqlalchemy _AssociationList object.
+
+        Returns:
+        list of FundraiseStatusOutputSchema objects.
+        """
+        if not isinstance(association_list, _AssociationList):
+            raise TypeError(SchemaExceptionMsgs.INVALID_ASSOCIATION_LIST_TYPE.value)
+        return [FundraiseStatusOutputSchema.from_orm(obj) for obj in association_list]
 
 
 class FundraisePaginatedOutputSchema(BaseModel):
@@ -62,5 +88,6 @@ class FundraiseInputSchema(FundraiseBaseSchema):
 
 
 from charity.schemas import CharityOutputSchema  # noqa
+from fundraisers.schemas import FundraiseStatusOutputSchema  # noqa
 
 FundraiseFullOutputSchema.update_forward_refs()

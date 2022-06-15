@@ -10,7 +10,7 @@ from auth.models import ChangePasswordToken, EmailConfirmationToken
 from charity.models import CharityOrganisation, CharityUserAssociation
 from common.constants.api import ApiConstants
 from db import Base
-from fundraisers.models import Fundraise
+from fundraisers.models import Fundraise, FundraiseStatus
 from users.models import User, UserPicture
 
 Config = get_app_config(ApiConstants.DEVELOPMENT_CONFIG.value)

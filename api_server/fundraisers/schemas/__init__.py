@@ -1,3 +1,4 @@
+from fundraisers.schemas.fundraise_statuses import FundraiseStatusInputSchema, FundraiseStatusOutputSchema
 from fundraisers.schemas.fundraisers import (
     FundraiseFullOutputSchema,
     FundraiseInputSchema,
@@ -10,4 +11,6 @@ __all__ = [
     'FundraiseOutputSchema',
     'FundraiseFullOutputSchema',
     'FundraiseInputSchema',
+    'FundraiseStatusOutputSchema',
+    'FundraiseStatusInputSchema',
 ]

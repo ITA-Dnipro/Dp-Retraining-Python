@@ -2,8 +2,9 @@ from fastapi import Depends
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from common.constants.prepopulates.fundraise_statuses import FundraiseStatusPopulateData
 from db import get_session
-from fundraisers.dao import FundraiseDAO
+from fundraisers.dao import FundraiseDAO, FundraiseStatusDAO
 from fundraisers.models import Fundraise
 from fundraisers.schemas import FundraiseInputSchema
 from users.utils.pagination import PaginationPage
@@ -16,6 +17,7 @@ class FundraiseService:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
         self.fundraise_dao = FundraiseDAO(session=self.session)
+        self.fundraise_status_dao = FundraiseStatusDAO(session=self.session)
 
     async def get_fundraisers(self, page: int, page_size: int) -> PaginationPage:
         """Get Fundraise objects from database.
@@ -46,4 +48,9 @@ class FundraiseService:
         return await self._add_fundraise(fundraise)
 
     async def _add_fundraise(self, fundraise: FundraiseInputSchema) -> Fundraise:
-        return await self.fundraise_dao.add_fundraise(fundraise)
+        db_fundraise = await self.fundraise_dao.add_fundraise(fundraise)
+        db_fundraise_status = await self.fundraise_status_dao.get_fundraise_status_by_name(
+            FundraiseStatusPopulateData.NEW.value,
+        )
+        await self.fundraise_dao.add_status(fundraise=db_fundraise, fundraise_status=db_fundraise_status)
+        return db_fundraise
