@@ -35,8 +35,8 @@ from auth.utils.exceptions import (
     invalid_jwt_token_handler,
     user_already_activated_handler,
 )
-from charity.routers import charities_router
-from charity.utils.exceptions import OrganisationHTTPException, organisation_exception_handler
+from charities.routers import charities_router
+from charities.utils.exceptions import OrganisationHTTPException, organisation_exception_handler
 from common.constants.api import ApiConstants
 from fundraisers.routers import fundraisers_router
 from fundraisers.utils.exceptions import (

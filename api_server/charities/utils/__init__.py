@@ -1,7 +1,7 @@
 from sqlalchemy.ext.associationproxy import _AssociationList
 from starlette.status import HTTP_400_BAD_REQUEST
 
-from charity.utils.exceptions import OrganisationHTTPException
+from charities.utils.exceptions import OrganisationHTTPException
 
 
 def check_permission_to_manage_charity(users: _AssociationList, current_user_id: str) -> bool:

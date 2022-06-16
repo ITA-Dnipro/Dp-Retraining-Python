@@ -89,7 +89,7 @@ class FundraiseDAO:
         """Get Fundraise object from database filtered by id.
 
         Args:
-            id_: of fundraise status.
+            id_: UUID of fundraise.
 
         Returns:
         single Fundraise object filtered by id.
@@ -109,7 +109,7 @@ class FundraiseDAO:
         """Updates Fundraise object in the database.
 
         Args:
-            id_: UUID of user.
+            id_: UUID of fundraise.
             update_data: FundraiseUpdateSchema object.
 
         Returns:

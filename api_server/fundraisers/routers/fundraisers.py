@@ -83,7 +83,7 @@ async def get_fundraise(
     ResponseBaseSchema object with FundraiseFullOutputSchema object as response data.
     """
     return ResponseBaseSchema(
-        status_code=status.HTTP_201_CREATED,
+        status_code=status.HTTP_200_OK,
         data=FundraiseFullOutputSchema.from_orm(await fundraise_service.get_fundraise_by_id(id_=id)),
         errors=[],
     )

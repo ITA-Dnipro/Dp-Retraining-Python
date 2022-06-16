@@ -64,7 +64,7 @@ class FundraiseService:
         """Get Fundraise object from database filtered by id.
 
         Args:
-            id_: of fundraise status.
+            id_: UUID of fundraise.
         Raise:
             FundraiseNotFoundError in case fundraise not found.
 

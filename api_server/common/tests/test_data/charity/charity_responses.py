@@ -1,3 +1,5 @@
+from users.tests.test_data import response_test_user_data
+
 UNAUTHORIZED = {'status_code': 401, 'data': [], 'errors': [{'detail': 'Missing cookie access_token_cookie'}]}
 
 NOT_VALID_REQUEST = {'data': [],
@@ -32,13 +34,20 @@ NOT_FOUND = {'data': [],
 
 
 def get_successful_organisation_creating(org_id) -> dict:
-    return {'data': {'title': 'Charity Organisation',
-                     'description': 'Some good organisation',
-                     'organisation_email': 'org@mail.org',
-                     'phone_number': '+380707813196',
-                     'id': str(org_id)},
-            'errors': [],
-            'status_code': 201}
+    charity = {
+        'data': {
+            'title': 'Charity Organisation',
+            'description': 'Some good organisation',
+            'organisation_email': 'org@mail.org',
+            'phone_number': '+380707813196',
+            'id': str(org_id),
+            'users': [response_test_user_data.RESPONSE_USER_TEST_DATA],
+            'fundraisers': [],
+        },
+        'errors': [],
+        'status_code': 201
+    }
+    return charity
 
 
 def get_charities_list(org_ids: [list, tuple], title_list: [list, tuple], phones, mails) -> dict:
@@ -55,10 +64,37 @@ def get_charities_list(org_ids: [list, tuple], title_list: [list, tuple], phones
 
 
 def get_successfully_edited_charity_data(org_id, email, phone):
-    return {'data': [{'description': 'Very good organisation',
-                      'id': str(org_id),
-                      'organisation_email': email,
-                      'phone_number': phone,
-                      'title': 'Charity Organisation'}],
-            'errors': [],
-            'status_code': 200}
+    # aaa = {
+    #     'data': [
+    #         {
+    #             'description': 'Very good organisation',
+    #             'id': str(org_id),
+    #             'organisation_email': email,
+    #             'phone_number': phone,
+    #             'title': 'Charity Organisation'
+    #         }
+    #     ],
+    #     'errors': [],
+    #     'status_code': 200}
+    # return {'data': [{'description': 'Very good organisation',
+    #                   'id': str(org_id),
+    #                   'organisation_email': email,
+    #                   'phone_number': phone,
+    #                   'title': 'Charity Organisation'}],
+    #         'errors': [],
+    #         'status_code': 200}
+
+    charity = {
+        'data': {
+            'title': 'Charity Organisation',
+            'description': 'Very good organisation',
+            'organisation_email': email,
+            'phone_number': phone,
+            'id': str(org_id),
+            'users': [response_test_user_data.RESPONSE_USER_TEST_DATA],
+            'fundraisers': [],
+        },
+        'errors': [],
+        'status_code': 200
+    }
+    return charity

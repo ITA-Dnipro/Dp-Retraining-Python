@@ -92,7 +92,7 @@ class FundraiseUpdateSchema(FundraiseBaseSchema):
     pass
 
 
-from charity.schemas import CharityOutputSchema  # noqa
+from charities.schemas.charities import CharityOutputSchema  # noqa
 from fundraisers.schemas import FundraiseStatusOutputSchema  # noqa
 
 FundraiseFullOutputSchema.update_forward_refs()

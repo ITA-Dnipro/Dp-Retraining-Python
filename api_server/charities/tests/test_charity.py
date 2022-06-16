@@ -15,7 +15,7 @@ from starlette.status import (
 )
 import pytest
 
-from charity.models import CharityOrganisation
+from charities.models import CharityOrganisation
 from common.tests.generics import TestMixin
 from common.tests.test_data.charity.charity_requests import (
     DUMMY_UUID,
