@@ -1,6 +1,6 @@
-from charities.models.charities import CharityOrganisation, CharityUserAssociation
+from charities.models.charities import Charity, CharityUserAssociation
 
 __all__ = [
-    'CharityOrganisation',
+    'Charity',
     'CharityUserAssociation',
 ]

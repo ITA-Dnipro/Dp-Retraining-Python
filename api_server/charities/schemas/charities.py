@@ -24,13 +24,13 @@ class AllOptional(ModelMetaclass):
 
 
 class CharityDefaultSchema(BaseModel):
-    title: str = Field(description="Name of organisation")
-    description: str = Field(description="Short description of organisation")
+    title: str = Field(description='Name of organisation')
+    description: str = Field(description='Short description of organisation')
     phone_number: str = Field(
         regex=CharitySchemaConstants.PHONE_REGEX.value,
-        description="Phone number must be from Ukrainian operator and same to that template: +380xxxxxxxxx"
+        description='Phone number must be from Ukrainian operator and same to that template: +380xxxxxxxxx',
     )
-    organisation_email: str = Field(regex=CharitySchemaConstants.EMAIL_REGEX.value, description="Enter valid email")
+    email: str = Field(regex=CharitySchemaConstants.EMAIL_REGEX.value, description='Enter valid email')
 
     class Config:
         orm_mode = True

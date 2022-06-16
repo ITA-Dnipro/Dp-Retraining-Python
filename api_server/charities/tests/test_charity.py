@@ -15,7 +15,7 @@ from starlette.status import (
 )
 import pytest
 
-from charities.models import CharityOrganisation
+from charities.models import Charity
 from common.tests.generics import TestMixin
 from common.tests.test_data.charity.charity_requests import (
     DUMMY_UUID,
@@ -85,8 +85,8 @@ class TestCaseCharity(TestMixin):
         response_data = response.json()
         organisation_id = response_data["data"]["id"]
         expected_result = get_successful_organisation_creating(organisation_id)
-        organisation = (await db_session.execute(select(CharityOrganisation)
-                                                 .where(CharityOrganisation.id == organisation_id))).scalar_one()
+        organisation = (await db_session.execute(select(Charity)
+                                                 .where(Charity.id == organisation_id))).scalar_one()
         assert response.status_code == HTTP_201_CREATED
         assert response_data == expected_result
         assert organisation.users[0].username == "test_john"
@@ -96,7 +96,7 @@ class TestCaseCharity(TestMixin):
             self,
             app: FastAPI,
             client: AsyncClient,
-            charity: CharityOrganisation
+            charity: Charity
     ):
         """
         Test PATCH '/charities/{org_id}' endpoint with NOT authenticated user.
@@ -104,7 +104,7 @@ class TestCaseCharity(TestMixin):
         Args:
             app: pytest fixture, an instance of FastAPI.
             client: pytest fixture, an instance of AsyncClient for http requests.
-            charity: pytest fixture, add CharityOrganisation to database with non-authenticated user
+            charity: pytest fixture, add Charity to database with non-authenticated user
 
         """
 
@@ -118,7 +118,7 @@ class TestCaseCharity(TestMixin):
             self,
             app: FastAPI,
             client: AsyncClient,
-            charity_with_authenticated_director: CharityOrganisation
+            charity_with_authenticated_director: Charity
     ):
         """
         Test PATCH '/charities/{org_id}' endpoint with authenticated user.

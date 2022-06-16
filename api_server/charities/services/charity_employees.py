@@ -5,7 +5,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityEmployeeDBService
-from charities.models import CharityOrganisation
+from charities.models import Charity
 from charities.schemas import EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 from db import get_session
@@ -24,21 +24,21 @@ class CharityEmployeeService(CharityCommonService):
 
     async def add_employee_to_charity(
             self, charity_id: UUID, employee_data: EmployeeInputSchema,
-    ) -> CharityOrganisation:
-        """Add User to CharityOrganisation object in the database via many-to-many relationship.
+    ) -> Charity:
+        """Add User to Charity object in the database via many-to-many relationship.
 
         Args:
             charity_id: UUID of charity.
             employee_data: Serialized EmployeeInputSchema object.
 
         Returns:
-        CharityOrganisation object with User added to many-to-many relationship.
+        Charity object with User added to many-to-many relationship.
         """
         return await self._add_employee_to_charity(charity_id, employee_data)
 
     async def _add_employee_to_charity(
             self, charity_id: UUID, employee_data: EmployeeInputSchema,
-    ) -> CharityOrganisation:
+    ) -> Charity:
         user = await self.user_service.get_user_by_id(employee_data.user_id)
         charity = await self.get_charity_by_id(charity_id)
         await self.save_employee_to_charity(user, charity)

@@ -8,7 +8,7 @@ from fastapi import Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityDBService, CharityEmployeeDBService
-from charities.models import CharityOrganisation
+from charities.models import Charity
 from charities.schemas import CharityInputSchema, EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 # from charities.utils import check_permission_to_manage_charity, remove_nullable_params
@@ -33,19 +33,19 @@ class CharityService(CharityCommonService):
         self.user_service = UserService(session)
 
 
-    async def add_charity(self, charity: CharityInputSchema, jwt_subject: str) -> CharityOrganisation:
-        """Add CharityOrganisation object to the database.
+    async def add_charity(self, charity: CharityInputSchema, jwt_subject: str) -> Charity:
+        """Add Charity object to the database.
 
         Args:
             charity: CharityInputSchema object.
             jwt_subject: decoded jwt identity.
 
         Returns:
-        Newly created CharityOrganisation object.
+        Newly created Charity object.
         """
         return await self._add_charity(charity, jwt_subject)
 
-    async def _add_charity(self, charity: CharityInputSchema, jwt_subject: str) -> CharityOrganisation:
+    async def _add_charity(self, charity: CharityInputSchema, jwt_subject: str) -> Charity:
         db_user = await self.user_service.get_user_by_username(jwt_subject)
         db_charity = await self.charity_db_service.add_charity(charity)
         await self.save_employee_to_charity(user=db_user, charity=db_charity)

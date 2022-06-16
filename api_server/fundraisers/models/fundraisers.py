@@ -15,7 +15,7 @@ class Fundraise(Base):
     __tablename__ = 'fundraisers'
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    charity_id = Column(UUID(as_uuid=True), ForeignKey('CharityOrganisations.id'), nullable=False)
+    charity_id = Column(UUID(as_uuid=True), ForeignKey('charities.id'), nullable=False)
     title = Column(String(length=FundraiseModelConstants.CHAR_SIZE_512.value), nullable=False)
     description = Column(String(length=FundraiseModelConstants.CHAR_SIZE_8192.value), nullable=False)
     goal = Column(
@@ -29,7 +29,7 @@ class Fundraise(Base):
     ending_at = Column(DateTime, nullable=True)
 
     charity = relationship(
-        'CharityOrganisation', back_populates='fundraisers', uselist=False, lazy='selectin',
+        'Charity', back_populates='fundraisers', uselist=False, lazy='selectin',
     )
     statuses_association = relationship(
         'FundraiseStatusAssociation', back_populates='fundraise', lazy='selectin', cascade='all, delete',

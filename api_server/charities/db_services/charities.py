@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from charities.models import CharityOrganisation
+from charities.models import Charity
 from charities.schemas import CharityInputSchema
 from utils.logging import setup_logging
 
@@ -14,41 +14,41 @@ class CharityDBService:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
 
-    async def get_charity_by_id(self, id_: UUID) -> CharityOrganisation | None:
-        """Get CharityOrganisation object from database filtered by id.
+    async def get_charity_by_id(self, id_: UUID) -> Charity | None:
+        """Get Charity object from database filtered by id.
 
         Args:
             id_: UUID of charity.
 
         Returns:
-        Single CharityOrganisation object filtered by id.
+        Single Charity object filtered by id.
         """
         return await self._get_charity_by_id(id_)
 
-    async def _get_charity_by_id(self, id_: UUID) -> CharityOrganisation | None:
+    async def _get_charity_by_id(self, id_: UUID) -> Charity | None:
         return await self._select_charity(column='id', value=id_)
 
-    async def _select_charity(self, column: str, value: UUID | str) -> CharityOrganisation | None:
-        self._log.debug(f'Getting CharityOrganisation with "{column}": "{value}" from the db.')
-        q = select(CharityOrganisation).where(CharityOrganisation.__table__.columns[column] == value)
+    async def _select_charity(self, column: str, value: UUID | str) -> Charity | None:
+        self._log.debug(f'Getting Charity with "{column}": "{value}" from the db.')
+        q = select(Charity).where(Charity.__table__.columns[column] == value)
         result = await self.session.execute(q)
         return result.scalars().one_or_none()
 
-    async def add_charity(self, charity: CharityInputSchema) -> CharityOrganisation:
-        """Add CharityOrganisation object to the database.
+    async def add_charity(self, charity: CharityInputSchema) -> Charity:
+        """Add Charity object to the database.
 
         Args:
             charity: CharityInputSchema object.
 
         Returns:
-        Newly created CharityOrganisation object.
+        Newly created Charity object.
         """
         return await self._add_charity(charity)
 
-    async def _add_charity(self, charity: CharityInputSchema) -> CharityOrganisation:
-        db_charity = CharityOrganisation(**charity.dict())
+    async def _add_charity(self, charity: CharityInputSchema) -> Charity:
+        db_charity = Charity(**charity.dict())
         self.session.add(db_charity)
         await self.session.commit()
         await self.session.refresh(db_charity)
-        self._log.debug(f'CharityOrganisation with id: "{db_charity.id}" successfully created.')
+        self._log.debug(f'Charity with id: "{db_charity.id}" successfully created.')
         return db_charity

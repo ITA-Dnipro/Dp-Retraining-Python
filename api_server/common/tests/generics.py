@@ -30,7 +30,7 @@ from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
 from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.services import AuthService
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
-from charities.models import CharityOrganisation, CharityUserAssociation
+from charities.models import Charity, CharityUserAssociation
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
@@ -490,17 +490,17 @@ class TestMixin:
 
     @staticmethod
     async def _initialize_charity(user: User, db_session: AsyncSession, charity_title: str, is_director: bool,
-                                  is_supermanager: bool) -> CharityOrganisation:
+                                  is_supermanager: bool) -> Charity:
         """
-        Initializes charityOrganisation in database.
+        Initializes Charity in database.
         Args:
                 user: instance of User business logic class.
                 db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
-            newly created CharityOrganisation object.
+            newly created Charity object.
         """
-        organisation = CharityOrganisation(**initialize_charity_data(charity_title))
+        organisation = Charity(**initialize_charity_data(charity_title))
         association = CharityUserAssociation()
         association.user = user
         association.is_director = is_director
@@ -513,12 +513,12 @@ class TestMixin:
         return organisation
 
     @pytest_asyncio.fixture
-    async def charity(self, user_service: UserService, db_session: AsyncSession) -> CharityOrganisation:
+    async def charity(self, user_service: UserService, db_session: AsyncSession) -> Charity:
         """
             Create test charity data and store it in test database.
 
             Returns:
-            CharityOrganisation object and not authenticated User object.
+            Charity object and not authenticated User object.
             """
 
         user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
@@ -536,12 +536,12 @@ class TestMixin:
                                                  user_service: UserService,
                                                  db_session: AsyncSession,
                                                  auth_service: AuthService,
-                                                 client: fixture, ) -> CharityOrganisation:
+                                                 client: fixture, ) -> Charity:
         """
         Create authenticated test charity data and store it in test database.
 
             Returns:
-        CharityOrganisation object with authenticated user.
+        Charity object with authenticated user.
         """
         additional_user = await self._create_user(user_service, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
         user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
@@ -567,12 +567,12 @@ class TestMixin:
                                                   user_service: UserService,
                                                   db_session: AsyncSession,
                                                   auth_service: AuthService,
-                                                  client: fixture, ) -> CharityOrganisation:
+                                                  client: fixture, ) -> Charity:
         """
         Create authenticated test charity data and store it in test database.
 
             Returns:
-        CharityOrganisation object with authenticated user.
+        Charity object with authenticated user.
         """
         additional_user = await self._create_user(user_service, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
         user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
