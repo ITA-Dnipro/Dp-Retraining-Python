@@ -67,12 +67,6 @@ class CharityDBService:
         return await self._get_charity_by_id_with_relationships(id_)
 
     async def _get_charity_by_id_with_relationships(self, id_: UUID) -> Charity | None:
-        CharityEmployeeAssociation.roles = relationship(
-            'EmployeeRole',
-            secondary='charity_employee_role_association',
-            lazy='subquery',
-        )
-        Charity.employees = relationship('Employee', secondary='charity_employee_association', lazy='subquery')
         roles_subquery = (
             select(EmployeeRole, CharityEmployeeAssociation).join(
                 CharityEmployeeRoleAssociation, CharityEmployeeRoleAssociation.role_id == EmployeeRole.id
@@ -100,22 +94,7 @@ class CharityDBService:
 
     async def _get_charities(self, page: int, page_size: int) -> list[Charity]:
         self._log.debug(f'Getting charities from the db, page: {page} with page size: {page_size}.')
-        CharityEmployeeAssociation.roles = relationship(
-            'EmployeeRole',
-            secondary='charity_employee_role_association',
-            lazy='subquery',
-        )
-        Charity.employees = relationship('Employee', secondary='charity_employee_association', lazy='subquery')
-        roles_subquery = (
-            select(EmployeeRole, CharityEmployeeAssociation).join(
-                CharityEmployeeRoleAssociation, CharityEmployeeRoleAssociation.role_id == EmployeeRole.id
-            ).subquery()
-        )
-        EmployeeRoleAlias = aliased(EmployeeRole, roles_subquery)
-        Employee.roles = relationship(EmployeeRoleAlias, primaryjoin=Employee.id == roles_subquery.c.employee_id)
-        q = select(Charity).limit(page_size).offset((page - 1) * page_size).options(
-            subqueryload(Charity.employees).subqueryload(Employee.roles),
-        )
+        q = select(Charity).limit(page_size).offset((page - 1) * page_size)
         return (await self.session.execute(q)).scalars().all()
 
     async def get_total_charities(self) -> int:

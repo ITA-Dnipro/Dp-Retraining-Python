@@ -43,6 +43,12 @@ class CharityEmployeeAssociation(Base):
     employee_id = Column(UUID(as_uuid=True), ForeignKey('employees.id'), nullable=False)
     created_at = Column(DateTime, default=datetime.now())
 
+    roles = relationship(
+        'EmployeeRole',
+        secondary='charity_employee_role_association',
+        lazy='subquery',
+    )
+
     def __repr__(self):
         return (
             f'CharityUserAssociation: charity_id={self.charity_id}, employee_id={self.employee_id}, '
@@ -61,6 +67,8 @@ class Charity(Base):
     email = Column(String(length=CharityModelConstants.CHAR_SIZE_256.value), unique=True)
     phone_number = Column(String(length=CharityModelConstants.CHAR_SIZE_128.value), unique=True)
     created_at = Column(DateTime, default=datetime.now())
+
+    employees = relationship('Employee', secondary='charity_employee_association', lazy='subquery')
 
     fundraisers = relationship('Fundraise', back_populates='charity', lazy='selectin', cascade='all, delete')
 

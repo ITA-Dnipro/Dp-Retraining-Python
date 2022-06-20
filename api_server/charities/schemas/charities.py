@@ -96,7 +96,7 @@ class CharityPaginatedOutputSchema(BaseModel):
     current_page: int
     has_next: bool
     has_previous: bool
-    items: list[CharityFullOutputSchema]
+    items: list[CharityOutputSchema]
     next_page: int | None
     previous_page: int | None
     total_pages: int
