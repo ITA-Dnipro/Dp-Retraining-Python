@@ -12,8 +12,8 @@ from fundraisers.models import Fundraise
 from fundraisers.schemas import FundraiseInputSchema, FundraiseUpdateSchema
 from fundraisers.utils.exceptions import FundraiseNotFoundError
 from fundraisers.utils.jwt import jwt_fundraise_validator
-from users.utils.pagination import PaginationPage
 from utils.logging import setup_logging
+from utils.pagination import PaginationPage
 
 
 class FundraiseService:

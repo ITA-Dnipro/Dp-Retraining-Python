@@ -16,8 +16,8 @@ from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
 from users.utils.exceptions import UserNotFoundError
 from users.utils.jwt.user import jwt_user_validator
-from users.utils.pagination import PaginationPage
 from utils.logging import setup_logging
+from utils.pagination import PaginationPage
 
 
 class UserService:

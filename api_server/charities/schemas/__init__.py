@@ -3,6 +3,7 @@ from charities.schemas.charities import (
     CharityFullOutputSchema,
     CharityInputSchema,
     CharityOutputSchema,
+    CharityPaginatedOutputSchema,
     CharityUpdateSchema,
     ManagerResponseSchema,
 )
@@ -18,4 +19,5 @@ __all__ = [
     'EmployeeInputSchema',
     'EmployeeRoleInputSchema',
     'EmployeeRoleOutputSchema',
+    'CharityPaginatedOutputSchema',
 ]

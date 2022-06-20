@@ -91,6 +91,20 @@ class ManagerResponseSchema(BaseModel):
         orm_mode = True
 
 
+class CharityPaginatedOutputSchema(BaseModel):
+    """Charity paginated output schema for Charity model."""
+    current_page: int
+    has_next: bool
+    has_previous: bool
+    items: list[CharityFullOutputSchema]
+    next_page: int | None
+    previous_page: int | None
+    total_pages: int
+
+    class Config:
+        orm_mode = True
+
+
 from charities.schemas.employees import EmployeeOutputSchema  # noqa
 from fundraisers.schemas import FundraiseOutputSchema  # noqa
 

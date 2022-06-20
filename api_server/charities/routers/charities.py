@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from fastapi_jwt_auth import AuthJWT
 
@@ -8,8 +8,10 @@ from charities.routers.charity_employees import charity_employees_router
 from charities.schemas import (  # AddManagerSchema,; CharityUpdateSchema,; ManagerResponseSchema,
     CharityFullOutputSchema,
     CharityInputSchema,
+    CharityPaginatedOutputSchema,
 )
 from charities.services.charities import CharityService
+from common.constants.charities import CharityRouteConstants
 from common.schemas.responses import ResponseBaseSchema
 
 charities_router = APIRouter(prefix='/charities', tags=['Charities'])
@@ -40,6 +42,35 @@ async def post_charities(
         errors=[],
     )
 
+
+@charities_router.get('/', response_model=ResponseBaseSchema)
+async def get_charities(
+        page: int = Query(
+            default=CharityRouteConstants.DEFAULT_START_PAGE.value,
+            gt=CharityRouteConstants.ZERO_NUMBER.value,
+        ),
+        page_size: int = Query(
+            default=CharityRouteConstants.DEFAULT_PAGE_SIZE.value,
+            gt=CharityRouteConstants.ZERO_NUMBER.value,
+            lt=CharityRouteConstants.MAX_PAGINATION_PAGE_SIZE.value,
+        ),
+        charity_service: CharityService = Depends(),
+) -> ResponseBaseSchema:
+    """GET '/charities' endpoint view function.
+
+    Args:
+        page: pagination page.
+        page_size: pagination page size, how many items to show per page.
+        charity_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with list of CharityFullOutputSchema objects as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_200_OK,
+        data=CharityPaginatedOutputSchema.from_orm(await charity_service.get_charities(page, page_size)),
+        errors=[],
+    )
 
 # # @charities_router.get("/{org_id}", response_model=ResponseBaseSchema, status_code=HTTP_200_OK)
 # # async def show_charity_organisation(org_id: UUID, charity_service: CharityService = Depends()):

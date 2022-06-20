@@ -19,6 +19,7 @@ from users.models import User
 from users.services import UserService
 # from users.utils.exceptions import UserNotFoundError
 from utils.logging import setup_logging
+from utils.pagination import PaginationPage
 
 # from sqlalchemy.orm.collections import InstrumentedList
 # from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
@@ -63,18 +64,24 @@ class CharityService(CharityCommonService):
         )
         return await self.charity_db_service.get_charity_by_id_with_relationships(id_=db_charity.id)
 
+    async def get_charities(self, page: int, page_size: int) -> PaginationPage:
+        """Get Charity objects from database.
 
-    # async def get_exact_organisation(self, org_id: UUID) -> CharityOrganisation:
-    #     """
-    #     Retrieves definite charity organisation.
-    # 
-    #     Args:
-    #         org_id: id of organisation we want to retrieve
-    #     Returns:
-    #         CharityOrganisation object.
-    #     """
-    #     return await self._get_organisation_by_id(org_id)
-    # 
+        Args:
+            page: number of result page.
+            page_size: number of items per page.
+
+        Returns:
+        PaginationPage object with items as a list of Charity objects.
+        """
+        return await self._get_charities(page, page_size)
+
+    async def _get_charities(self, page: int, page_size: int) -> PaginationPage:
+        charities = await self.charity_db_service.get_charities(page, page_size)
+        total_charities = await self.charity_db_service.get_total_charities()
+        return PaginationPage(items=charities, page=page, page_size=page_size, total=total_charities)
+
+
     # async def get_organisations_list(self) -> List[CharityOrganisation]:
     #     """
     #     Retrieves all charity organisations
