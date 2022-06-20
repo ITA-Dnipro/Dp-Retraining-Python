@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import func, join
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased, relationship, subqueryload
@@ -78,7 +78,9 @@ class CharityDBService:
             subqueryload(Charity.employees).subqueryload(Employee.roles),
         )
         result = await self.session.execute(q)
-        return result.scalars().one_or_none()
+        charity = result.scalars().one_or_none()
+        await self.session.refresh(charity)
+        return charity
 
     async def get_charities(self, page: int, page_size: int) -> list[Charity]:
         """Get Charity objects from database.
