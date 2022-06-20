@@ -7,12 +7,13 @@ from fastapi import Depends, status
 # from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from charities.db_services import CharityDBService, CharityEmployeeDBService
+from charities.db_services import CharityDBService, CharityEmployeeDBService, EmployeeDBService, EmployeeRoleDBService
 from charities.models import Charity
 from charities.schemas import CharityInputSchema, EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 # from charities.utils import check_permission_to_manage_charity, remove_nullable_params
 from charities.utils.exceptions import OrganisationHTTPException
+from common.constants.prepopulates import EmployeeRolePopulateData
 from db import get_session
 from users.models import User
 from users.services import UserService
@@ -31,7 +32,8 @@ class CharityService(CharityCommonService):
         self.session = session
         self.charity_db_service = CharityDBService(session)
         self.user_service = UserService(session)
-
+        self.employee_db_service = EmployeeDBService(session)
+        self.employee_role_db_service = EmployeeRoleDBService(session)
 
     async def add_charity(self, charity: CharityInputSchema, jwt_subject: str) -> Charity:
         """Add Charity object to the database.
@@ -47,9 +49,19 @@ class CharityService(CharityCommonService):
 
     async def _add_charity(self, charity: CharityInputSchema, jwt_subject: str) -> Charity:
         db_user = await self.user_service.get_user_by_username(jwt_subject)
+        db_employee = db_user.employee
+        if not db_employee:
+            employee = EmployeeInputSchema(user_id=db_user.id)
+            db_employee = await self.employee_db_service.add_employee(employee)
         db_charity = await self.charity_db_service.add_charity(charity)
-        await self.save_employee_to_charity(user=db_user, charity=db_charity)
-        return db_charity
+        db_charity_employee = await self.save_employee_to_charity(employee=db_employee, charity=db_charity)
+        supervisor_role = await self.employee_role_db_service.get_employee_role_by_name(
+            EmployeeRolePopulateData.SUPERVISOR.value
+        )
+        await self.employee_role_db_service.add_role_to_charity_employee(
+            role=supervisor_role, charity_employee=db_charity_employee,
+        )
+        return await self.charity_db_service.get_charity_by_id_with_relationships(id_=db_charity.id)
 
 
     # async def get_exact_organisation(self, org_id: UUID) -> CharityOrganisation:

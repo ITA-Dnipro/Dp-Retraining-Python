@@ -9,7 +9,6 @@ from charities.models import Charity
 from charities.schemas import EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 from db import get_session
-from users.services import UserService
 from utils.logging import setup_logging
 
 

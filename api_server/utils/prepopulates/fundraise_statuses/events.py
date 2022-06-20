@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from common.constants.prepopulates.fundraise_statuses import FundraiseStatusPopulateData
+from common.constants.prepopulates import FundraiseStatusPopulateData
 from db import create_engine
 from fundraisers.dao import FundraiseStatusDAO
 from fundraisers.schemas import FundraiseStatusInputSchema

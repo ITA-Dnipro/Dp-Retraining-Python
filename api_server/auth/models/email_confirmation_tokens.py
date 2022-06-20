@@ -14,7 +14,7 @@ class EmailConfirmationToken(Base):
     __tablename__ = 'email-confirmation-token'
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('Users.id'), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     token = Column(String(EmailConfirmationTokenModelConstants.CHAR_SIZE_2048.value), nullable=True, unique=True)
     created_at = Column(DateTime, server_default=func.now())
     expired_at = Column(DateTime, nullable=True)

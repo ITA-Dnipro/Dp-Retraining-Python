@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from pydantic.main import ModelMetaclass
 from sqlalchemy.ext.associationproxy import _AssociationList
 
-from common.constants.charities import CharitySchemaConstants
+from common.constants.charities.charities import CharitySchemaConstants
 from common.exceptions.schemas import SchemaExceptionMsgs
 
 
@@ -41,33 +41,33 @@ class CharityOutputSchema(CharityDefaultSchema):
     id: UUID = Field(description="id of current organisation")
 
 
-class UserOutputAssociationListSchema(_AssociationList):
-    """Custom UserOutput schema for sqlalchemy association_proxy field."""
-
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, association_list: _AssociationList) -> list[UserOutputSchema]:
-        """Custom validator checks if field is sqlalchemy _AssociationList object and serializing it with
-        UserOutputSchema.
-
-        Args:
-            association_list: sqlalchemy _AssociationList object.
-
-        Returns:
-        list of UserOutputSchema objects.
-        """
-        if not isinstance(association_list, _AssociationList):
-            raise TypeError(SchemaExceptionMsgs.INVALID_ASSOCIATION_LIST_TYPE.value)
-        return [UserOutputSchema.from_orm(obj) for obj in association_list]
+# class UserOutputAssociationListSchema(_AssociationList):
+#     """Custom UserOutput schema for sqlalchemy association_proxy field."""
+# 
+#     @classmethod
+#     def __get_validators__(cls):
+#         yield cls.validate
+# 
+#     @classmethod
+#     def validate(cls, association_list: _AssociationList) -> list[UserOutputSchema]:
+#         """Custom validator checks if field is sqlalchemy _AssociationList object and serializing it with
+#         UserOutputSchema.
+# 
+#         Args:
+#             association_list: sqlalchemy _AssociationList object.
+# 
+#         Returns:
+#         list of UserOutputSchema objects.
+#         """
+#         if not isinstance(association_list, _AssociationList):
+#             raise TypeError(SchemaExceptionMsgs.INVALID_ASSOCIATION_LIST_TYPE.value)
+#         return [UserOutputSchema.from_orm(obj.user) for obj in association_list]
 
 
 class CharityFullOutputSchema(CharityOutputSchema):
     """Charity Output schema with all nested schemas included."""
     fundraisers: List[Optional['FundraiseOutputSchema']]
-    users: UserOutputAssociationListSchema
+    employees: list[EmployeeOutputSchema]
 
 
 class CharityInputSchema(CharityDefaultSchema):
@@ -85,13 +85,15 @@ class AddManagerSchema(BaseModel):
 
 class ManagerResponseSchema(BaseModel):
     is_supermanager: bool
-    user: UserOutputSchema
+    # user: UserOutputSchema
 
     class Config:
         orm_mode = True
 
 
+from charities.schemas.employees import EmployeeOutputSchema  # noqa
 from fundraisers.schemas import FundraiseOutputSchema  # noqa
-from users.schemas import UserOutputSchema  # noqa
+
+# from users.schemas import UserOutputSchema  # noqa
 
 CharityFullOutputSchema.update_forward_refs()

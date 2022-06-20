@@ -1,6 +1,11 @@
-from charities.models.charities import Charity, CharityUserAssociation
+from charities.models.charities import Charity, CharityEmployeeAssociation, CharityEmployeeRoleAssociation
+from charities.models.employee_roles import EmployeeRole
+from charities.models.employees import Employee
 
 __all__ = [
     'Charity',
-    'CharityUserAssociation',
+    'CharityEmployeeAssociation',
+    'CharityEmployeeRoleAssociation',
+    'EmployeeRole',
+    'Employee',
 ]

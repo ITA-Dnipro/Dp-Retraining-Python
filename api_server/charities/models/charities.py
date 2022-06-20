@@ -6,27 +6,48 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 
-from common.constants.charities import CharityModelConstants
+from common.constants.charities.charities import CharityModelConstants
 from db import Base
 
 
-class CharityUserAssociation(Base):
-    """Many-to-Many table for Charity and User models association."""
+class CharityEmployeeRoleAssociation(Base):
+    """Many-to-Many table for CharityEmployeeAssociation and EmployeeRole models association."""
 
-    __tablename__ = 'charity_user_association'
+    __tablename__ = 'charity_employee_role_association'
     __table_args__ = (
-        UniqueConstraint('charity_id', 'user_id', name='_charity_user_uc'),
+        UniqueConstraint('charity_employee_id', 'role_id', name='_charity_employee_role_uc'),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    charity_employee_id = Column(UUID(as_uuid=True), ForeignKey('charity_employee_association.id'), nullable=False)
+    role_id = Column(UUID(as_uuid=True), ForeignKey('employee_roles.id'), nullable=False)
+    created_at = Column(DateTime, default=datetime.now())
+
+    def __repr__(self):
+        return (
+            f'CharityEmployeeRoleAssociation: charity_employee_id={self.charity_employee_id}, '
+            f'role_id={self.role_id}, created_at={self.created_at}'
+        )
+
+
+class CharityEmployeeAssociation(Base):
+    """Many-to-Many table for Charity and Employee models association."""
+
+    __tablename__ = 'charity_employee_association'
+    __table_args__ = (
+        UniqueConstraint('charity_id', 'employee_id', name='_charity_employee_uc'),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     charity_id = Column(UUID(as_uuid=True), ForeignKey('charities.id'), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('Users.id'), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey('employees.id'), nullable=False)
     created_at = Column(DateTime, default=datetime.now())
-    charity = relationship('Charity', back_populates='users_association', lazy='selectin')
-    user = relationship('User', back_populates='charities', lazy='selectin')
 
     def __repr__(self):
-        return f'CharityUserAssociation: charity_id={self.charity_id}, user_id={self.users_id}, created_at={self.created_at}' # noqa
+        return (
+            f'CharityUserAssociation: charity_id={self.charity_id}, employee_id={self.employee_id}, '
+            f'created_at={self.created_at}'
+        )
 
 
 class Charity(Base):
@@ -40,11 +61,6 @@ class Charity(Base):
     email = Column(String(length=CharityModelConstants.CHAR_SIZE_256.value), unique=True)
     phone_number = Column(String(length=CharityModelConstants.CHAR_SIZE_128.value), unique=True)
     created_at = Column(DateTime, default=datetime.now())
-
-    users_association = relationship(
-        'CharityUserAssociation', back_populates='charity', lazy='selectin', cascade='all, delete',
-    )
-    users = association_proxy('users_association', 'user')
 
     fundraisers = relationship('Fundraise', back_populates='charity', lazy='selectin', cascade='all, delete')
 

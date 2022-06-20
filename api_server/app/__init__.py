@@ -61,7 +61,8 @@ from users.utils.exceptions import (
     user_picture_size_error_handler,
 )
 from utils.exceptions import integrity_error_handler
-from utils.prepopulates.fundraise_statuses.events import populate_fundraise_statuses_table
+from utils.prepopulates.employee_roles import populate_employee_roles_table
+from utils.prepopulates.fundraise_statuses import populate_fundraise_statuses_table
 
 load_dotenv()
 
@@ -162,3 +163,4 @@ def app_on_start_up_events(app: FastAPI) -> FastAPI:
     An instance of FastAPI with added start_up handlers.
     """
     app.add_event_handler(event_type='startup', func=partial(populate_fundraise_statuses_table, config=app.app_config))
+    app.add_event_handler(event_type='startup', func=partial(populate_employee_roles_table, config=app.app_config))
