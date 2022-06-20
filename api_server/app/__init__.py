@@ -36,7 +36,7 @@ from auth.utils.exceptions import (
     user_already_activated_handler,
 )
 from charities.routers import charities_router
-from charities.utils.exceptions import OrganisationHTTPException, organisation_exception_handler
+from charities.utils.exceptions import CharityNotFoundError, charity_not_found_error_handler
 from common.constants.api import ApiConstants
 from fundraisers.routers import fundraisers_router
 from fundraisers.utils.exceptions import (
@@ -134,7 +134,7 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(UserPictureExtensionError, user_picture_extension_error_handler)
     app.add_exception_handler(UserPictureResolutionError, user_picture_resolution_error_handler)
     app.add_exception_handler(UserPictureNotFoundError, user_picture_not_found_error_handler)
-    app.add_exception_handler(OrganisationHTTPException, organisation_exception_handler)
+    app.add_exception_handler(CharityNotFoundError, charity_not_found_error_handler)
     app.add_exception_handler(UserAlreadyActivatedException, user_already_activated_handler)
     app.add_exception_handler(EmailConfirmationTokenNotFoundError, email_confirmation_token_not_found_error_handler)
     app.add_exception_handler(EmailConfirmationTokenExpiredError, email_confirmation_token_expired_handler)

@@ -23,6 +23,8 @@ class CharityEmployeeRoleAssociation(Base):
     role_id = Column(UUID(as_uuid=True), ForeignKey('employee_roles.id'), nullable=False)
     created_at = Column(DateTime, default=datetime.now())
 
+    __mapper_args__ = {'eager_defaults': True}
+
     def __repr__(self):
         return (
             f'CharityEmployeeRoleAssociation: charity_employee_id={self.charity_employee_id}, '
@@ -49,6 +51,8 @@ class CharityEmployeeAssociation(Base):
         lazy='subquery',
     )
 
+    __mapper_args__ = {'eager_defaults': True}
+
     def __repr__(self):
         return (
             f'CharityUserAssociation: charity_id={self.charity_id}, employee_id={self.employee_id}, '
@@ -71,6 +75,8 @@ class Charity(Base):
     employees = relationship('Employee', secondary='charity_employee_association', lazy='subquery')
 
     fundraisers = relationship('Fundraise', back_populates='charity', lazy='selectin', cascade='all, delete')
+
+    __mapper_args__ = {'eager_defaults': True}
 
     def __repr__(self):
         return f'Charity id={self.id}, title={self.title}, created_at={self.created_at}'

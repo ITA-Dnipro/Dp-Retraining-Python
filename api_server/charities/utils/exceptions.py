@@ -5,20 +5,20 @@ from starlette.responses import JSONResponse
 from common.schemas.responses import ResponseBaseSchema
 
 
-class OrganisationHTTPException(HTTPException):
-    """Custom Organisation not exception."""
+class CharityNotFoundError(HTTPException):
+    """Custom Fundraise not found error."""
     pass
 
 
-def organisation_exception_handler(request: Request, exc: OrganisationHTTPException):
-    """Handler for OrganisationHTTPException exception that makes http response.
+def charity_not_found_error_handler(request: Request, exc: CharityNotFoundError):
+    """Handler for CharityNotFoundError exception that makes http response.
 
     Args:
         request: FastAPI Request object.
-        exc: raised OrganisationHTTPException.
+        exc: raised CharityNotFoundError.
 
     Returns:
-        http response for raised OrganisationHTTPException.
+    http response for raised CharityNotFoundError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,

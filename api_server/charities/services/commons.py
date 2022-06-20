@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityDBService, CharityEmployeeDBService
 from charities.models import Charity, Employee
-from charities.utils.exceptions import OrganisationHTTPException
+from charities.utils.exceptions import CharityNotFoundError
+from common.exceptions.charities import CharityExceptionMsgs
 from db import get_session
 from utils.logging import setup_logging
 
@@ -35,10 +36,12 @@ class CharityCommonService:
     async def _get_charity_by_id(self, id_: UUID) -> Charity:
         charity = await self.charity_db_service.get_charity_by_id(id_)
         if not charity:
-            raise OrganisationHTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="This organisation hasn't been found",
+            err_msg = CharityExceptionMsgs.CHARITY_NOT_FOUND.value.format(
+                column='id',
+                value=id_,
             )
+            self._log.debug(err_msg)
+            raise CharityNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
         return charity
 
     async def save_employee_to_charity(self, employee: Employee, charity: Charity) -> Charity:

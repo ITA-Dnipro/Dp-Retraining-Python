@@ -18,5 +18,7 @@ class Employee(Base):
     created_at = Column(DateTime, default=datetime.now())
     user = relationship('User', back_populates='employee', uselist=False, lazy='selectin')
 
+    __mapper_args__ = {'eager_defaults': True}
+
     def __repr__(self):
         return f'Employee id={self.id}, user_id={self.user_id}, created_at={self.created_at}'

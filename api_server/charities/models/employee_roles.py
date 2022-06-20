@@ -17,5 +17,7 @@ class EmployeeRole(Base):
     name = Column(String(length=EmployeeRoleModelConstants.CHAR_SIZE_256.value), unique=True)
     created_at = Column(DateTime, default=datetime.now())
 
+    __mapper_args__ = {'eager_defaults': True}
+
     def __repr__(self):
         return f'EmployeeRole id={self.id}, name={self.name}, created_at={self.created_at}'

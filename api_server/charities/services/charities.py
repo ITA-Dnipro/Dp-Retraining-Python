@@ -12,8 +12,9 @@ from charities.models import Charity
 from charities.schemas import CharityInputSchema, EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 # from charities.utils import check_permission_to_manage_charity, remove_nullable_params
-from charities.utils.exceptions import OrganisationHTTPException
+from charities.utils.exceptions import CharityNotFoundError
 from common.constants.prepopulates import EmployeeRolePopulateData
+from common.exceptions.charities import CharityExceptionMsgs
 from db import get_session
 from users.models import User
 from users.services import UserService
@@ -62,7 +63,7 @@ class CharityService(CharityCommonService):
         await self.employee_role_db_service.add_role_to_charity_employee(
             role=supervisor_role, charity_employee=db_charity_employee,
         )
-        return await self.charity_db_service.get_charity_by_id_with_relationships(id_=db_charity.id)
+        return await self.get_charity_by_id_with_relationships(id_=db_charity.id)
 
     async def get_charities(self, page: int, page_size: int) -> PaginationPage:
         """Get Charity objects from database.
@@ -81,6 +82,29 @@ class CharityService(CharityCommonService):
         total_charities = await self.charity_db_service.get_total_charities()
         return PaginationPage(items=charities, page=page, page_size=page_size, total=total_charities)
 
+    async def get_charity_by_id_with_relationships(self, id_: UUID) -> Charity:
+        """Get Charity object from database filtered by id with loaded relationships.
+
+        Args:
+            id_: UUID of charity.
+        Raise:
+            CharityNotFoundError in case fundraise not found.
+
+        Returns:
+        single Fundraise object filtered by id.
+        """
+        return await self._get_get_charity_by_id_with_relationships(id_)
+
+    async def _get_get_charity_by_id_with_relationships(self, id_: UUID) -> Charity:
+        charity = await self.charity_db_service.get_charity_by_id_with_relationships(id_)
+        if not charity:
+            err_msg = CharityExceptionMsgs.CHARITY_NOT_FOUND.value.format(
+                column='id',
+                value=id_,
+            )
+            self._log.debug(err_msg)
+            raise CharityNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return charity
 
     # async def get_organisations_list(self) -> List[CharityOrganisation]:
     #     """

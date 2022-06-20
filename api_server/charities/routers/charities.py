@@ -64,13 +64,35 @@ async def get_charities(
         charity_service: dependency as business logic instance.
 
     Returns:
-    ResponseBaseSchema object with list of CharityFullOutputSchema objects as response data.
+    ResponseBaseSchema object with list of CharityOutputSchema objects as response data.
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
         data=CharityPaginatedOutputSchema.from_orm(await charity_service.get_charities(page, page_size)),
         errors=[],
     )
+
+
+@charities_router.get('/{id}', response_model=ResponseBaseSchema)
+async def get_charity(
+        id: UUID,
+        charity_service: CharityService = Depends(),
+) -> ResponseBaseSchema:
+    """GET '/charities/{id}' endpoint view function.
+
+    Args:
+        id: UUID of charity.
+        charity_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with CharityFullOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_200_OK,
+        data=CharityFullOutputSchema.from_orm(await charity_service.get_charity_by_id_with_relationships(id_=id)),
+        errors=[],
+    )
+
 
 # # @charities_router.get("/{org_id}", response_model=ResponseBaseSchema, status_code=HTTP_200_OK)
 # # async def show_charity_organisation(org_id: UUID, charity_service: CharityService = Depends()):
