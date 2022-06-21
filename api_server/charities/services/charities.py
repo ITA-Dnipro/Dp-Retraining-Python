@@ -107,7 +107,7 @@ class CharityService(CharityCommonService):
             )
             self._log.debug(err_msg)
             raise CharityNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
-        return charity
+        return await self.charity_db_service.refresh_charity(charity)
 
     async def update_charity(self, id_: UUID, jwt_subject: str, update_data: CharityUpdateSchema) -> Charity:
         """Updates Charity object data in the db.
@@ -142,6 +142,36 @@ class CharityService(CharityCommonService):
                 # Updating and refreshing Charity.
                 await self.charity_db_service.update_charity(id_, update_data)
                 return await self.charity_db_service.refresh_charity(db_charity)
+
+    async def delete_charity(self, id_: UUID,  jwt_subject: str) -> None:
+        """Delete Fundraise object from the database.
+
+        Args:
+            id_: UUID of a Charity object.
+            jwt_subject: decoded jwt identity.
+
+        Returns:
+        Nothing.
+        """
+        return await self._delete_charity(id_, jwt_subject)
+
+    async def _delete_charity(self, id_: UUID, jwt_subject: str) -> None:
+        # Checking if currently authenticated user is in Charity employees list.
+        db_charity = await self.get_charity_by_id_with_relationships(id_)
+        usernames = [employee.user.username for employee in db_charity.employees]
+        if jwt_charity_validator(jwt_subject=jwt_subject, usernames=usernames):
+            # Checking if currently authenticated employee have sufficient roles to perform delete charity.
+            for db_employee in db_charity.employees:
+                if db_employee.user.username == jwt_subject:
+                    break
+            db_employee_roles = [role for role in db_employee.roles]
+            db_employee_role_names = [role.name for role in db_employee_roles]
+            if employee_role_validator(
+                    employee_roles=db_employee_role_names,
+                    allowed_roles=CharityEmployeeRoleConstants.DELETE_CHARITY_ROLES.value,
+            ):
+                # Deleting Charity.
+                await self.charity_db_service.delete_charity(db_charity)
 
 
     # async def get_organisations_list(self) -> List[CharityOrganisation]:

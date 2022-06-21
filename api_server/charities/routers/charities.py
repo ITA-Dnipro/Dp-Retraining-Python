@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from fastapi_jwt_auth import AuthJWT
 
@@ -123,6 +123,29 @@ async def put_charity(
         ),
         errors=[],
     )
+
+
+@charities_router.delete('/{id}', response_model=ResponseBaseSchema)
+async def delete_charity(
+        id: UUID,
+        charity_service: CharityService = Depends(),
+        Authorize: AuthJWT = Depends(),
+) -> ResponseBaseSchema:
+    """DELETE '/charities/{id}' endpoint view function.
+
+    Args:
+        id: UUID of charity.
+        charity_service: dependency as business logic instance.
+        Authorize: dependency of AuthJWT for JWT tokens.
+
+    Returns:
+    http response with no data and 204 status code.
+    """
+    Authorize.jwt_required()
+    jwt_subject = Authorize.get_jwt_subject()
+
+    await charity_service.delete_charity(id_=id, jwt_subject=jwt_subject)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # # @charities_router.get("/{org_id}", response_model=ResponseBaseSchema, status_code=HTTP_200_OK)

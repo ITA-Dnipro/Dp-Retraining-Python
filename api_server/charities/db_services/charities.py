@@ -78,9 +78,7 @@ class CharityDBService:
             subqueryload(Charity.employees).subqueryload(Employee.roles),
         )
         result = await self.session.execute(q)
-        charity = result.scalars().one_or_none()
-        await self.session.refresh(charity)
-        return charity
+        return result.scalars().one_or_none()
 
     async def get_charities(self, page: int, page_size: int) -> list[Charity]:
         """Get Charity objects from database.
@@ -146,3 +144,19 @@ class CharityDBService:
 
         self._log.debug(f'Charity with id: "{charity.id}" successfully refreshed.')
         return charity
+
+    async def delete_charity(self, charity: Charity) -> None:
+        """Delete charity and related objects from the database.
+
+        Args:
+            charity: Charity object.
+
+        Returns:
+        Nothing.
+        """
+        return await self._delete_charity(charity)
+
+    async def _delete_charity(self, charity: Charity) -> None:
+        await self.session.delete(charity)
+        await self.session.commit()
+        self._log.debug(f'Charity with id: "{charity.id}" successfully deleted.')

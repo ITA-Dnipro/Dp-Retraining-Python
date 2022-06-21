@@ -3,7 +3,6 @@ import uuid
 
 from sqlalchemy import Column, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 
 from common.constants.charities.charities import CharityModelConstants
@@ -19,8 +18,10 @@ class CharityEmployeeRoleAssociation(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    charity_employee_id = Column(UUID(as_uuid=True), ForeignKey('charity_employee_association.id'), nullable=False)
-    role_id = Column(UUID(as_uuid=True), ForeignKey('employee_roles.id'), nullable=False)
+    charity_employee_id = Column(
+        UUID(as_uuid=True), ForeignKey('charity_employee_association.id', ondelete='CASCADE'), nullable=False,
+    )
+    role_id = Column(UUID(as_uuid=True), ForeignKey('employee_roles.id', ondelete='CASCADE'), nullable=False)
     created_at = Column(DateTime, default=datetime.now())
 
     __mapper_args__ = {'eager_defaults': True}
@@ -41,8 +42,8 @@ class CharityEmployeeAssociation(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    charity_id = Column(UUID(as_uuid=True), ForeignKey('charities.id'), nullable=False)
-    employee_id = Column(UUID(as_uuid=True), ForeignKey('employees.id'), nullable=False)
+    charity_id = Column(UUID(as_uuid=True), ForeignKey('charities.id', ondelete='CASCADE'), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey('employees.id', ondelete='CASCADE'), nullable=False)
     created_at = Column(DateTime, default=datetime.now())
 
     roles = relationship(
