@@ -120,7 +120,7 @@ class FundraiseDAO:
     async def _update_fundraise(self, id_: UUID, update_data: FundraiseUpdateSchema) -> Fundraise:
         await self.session.execute(update(Fundraise).where(Fundraise.id == id_).values(**update_data.dict()))
         await self.session.commit()
-        # Return updated user.
+        # Return updated fundraise.
         self._log.debug(f'Fundraise with id: "{id_}" successfully updated.')
         return await self._get_fundraise_by_id(id_=id_)
 

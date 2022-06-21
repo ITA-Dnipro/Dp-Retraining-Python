@@ -9,10 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityDBService, CharityEmployeeDBService, EmployeeDBService, EmployeeRoleDBService
 from charities.models import Charity
-from charities.schemas import CharityInputSchema, EmployeeInputSchema
+from charities.schemas import CharityInputSchema, CharityUpdateSchema, EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 # from charities.utils import check_permission_to_manage_charity, remove_nullable_params
 from charities.utils.exceptions import CharityNotFoundError
+from charities.utils.jwt import jwt_charity_validator
+from charities.utils.role_permissions import employee_role_validator
+from common.constants.charities import CharityEmployeeRoleConstants
 from common.constants.prepopulates import EmployeeRolePopulateData
 from common.exceptions.charities import CharityExceptionMsgs
 from db import get_session
@@ -105,6 +108,41 @@ class CharityService(CharityCommonService):
             self._log.debug(err_msg)
             raise CharityNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
         return charity
+
+    async def update_charity(self, id_: UUID, jwt_subject: str, update_data: CharityUpdateSchema) -> Charity:
+        """Updates Charity object data in the db.
+
+        Args:
+            id_: UUID of a Charity object.
+            jwt_subject: decoded jwt identity.
+            update_data: Serialized CharityUpdateSchema object.
+        Raise:
+            CharityPermissionError in case of employee not present in charity's employee list.
+            CharityEmployeeRolePermissionError in case employee
+        Returns:
+        Updated Charity object.
+        """
+        return await self._update_charity(id_, jwt_subject, update_data)
+
+    async def _update_charity(self, id_: UUID, jwt_subject: str, update_data: CharityUpdateSchema) -> Charity:
+        # Checking if currently authenticated user is in Charity employees list.
+        db_charity = await self.get_charity_by_id_with_relationships(id_)
+        usernames = [employee.user.username for employee in db_charity.employees]
+        if jwt_charity_validator(jwt_subject=jwt_subject, usernames=usernames):
+            # Checking if currently authenticated employee have sufficient roles to perform charity update.
+            for db_employee in db_charity.employees:
+                if db_employee.user.username == jwt_subject:
+                    break
+            db_employee_roles = [role for role in db_employee.roles]
+            db_employee_role_names = [role.name for role in db_employee_roles]
+            if employee_role_validator(
+                    employee_roles=db_employee_role_names,
+                    allowed_roles=CharityEmployeeRoleConstants.EDIT_CHARITY_ROLES.value,
+            ):
+                # Updating and refreshing Charity.
+                await self.charity_db_service.update_charity(id_, update_data)
+                return await self.charity_db_service.refresh_charity(db_charity)
+
 
     # async def get_organisations_list(self) -> List[CharityOrganisation]:
     #     """

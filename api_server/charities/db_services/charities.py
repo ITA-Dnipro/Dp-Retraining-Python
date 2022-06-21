@@ -1,12 +1,12 @@
 from uuid import UUID
 
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased, relationship, subqueryload
 
 from charities.models import Charity, CharityEmployeeAssociation, CharityEmployeeRoleAssociation, Employee, EmployeeRole
-from charities.schemas import CharityInputSchema
+from charities.schemas import CharityInputSchema, CharityUpdateSchema
 from utils.logging import setup_logging
 
 
@@ -100,10 +100,10 @@ class CharityDBService:
         return (await self.session.execute(q)).scalars().all()
 
     async def get_total_charities(self) -> int:
-        """Counts number of fundraisers in Fundraise table.
+        """Counts number of charities in Charity table.
 
         Returns:
-        Quantity of fundraise objects in Fundraise table.
+        Quantity of charity objects in Charity table.
         """
         return await self._get_total_charities()
 
@@ -111,3 +111,38 @@ class CharityDBService:
         total_charities = (await self.session.execute(select(func.count(Charity.id)))).scalar_one()
         self._log.debug(f'Charity table has totally: "{total_charities}" charities.')
         return total_charities
+
+    async def update_charity(self, id_: UUID, update_data: CharityUpdateSchema) -> None:
+        """Updates Charity object in the database.
+
+        Args:
+            id_: UUID of charity.
+            update_data: CharityUpdateSchema object.
+
+        Returns:
+        Nothing.
+        """
+        return await self._update_charity(id_, update_data)
+
+    async def _update_charity(self, id_: UUID, update_data: CharityUpdateSchema) -> None:
+        await self.session.execute(update(Charity).where(Charity.id == id_).values(**update_data.dict()))
+        await self.session.commit()
+
+        self._log.debug(f'Charity with id: "{id_}" successfully updated.')
+
+    async def refresh_charity(self, charity: Charity) -> Charity:
+        """Refreshes charity object from the database.
+
+        Args:
+            charity: Charity object.
+
+        Returns:
+        Refreshed Charity object.
+        """
+        return await self._refresh_charity(charity)
+
+    async def _refresh_charity(self, charity: Charity) -> Charity:
+        await self.session.refresh(charity)
+
+        self._log.debug(f'Charity with id: "{charity.id}" successfully refreshed.')
+        return charity

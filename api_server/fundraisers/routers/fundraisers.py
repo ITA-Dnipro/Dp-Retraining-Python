@@ -100,7 +100,7 @@ async def put_fundraise(
 
     Args:
         id: UUID of fundraise.
-        update_data: update_data: Serialized FundraiseUpdateSchema object.
+        update_data: Serialized FundraiseUpdateSchema object.
         fundraise_service: dependency as business logic instance.
         Authorize: dependency of AuthJWT for JWT tokens.
 

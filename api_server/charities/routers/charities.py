@@ -9,6 +9,7 @@ from charities.schemas import (  # AddManagerSchema,; CharityUpdateSchema,; Mana
     CharityFullOutputSchema,
     CharityInputSchema,
     CharityPaginatedOutputSchema,
+    CharityUpdateSchema,
 )
 from charities.services.charities import CharityService
 from common.constants.charities import CharityRouteConstants
@@ -90,6 +91,36 @@ async def get_charity(
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
         data=CharityFullOutputSchema.from_orm(await charity_service.get_charity_by_id_with_relationships(id_=id)),
+        errors=[],
+    )
+
+
+@charities_router.put('/{id}', response_model=ResponseBaseSchema)
+async def put_charity(
+        id: UUID,
+        update_data: CharityUpdateSchema,
+        charity_service: CharityService = Depends(),
+        Authorize: AuthJWT = Depends(),
+) -> ResponseBaseSchema:
+    """PUT '/charities/{id}' endpoint view function.
+
+    Args:
+        id: UUID of charity.
+        update_data: Serialized CharityUpdateSchema object.
+        charity_service: dependency as business logic instance.
+        Authorize: dependency of AuthJWT for JWT tokens.
+
+    Returns:
+    ResponseBaseSchema object with CharityFullOutputSchema object as response data.
+    """
+    Authorize.jwt_required()
+    jwt_subject = Authorize.get_jwt_subject()
+
+    return ResponseBaseSchema(
+        status_code=status.HTTP_200_OK,
+        data=CharityFullOutputSchema.from_orm(
+            await charity_service.update_charity(id_=id, jwt_subject=jwt_subject, update_data=update_data)
+        ),
         errors=[],
     )
 

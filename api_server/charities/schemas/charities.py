@@ -3,64 +3,43 @@ from __future__ import annotations
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
-from pydantic.main import ModelMetaclass
-from sqlalchemy.ext.associationproxy import _AssociationList
+from pydantic import BaseModel, Field, root_validator
 
-from common.constants.charities.charities import CharitySchemaConstants
+from common.constants.charities import CharitySchemaConstants
 from common.exceptions.schemas import SchemaExceptionMsgs
 
 
-class AllOptional(ModelMetaclass):
-    def __new__(mcs, name, bases, namespaces, **kwargs):
-        annotations = namespaces.get('__annotations__', {})
-        for base in bases:
-            annotations.update(base.__annotations__)
-        for field in annotations:
-            if not field.startswith('__'):
-                annotations[field] = Optional[annotations[field]]
-        namespaces['__annotations__'] = annotations
-        return super().__new__(mcs, name, bases, namespaces, **kwargs)
-
-
-class CharityDefaultSchema(BaseModel):
-    title: str = Field(description='Name of organisation')
-    description: str = Field(description='Short description of organisation')
-    phone_number: str = Field(
-        description='Phone number must be from Ukrainian operator and same to that template: +380xxxxxxxxx',
+class CharityBaseSchema(BaseModel):
+    """Charity Base Schema for Charity model."""
+    title: str = Field(
+        description='Title of a charity.',
+        min_length=CharitySchemaConstants.CHAR_SIZE_2.value,
+        max_length=CharitySchemaConstants.CHAR_SIZE_512.value,
     )
-    email: str = Field(regex=CharitySchemaConstants.EMAIL_REGEX.value, description='Enter valid email')
+    description: str = Field(
+        description='Description of a charity.',
+        min_length=CharitySchemaConstants.CHAR_SIZE_2.value,
+        max_length=CharitySchemaConstants.CHAR_SIZE_8192.value,
+    )
+    phone_number: str = Field(
+        description='Phone number of a charity.',
+        min_length=CharitySchemaConstants.CHAR_SIZE_2.value,
+        max_length=CharitySchemaConstants.CHAR_SIZE_128.value,
+    )
+    email: str = Field(
+        description='Email of a charity.',
+        regex=CharitySchemaConstants.EMAIL_REGEX.value,
+        min_length=CharitySchemaConstants.CHAR_SIZE_2.value,
+        max_length=CharitySchemaConstants.CHAR_SIZE_256.value,
+    )
 
     class Config:
         orm_mode = True
 
 
-class CharityOutputSchema(CharityDefaultSchema):
-    """Charity Output Schema."""
-    id: UUID = Field(description="id of current organisation")
-
-
-# class UserOutputAssociationListSchema(_AssociationList):
-#     """Custom UserOutput schema for sqlalchemy association_proxy field."""
-# 
-#     @classmethod
-#     def __get_validators__(cls):
-#         yield cls.validate
-# 
-#     @classmethod
-#     def validate(cls, association_list: _AssociationList) -> list[UserOutputSchema]:
-#         """Custom validator checks if field is sqlalchemy _AssociationList object and serializing it with
-#         UserOutputSchema.
-# 
-#         Args:
-#             association_list: sqlalchemy _AssociationList object.
-# 
-#         Returns:
-#         list of UserOutputSchema objects.
-#         """
-#         if not isinstance(association_list, _AssociationList):
-#             raise TypeError(SchemaExceptionMsgs.INVALID_ASSOCIATION_LIST_TYPE.value)
-#         return [UserOutputSchema.from_orm(obj.user) for obj in association_list]
+class CharityOutputSchema(CharityBaseSchema):
+    """Charity Output Schema for Charity model."""
+    id: UUID = Field(description='Unique identifier of a charity.')
 
 
 class CharityFullOutputSchema(CharityOutputSchema):
@@ -69,12 +48,65 @@ class CharityFullOutputSchema(CharityOutputSchema):
     employees: list[EmployeeOutputSchema]
 
 
-class CharityInputSchema(CharityDefaultSchema):
+class CharityInputSchema(CharityBaseSchema):
+    """Charity Input Schema for Charity model."""
     pass
 
 
-class CharityUpdateSchema(CharityDefaultSchema, metaclass=AllOptional):
-    pass
+class CharityUpdateSchema(BaseModel):
+    """Charity Update Schema for Charity model."""
+    title: Optional[str] = Field(
+        description='Title of a charity.',
+        min_length=CharitySchemaConstants.CHAR_SIZE_2.value,
+        max_length=CharitySchemaConstants.CHAR_SIZE_512.value,
+    )
+    description: Optional[str] = Field(
+        description='Description of a charity.',
+        min_length=CharitySchemaConstants.CHAR_SIZE_2.value,
+        max_length=CharitySchemaConstants.CHAR_SIZE_8192.value,
+        exclude=False
+    )
+    phone_number: Optional[str] = Field(
+        description='Phone number of a charity.',
+        min_length=CharitySchemaConstants.CHAR_SIZE_2.value,
+        max_length=CharitySchemaConstants.CHAR_SIZE_128.value,
+    )
+    email: Optional[str] = Field(
+        description='Email of a charity.',
+        regex=CharitySchemaConstants.EMAIL_REGEX.value,
+        min_length=CharitySchemaConstants.CHAR_SIZE_2.value,
+        max_length=CharitySchemaConstants.CHAR_SIZE_256.value,
+    )
+
+    @root_validator
+    def exclude_none_values(cls, incoming_data: dict) -> dict:
+        """Excludes field from schema if value is None.
+
+        Args:
+            incoming_data: Schema incoming data.
+
+        Returns:
+        dict with incoming_data.
+        """
+        incoming_data = {k: v for k, v in incoming_data.items() if v}
+        return incoming_data
+
+    @root_validator
+    def at_least_one_field_present(cls, incoming_data: dict) -> dict:
+        """Checks if at least one field in schema present.
+
+        Args:
+            incoming_data: Schema incoming data.
+
+        Returns:
+        dict with incoming_data.
+        """
+        if not any(incoming_data.values()):
+            raise ValueError(SchemaExceptionMsgs.AT_LEAST_ONE_FIELD_PRESENT.value)
+        return incoming_data
+
+    class Config:
+        orm_mode = True
 
 
 class AddManagerSchema(BaseModel):
@@ -106,7 +138,5 @@ class CharityPaginatedOutputSchema(BaseModel):
 
 from charities.schemas.employees import EmployeeOutputSchema  # noqa
 from fundraisers.schemas import FundraiseOutputSchema  # noqa
-
-# from users.schemas import UserOutputSchema  # noqa
 
 CharityFullOutputSchema.update_forward_refs()

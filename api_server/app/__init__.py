@@ -36,7 +36,14 @@ from auth.utils.exceptions import (
     user_already_activated_handler,
 )
 from charities.routers import charities_router
-from charities.utils.exceptions import CharityNotFoundError, charity_not_found_error_handler
+from charities.utils.exceptions import (
+    CharityEmployeePermissionError,
+    CharityEmployeeRolePermissionError,
+    CharityNotFoundError,
+    charity_employee_permission_error_handler,
+    charity_employee_role_permission_error_handler,
+    charity_not_found_error_handler,
+)
 from common.constants.api import ApiConstants
 from fundraisers.routers import fundraisers_router
 from fundraisers.utils.exceptions import (
@@ -150,6 +157,8 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(ChangePasswordTokenExpiredError, change_password_token_expired_in_db_handler)
     app.add_exception_handler(FundraiseNotFoundError, fundraise_not_found_error_handler)
     app.add_exception_handler(FundraisePermissionError, fundraise_no_permissions_error_handler)
+    app.add_exception_handler(CharityEmployeePermissionError, charity_employee_permission_error_handler)
+    app.add_exception_handler(CharityEmployeeRolePermissionError, charity_employee_role_permission_error_handler)
     return app
 
 
