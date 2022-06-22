@@ -33,11 +33,11 @@ class CharityEmployeeRoleConstants(Enum):
     SUPERVISOR = 'supervisor'
     MANAGER = 'manager'
 
-    EDIT_CHARITY_ROLES = [
+    EDIT_CHARITY_ROLES = (
         SUPERVISOR,
         MANAGER,
-    ]
+    )
 
-    DELETE_CHARITY_ROLES = [
+    DELETE_CHARITY_ROLES = (
         SUPERVISOR,
-    ]
+    )

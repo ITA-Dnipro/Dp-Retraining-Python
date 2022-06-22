@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from charities.models import Employee
-from charities.schemas import EmployeeInputSchema
+from charities.schemas import EmployeeDBSchema
 from utils.logging import setup_logging
 
 
@@ -42,18 +42,18 @@ class EmployeeDBService:
         result = await self.session.execute(q)
         return result.scalars().one_or_none()
 
-    async def add_employee(self, employee: EmployeeInputSchema) -> Employee:
+    async def add_employee(self, employee: EmployeeDBSchema) -> Employee:
         """Add Employee object to the database.
 
         Args:
-            fundraise: EmployeeInputSchema object.
+            fundraise: EmployeeDBSchema object.
 
         Returns:
         Newly created Employee object.
         """
         return await self._add_employee(employee)
 
-    async def _add_employee(self, employee: EmployeeInputSchema) -> Employee:
+    async def _add_employee(self, employee: EmployeeDBSchema) -> Employee:
         db_employee = Employee(**employee.dict())
         self.session.add(db_employee)
         await self.session.commit()

@@ -4,6 +4,7 @@ from common.constants.charities.charities import (
     CharityRouteConstants,
     CharitySchemaConstants,
 )
+from common.constants.charities.charity_employees import CharityEmployeeAllowedRolesConstants
 from common.constants.charities.employee_roles import EmployeeRoleModelConstants, EmployeeRoleSchemaConstants
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     'EmployeeRoleSchemaConstants',
     'CharityRouteConstants',
     'CharityEmployeeRoleConstants',
+    'CharityEmployeeAllowedRolesConstants',
 ]

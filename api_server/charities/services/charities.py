@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityDBService, CharityEmployeeDBService, EmployeeDBService, EmployeeRoleDBService
 from charities.models import Charity
-from charities.schemas import CharityInputSchema, CharityUpdateSchema, EmployeeInputSchema
+from charities.schemas import CharityInputSchema, CharityUpdateSchema, EmployeeDBSchema
 from charities.services.commons import CharityCommonService
 # from charities.utils import check_permission_to_manage_charity, remove_nullable_params
 from charities.utils.exceptions import CharityNotFoundError
@@ -56,7 +56,7 @@ class CharityService(CharityCommonService):
         db_user = await self.user_service.get_user_by_username(jwt_subject)
         db_employee = db_user.employee
         if not db_employee:
-            employee = EmployeeInputSchema(user_id=db_user.id)
+            employee = EmployeeDBSchema(user_id=db_user.id)
             db_employee = await self.employee_db_service.add_employee(employee)
         db_charity = await self.charity_db_service.add_charity(charity)
         db_charity_employee = await self.save_employee_to_charity(employee=db_employee, charity=db_charity)
@@ -84,30 +84,6 @@ class CharityService(CharityCommonService):
         charities = await self.charity_db_service.get_charities(page, page_size)
         total_charities = await self.charity_db_service.get_total_charities()
         return PaginationPage(items=charities, page=page, page_size=page_size, total=total_charities)
-
-    async def get_charity_by_id_with_relationships(self, id_: UUID) -> Charity:
-        """Get Charity object from database filtered by id with loaded relationships.
-
-        Args:
-            id_: UUID of charity.
-        Raise:
-            CharityNotFoundError in case fundraise not found.
-
-        Returns:
-        single Fundraise object filtered by id.
-        """
-        return await self._get_get_charity_by_id_with_relationships(id_)
-
-    async def _get_get_charity_by_id_with_relationships(self, id_: UUID) -> Charity:
-        charity = await self.charity_db_service.get_charity_by_id_with_relationships(id_)
-        if not charity:
-            err_msg = CharityExceptionMsgs.CHARITY_NOT_FOUND.value.format(
-                column='id',
-                value=id_,
-            )
-            self._log.debug(err_msg)
-            raise CharityNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
-        return await self.charity_db_service.refresh_charity(charity)
 
     async def update_charity(self, id_: UUID, jwt_subject: str, update_data: CharityUpdateSchema) -> Charity:
         """Updates Charity object data in the db.

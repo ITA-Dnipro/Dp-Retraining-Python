@@ -136,7 +136,7 @@ class CharityPaginatedOutputSchema(BaseModel):
         orm_mode = True
 
 
-from charities.schemas.employees import EmployeeOutputSchema  # noqa
+from charities.schemas.charity_employees import EmployeeOutputSchema  # noqa
 from fundraisers.schemas import FundraiseOutputSchema  # noqa
 
 CharityFullOutputSchema.update_forward_refs()

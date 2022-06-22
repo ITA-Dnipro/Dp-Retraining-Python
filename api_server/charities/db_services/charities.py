@@ -70,6 +70,9 @@ class CharityDBService:
         roles_subquery = (
             select(EmployeeRole, CharityEmployeeAssociation).join(
                 CharityEmployeeRoleAssociation, CharityEmployeeRoleAssociation.role_id == EmployeeRole.id
+            ).join(
+                CharityEmployeeAssociation,
+                CharityEmployeeAssociation.id == CharityEmployeeRoleAssociation.charity_employee_id
             ).subquery()
         )
         EmployeeRoleAlias = aliased(EmployeeRole, roles_subquery)

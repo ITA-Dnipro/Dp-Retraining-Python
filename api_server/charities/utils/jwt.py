@@ -1,7 +1,7 @@
 from fastapi import status
 
 from charities.utils.exceptions import CharityEmployeePermissionError
-from common.exceptions.charities import CharityExceptionMsgs
+from common.exceptions.charities import CharityEmployeesExceptionMsgs
 
 
 def jwt_charity_validator(jwt_subject: str, usernames: list) -> bool:
@@ -23,5 +23,7 @@ def jwt_charity_validator(jwt_subject: str, usernames: list) -> bool:
         return check
     raise CharityEmployeePermissionError(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=CharityExceptionMsgs.NO_CHARITY_EMPLOYEE_PERMISSION.value,
+        detail=CharityEmployeesExceptionMsgs.NO_EMPLOYEE_IN_CHARITY.value.format(
+            username=jwt_subject,
+        ),
     )

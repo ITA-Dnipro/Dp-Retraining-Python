@@ -1,12 +1,17 @@
 from uuid import UUID
 
+from fastapi import status
+
 from sqlalchemy import join
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased, relationship, subqueryload
 
 from charities.models import Charity, CharityEmployeeAssociation, CharityEmployeeRoleAssociation, Employee, EmployeeRole
 from charities.schemas import EmployeeRoleInputSchema
+from charities.utils.exceptions import CharityEmployeeRoleDuplicateError
+from common.exceptions.charities import EmployeeRolesExceptionMsgs
 from utils.logging import setup_logging
 
 
@@ -84,9 +89,17 @@ class EmployeeRoleDBService:
         charity_employee_role_association.role_id = role.id
         charity_employee_role_association.charity_employee_id = charity_employee.id
         self.session.add(charity_employee_role_association)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError as exc:
+            err_msg = EmployeeRolesExceptionMsgs.ROLE_ALREADY_ADDED_TO_EMPLOYEE.value.format(
+                role_id=charity_employee_role_association.role_id,
+                employee_id=charity_employee_role_association.charity_employee_id,
+            )
+            self._log.debug(exc)
+            await self.session.rollback()
+            raise CharityEmployeeRoleDuplicateError(status_code=status.HTTP_400_BAD_REQUEST, detail=err_msg)
         await self.session.refresh(charity_employee_role_association)
         self._log.debug(
             f'EmployeeRole with name: "{role.name}" added to CharityEmployeeAssociation with id: {charity_employee.id}.'
         )
-        return charity_employee_role_association
