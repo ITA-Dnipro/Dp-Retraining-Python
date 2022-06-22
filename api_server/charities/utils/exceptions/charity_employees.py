@@ -6,17 +6,12 @@ from common.schemas.responses import ResponseBaseSchema
 
 
 class CharityEmployeePermissionError(HTTPException):
-    """Custom Charity employee permission error."""
+    """Custom Charity Employee permission error."""
     pass
 
 
-class CharityEmployeeRolePermissionError(HTTPException):
-    """Custom Charity employee permission error."""
-    pass
-
-
-class CharityEmployeeDuplicateError(HTTPException):
-    """Custom Employee already added to Charity error."""
+class CharityEmployeeNotFoundError(HTTPException):
+    """Custom Charity Employee not found error."""
     pass
 
 
@@ -41,36 +36,15 @@ def charity_employee_permission_error_handler(request: Request, exc: CharityEmpl
     )
 
 
-def charity_employee_role_permission_error_handler(request: Request, exc: CharityEmployeeRolePermissionError):
-    """Handler for CharityEmployeeRolePermissionError exception that makes http response.
+def charity_employee_not_found_error_handler(request: Request, exc: CharityEmployeeNotFoundError):
+    """Handler for CharityEmployeeNotFoundError exception that makes http response.
 
     Args:
         request: FastAPI Request object.
-        exc: raised CharityEmployeeRolePermissionError.
+        exc: raised CharityEmployeeNotFoundError.
 
     Returns:
-    http response for raised CharityEmployeeRolePermissionError.
-    """
-    response = ResponseBaseSchema(
-        status_code=exc.status_code,
-        data=[],
-        errors=[{"detail": exc.detail}],
-    ).dict()
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=response,
-    )
-
-
-def employee_already_added_to_charity_error_handler(request: Request, exc: CharityEmployeeDuplicateError):
-    """Handler for CharityEmployeeDuplicateError exception that makes http response.
-
-    Args:
-        request: FastAPI Request object.
-        exc: raised CharityEmployeeDuplicateError.
-
-    Returns:
-    http response for raised CharityEmployeeDuplicateError.
+    http response for raised CharityEmployeeNotFoundError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,

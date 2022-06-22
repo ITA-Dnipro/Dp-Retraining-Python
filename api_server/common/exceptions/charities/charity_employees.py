@@ -10,3 +10,4 @@ class CharityEmployeesExceptionMsgs(enum.Enum):
     NO_CHARITY_EMPLOYEE_ROLE_PERMISSION = (
         'Employee with roles: {employee_roles} does not have permission to perform this action.'
     )
+    EMPLOYEE_NOT_FOUND = "Employee with id: '{employee_id}' not found in Charity with id: '{charity_id}'."

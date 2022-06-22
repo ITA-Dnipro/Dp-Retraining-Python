@@ -38,11 +38,13 @@ from auth.utils.exceptions import (
 from charities.routers import charities_router
 from charities.utils.exceptions import (
     CharityEmployeeDuplicateError,
+    CharityEmployeeNotFoundError,
     CharityEmployeePermissionError,
     CharityEmployeeRoleDuplicateError,
     CharityEmployeeRolePermissionError,
     CharityNotFoundError,
     EmployeeRoleNotSupportedError,
+    charity_employee_not_found_error_handler,
     charity_employee_permission_error_handler,
     charity_employee_role_permission_error_handler,
     charity_not_found_error_handler,
@@ -168,6 +170,7 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(CharityEmployeeDuplicateError, employee_already_added_to_charity_error_handler)
     app.add_exception_handler(EmployeeRoleNotSupportedError, employee_role_not_supported_error_handler)
     app.add_exception_handler(CharityEmployeeRoleDuplicateError, employee_role_already_added_to_employee_error_handler)
+    app.add_exception_handler(CharityEmployeeNotFoundError, charity_employee_not_found_error_handler)
     return app
 
 
