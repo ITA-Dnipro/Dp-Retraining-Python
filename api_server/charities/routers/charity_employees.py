@@ -41,3 +41,27 @@ async def post_charity_employees(
         ),
         errors=[],
     )
+
+
+@charity_employees_router.get('/', response_model=ResponseBaseSchema)
+async def get_charity_employees(
+        charity_id: UUID,
+        charity_employee_service: CharityEmployeeService = Depends(),
+):
+    """GET '/charities/{id}/employees' endpoint view function.
+
+    Args:
+        charity_id: UUID of charity.
+        charity_employee_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with EmployeeOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_200_OK,
+        data=[
+            EmployeeOutputSchema.from_orm(employee) for employee in
+            await charity_employee_service.get_charity_employees(charity_id)
+        ],
+        errors=[],
+    )

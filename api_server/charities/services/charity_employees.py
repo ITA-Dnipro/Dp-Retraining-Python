@@ -5,7 +5,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityEmployeeDBService, EmployeeDBService, EmployeeRoleDBService
-from charities.models import Charity, CharityEmployeeAssociation
+from charities.models import Charity, CharityEmployeeAssociation, Employee
 from charities.schemas import EmployeeDBSchema, EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 from charities.utils.jwt import jwt_charity_validator
@@ -28,7 +28,7 @@ class CharityEmployeeService(CharityCommonService):
 
     async def add_employee_to_charity(
             self, charity_id: UUID, jwt_subject: str, employee_data: EmployeeInputSchema,
-    ) -> CharityEmployeeAssociation:
+    ) -> Employee:
         """Add User to Charity object in the database via many-to-many relationship.
 
         Args:
@@ -43,7 +43,7 @@ class CharityEmployeeService(CharityCommonService):
 
     async def _add_employee_to_charity(
             self, charity_id: UUID, jwt_subject: str, employee_data: EmployeeInputSchema,
-    ) -> CharityEmployeeAssociation:
+    ) -> Employee:
         # Getting list of allowed roles for new eployee role.
         allowed_roles = get_allowed_roles_for_employee_role(role_name=employee_data.role)
         # Checking if currently authenticated user is in Charity employees list.
@@ -79,3 +79,18 @@ class CharityEmployeeService(CharityCommonService):
                 # Refreshing charity and returning newly added employee with roles.
                 await self.charity_db_service.refresh_charity(db_charity)
                 return new_db_employee
+
+    async def get_charity_employees(self, charity_id: UUID) -> list[Employee]:
+        """Get Charity's Employee objects from the database.
+
+        Args:
+            charity_id: UUID of a Charity object.
+
+        Returns:
+        list of charity's Employee objects.
+        """
+        return await self._get_charity_employees(charity_id)
+
+    async def _get_charity_employees(self, charity_id: UUID) -> list[Employee]:
+        db_charity = await self.charity_db_service.get_charity_by_id_with_relationships(charity_id)
+        return db_charity.employees
