@@ -42,3 +42,10 @@ class EmployeeOutputSchema(EmployeeBaseSchema):
     id: UUID = Field(description='Unique identifier of a employee.')
     user: UserOutputSchema
     roles: list[EmployeeRoleOutputSchema]
+
+
+class EmployeeOutputMessageSchema(BaseModel):
+    """Employee Output Message schema for Employee model."""
+    message: str = Field(
+        description='Message in regard of employee.'
+    )

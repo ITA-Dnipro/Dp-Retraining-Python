@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 
 from fastapi_jwt_auth import AuthJWT
 
-from charities.schemas import EmployeeInputSchema, EmployeeOutputSchema
+from charities.schemas import EmployeeInputSchema, EmployeeOutputMessageSchema, EmployeeOutputSchema
 from charities.services import CharityEmployeeService
 from common.schemas.responses import ResponseBaseSchema
 
@@ -20,7 +20,7 @@ async def post_charity_employees(
         charity_employee_service: CharityEmployeeService = Depends(),
         Authorize: AuthJWT = Depends(),
 ):
-    """POST '/charities/{id}/employees' endpoint view function.
+    """POST '/charities/{charity_id}/employees' endpoint view function.
 
     Args:
         charity_id: UUID of charity.
@@ -33,7 +33,6 @@ async def post_charity_employees(
     """
     Authorize.jwt_required()
     jwt_subject = Authorize.get_jwt_subject()
-
     return ResponseBaseSchema(
         status_code=status.HTTP_201_CREATED,
         data=EmployeeOutputSchema.from_orm(
@@ -48,7 +47,7 @@ async def get_charity_employees(
         charity_id: UUID,
         charity_employee_service: CharityEmployeeService = Depends(),
 ):
-    """GET '/charities/{id}/employees' endpoint view function.
+    """GET '/charities/{charity_id}/employees' endpoint view function.
 
     Args:
         charity_id: UUID of charity.
@@ -73,7 +72,7 @@ async def get_charity_employee(
         employee_id: UUID,
         charity_employee_service: CharityEmployeeService = Depends(),
 ):
-    """GET '/charities/{id}/employees/{id}' endpoint view function.
+    """GET '/charities/{charity_id}/employees/{employee_id}' endpoint view function.
 
     Args:
         charity_id: UUID of charity.
@@ -87,6 +86,36 @@ async def get_charity_employee(
         status_code=status.HTTP_200_OK,
         data=EmployeeOutputSchema.from_orm(
             await charity_employee_service.get_charity_employee_by_id(charity_id, employee_id)
+        ),
+        errors=[],
+    )
+
+
+@charity_employees_router.delete('/{employee_id}', response_model=ResponseBaseSchema)
+async def delete_charity_employee(
+        charity_id: UUID,
+        employee_id: UUID,
+        charity_employee_service: CharityEmployeeService = Depends(),
+        Authorize: AuthJWT = Depends(),
+):
+    """DELETE '/charities/{charity_id}/employees/{employee_id}' endpoint view function.
+
+    Args:
+        charity_id: UUID of charity.
+        employee_data: EmployeeInputSchema object.
+        charity_employee_service: dependency as business logic instance.
+        Authorize: dependency of AuthJWT for JWT tokens.
+
+    Returns:
+    http response with no data and 204 status code.
+    """
+    Authorize.jwt_required()
+    jwt_subject = Authorize.get_jwt_subject()
+
+    return ResponseBaseSchema(
+        status_code=status.HTTP_200_OK,
+        data=EmployeeOutputMessageSchema(
+            **await charity_employee_service.remove_employee_from_charity(charity_id, employee_id, jwt_subject)
         ),
         errors=[],
     )

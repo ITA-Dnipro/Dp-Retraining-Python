@@ -1,7 +1,6 @@
 from fastapi import status
 
 from charities.utils.exceptions import CharityEmployeeRolePermissionError, EmployeeRoleNotSupportedError
-from common.constants.charities import CharityEmployeeAllowedRolesConstants
 from common.exceptions.charities import CharityEmployeesExceptionMsgs, EmployeeRolesExceptionMsgs
 
 
@@ -22,24 +21,25 @@ def employee_role_validator(employee_roles: list, allowed_roles: tuple) -> bool:
     if check:
         return check
     raise CharityEmployeeRolePermissionError(
-        status_code=status.HTTP_401_UNAUTHORIZED,
+        status_code=status.HTTP_403_FORBIDDEN,
         detail=CharityEmployeesExceptionMsgs.NO_CHARITY_EMPLOYEE_ROLE_PERMISSION.value.format(
             employee_roles=employee_roles,
         ),
     )
 
 
-def get_allowed_roles_for_employee_role(role_name: str) -> list:
-    """Gets list of allowed roles for provided employee role.
+def get_allowed_role_for_employee_role(role_name: str, allowed_roles: dict) -> tuple:
+    """Gets allowed roles for provided employee role.
 
     Args:
         role_name: name of employee role.
+        allowed_roles: dict with role as a key and tuple of allowed roles as values.
 
     Returns:
-    list with allowed employee roles.
+    tuple with allowed employee roles.
     """
     try:
-        allowed_roles = CharityEmployeeAllowedRolesConstants.ROLES_MAPPING.value[role_name]
+        employee_allowed_roles = allowed_roles[role_name]
     except KeyError:
         raise EmployeeRoleNotSupportedError(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -47,4 +47,22 @@ def get_allowed_roles_for_employee_role(role_name: str) -> list:
                 role_name=role_name,
             )
         )
-    return allowed_roles
+    return employee_allowed_roles
+
+
+def get_allowed_roles_for_employee_roles(roles: tuple, allowed_roles: dict) -> tuple:
+    """Gets list of allowed roles for provided employee role.
+
+    Args:
+        role_name: name of employee role.
+        allowed_roles: dict with role as a key and tuple of allowed roles as values.
+
+    Returns:
+    tuple with allowed employee roles.
+    """
+    result = []
+    for role in roles:
+        mapped_roles = get_allowed_role_for_employee_role(role_name=role, allowed_roles=allowed_roles)
+        for mapped_role in mapped_roles:
+            result.append(mapped_role)
+    return tuple(result)

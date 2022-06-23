@@ -47,3 +47,20 @@ class CharityEmployeeDBService:
             f'Employee with id: "{employee.id}" added to Charity with id: {charity.id}.'
         )
         return charity_employee_association
+
+    async def remove_employee_from_charity(self, charity: Charity, employee: Employee) -> None:
+        """Removes Employee from Charity.employees collection.
+
+        Args:
+            charity: Charity object.
+            employee: Employee object.
+
+        Returns:
+        Nothing.
+        """
+        return await self._remove_employee_from_charity(charity, employee)
+
+    async def _remove_employee_from_charity(self, charity: Charity, employee: Employee) -> None:
+        charity.employees.remove(employee)
+        await self.session.commit()
+        self._log.debug(f'Employee with id: "{employee.id}" removed from Charity with id: {charity.id}.')

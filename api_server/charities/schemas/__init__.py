@@ -7,7 +7,12 @@ from charities.schemas.charities import (
     CharityUpdateSchema,
     ManagerResponseSchema,
 )
-from charities.schemas.charity_employees import EmployeeDBSchema, EmployeeInputSchema, EmployeeOutputSchema
+from charities.schemas.charity_employees import (
+    EmployeeDBSchema,
+    EmployeeInputSchema,
+    EmployeeOutputMessageSchema,
+    EmployeeOutputSchema,
+)
 from charities.schemas.employee_roles import EmployeeRoleInputSchema, EmployeeRoleOutputSchema
 
 __all__ = [
@@ -21,4 +26,5 @@ __all__ = [
     'CharityPaginatedOutputSchema',
     'EmployeeDBSchema',
     'EmployeeOutputSchema',
+    'EmployeeOutputMessageSchema',
 ]

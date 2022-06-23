@@ -5,12 +5,17 @@ from fastapi import Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityEmployeeDBService, EmployeeDBService, EmployeeRoleDBService
-from charities.models import Employee
+from charities.models import Charity, Employee
 from charities.schemas import EmployeeDBSchema, EmployeeInputSchema
 from charities.services.commons import CharityCommonService
-from charities.utils.exceptions import CharityEmployeeNotFoundError
+from charities.utils.exceptions import CharityEmployeeNotFoundError, CharityNonRemovableEmployeeError
 from charities.utils.jwt import jwt_charity_validator
-from charities.utils.role_permissions import employee_role_validator, get_allowed_roles_for_employee_role
+from charities.utils.role_permissions import (
+    employee_role_validator,
+    get_allowed_role_for_employee_role,
+    get_allowed_roles_for_employee_roles,
+)
+from common.constants.charities import CharityEmployeeAllowedRolesConstants, CharityEmployeeServiceConstants
 from common.exceptions.charities import CharityEmployeesExceptionMsgs
 from db import get_session
 from users.services import UserService
@@ -46,8 +51,11 @@ class CharityEmployeeService(CharityCommonService):
     async def _add_employee_to_charity(
             self, charity_id: UUID, jwt_subject: str, employee_data: EmployeeInputSchema,
     ) -> Employee:
-        # Getting list of allowed roles for new eployee role.
-        allowed_roles = get_allowed_roles_for_employee_role(role_name=employee_data.role)
+        # Getting allowed roles for new eployee role.
+        allowed_roles = get_allowed_role_for_employee_role(
+            role_name=employee_data.role,
+            allowed_roles=CharityEmployeeAllowedRolesConstants.ADD_EMPLOYEE_ROLES_MAPPING.value,
+        )
         # Checking if currently authenticated user is in Charity employees list.
         db_charity = await self.get_charity_by_id_with_relationships(charity_id)
         db_charity_employee_usernames = [employee.user.username for employee in db_charity.employees]
@@ -56,8 +64,7 @@ class CharityEmployeeService(CharityCommonService):
             for current_db_employee in db_charity.employees:
                 if current_db_employee.user.username == jwt_subject:
                     break
-            current_db_employee_roles = [role for role in current_db_employee.roles]
-            current_db_employee_role_names = [role.name for role in current_db_employee_roles]
+            current_db_employee_role_names = [role.name for role in current_db_employee.roles]
             if employee_role_validator(
                     employee_roles=current_db_employee_role_names,
                     allowed_roles=allowed_roles,
@@ -94,7 +101,7 @@ class CharityEmployeeService(CharityCommonService):
         return await self._get_charity_employees(charity_id)
 
     async def _get_charity_employees(self, charity_id: UUID) -> list[Employee]:
-        db_charity = await self.charity_db_service.get_charity_by_id_with_relationships(charity_id)
+        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
         return db_charity.employees
 
     async def get_charity_employee_by_id(self, charity_id: UUID, employee_id: UUID) -> Employee:
@@ -105,20 +112,134 @@ class CharityEmployeeService(CharityCommonService):
             employee_id: UUID of a Employee object.
 
         Returns:
-        list of charity's Employee objects.
+        Single charity's Employee object filtered by id.
         """
         return await self._get_charity_employee_by_id(charity_id, employee_id)
 
     async def _get_charity_employee_by_id(self, charity_id: UUID, employee_id: UUID) -> Employee:
-        db_charity = await self.charity_db_service.get_charity_by_id_with_relationships(charity_id)
-        for employee in db_charity.employees:
+        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        return await self.get_employee_from_charity(db_charity, employee_id)
+
+    async def get_employee_from_charity(self, charity: Charity, employee_id: UUID) -> Employee:
+        """Get Employee object by id from Charity.employees collection.
+
+        Args:
+            charity: Charity object.
+            employee_id: UUID of a Employee object.
+
+        Raise:
+            CharityEmployeeNotFoundError in case employee not present in Charity.employees collection.
+
+        Returns:
+        Single charity's Employee object filtered by id.
+        """
+        return await self._get_employee_from_charity(charity, employee_id)
+
+    async def _get_employee_from_charity(self, charity: Charity, employee_id: UUID) -> Employee:
+        for employee in charity.employees:
             if employee.id == employee_id:
                 break
         else:
             err_msg = CharityEmployeesExceptionMsgs.EMPLOYEE_NOT_FOUND.value.format(
-                charity_id=charity_id,
+                charity_id=charity.id,
                 employee_id=employee_id,
             )
             self._log.debug(err_msg)
             raise CharityEmployeeNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
         return employee
+
+    async def remove_employee_from_charity(self, charity_id: UUID, employee_id: UUID, jwt_subject: str) -> dict:
+        """Removes Employee from Charity.
+
+        Args:
+            charity_id: UUID of a Charity object.
+            employee_id: UUID of a Employee object.
+            jwt_subject: decoded jwt identity.
+
+        Returns:
+        dict with successful employee removal message.
+        """
+        return await self._remove_employee_from_charity(charity_id, employee_id, jwt_subject)
+
+    async def _remove_employee_from_charity(self, charity_id: UUID, employee_id: UUID, jwt_subject: str) -> dict:
+        # Checking if currently authenticated user is in Charity employees list.
+        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        db_charity_employee_usernames = [employee.user.username for employee in db_charity.employees]
+        if jwt_charity_validator(jwt_subject=jwt_subject, usernames=db_charity_employee_usernames):
+            # Checking if currently authenticated employee have sufficient roles to perform action.
+            for authenticated_employee in db_charity.employees:
+                if authenticated_employee.user.username == jwt_subject:
+                    break
+            authenticated_employee_role_names = [role.name for role in authenticated_employee.roles]
+            # Getting allowed roles for eployee_to_delete roles.
+            employee_to_delete = await self.get_employee_from_charity(db_charity, employee_id)
+            employee_to_delete_role_names = [role.name for role in employee_to_delete.roles]
+            employee_to_delete_allowed_roles = get_allowed_roles_for_employee_roles(
+                roles=employee_to_delete_role_names,
+                allowed_roles=CharityEmployeeAllowedRolesConstants.DELETE_EMPLOYEE_ROLES_MAPPING.value,
+            )
+            if employee_role_validator(
+                    employee_roles=authenticated_employee_role_names,
+                    allowed_roles=employee_to_delete_allowed_roles,
+            ):
+                # Checking if Charity have at least one Employee with supervisor role.
+                total_supervisors_in_charity = await self.count_employee_role_in_charity(
+                    charity=db_charity,
+                    role_name=CharityEmployeeAllowedRolesConstants.SUPERVISOR.value,
+                )
+                employee_to_delete_is_supervisor = await self.employee_has_role(
+                    employee=employee_to_delete,
+                    role_name=CharityEmployeeAllowedRolesConstants.SUPERVISOR.value,
+                )
+                if total_supervisors_in_charity < 2 and employee_to_delete_is_supervisor:
+                    err_msg = CharityEmployeesExceptionMsgs.EMPLOYEE_NON_REMOVABLE.value.format(
+                        employee_role=CharityEmployeeAllowedRolesConstants.SUPERVISOR.value,
+                        charity_id=db_charity.id,
+                        role_count=total_supervisors_in_charity,
+                    )
+                    self._log.debug(err_msg)
+                    raise CharityNonRemovableEmployeeError(status_code=status.HTTP_403_FORBIDDEN, detail=err_msg)
+                # Removing Employee from Charity.employees.
+                await self.charity_employee_db_service.remove_employee_from_charity(db_charity, employee_to_delete)
+                CharityEmployeeServiceConstants.SUCCESSSFUL_EMPLOYEE_REMOVAL_MSG.value['message'] = (
+                    CharityEmployeeServiceConstants.SUCCESSSFUL_EMPLOYEE_REMOVAL_MSG.value['message'].format(
+                        charity_id=db_charity.id,
+                        employee_id=employee_to_delete.id,
+                    )
+                )
+                return CharityEmployeeServiceConstants.SUCCESSSFUL_EMPLOYEE_REMOVAL_MSG.value
+
+    async def count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
+        """Counts how many Charity.employees have specific role.
+
+        Args:
+            charity: Charity object.
+            role_name: Employee role name.
+
+        Returns:
+        int of how many Charity.employees have specific role.
+        """
+        return await self._count_employee_role_in_charity(charity, role_name)
+
+    async def _count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
+        total_roles = 0
+        for employee in charity.employees:
+            for role in employee.roles:
+                if role.name == role_name:
+                    total_roles += 1
+        return total_roles
+
+    async def employee_has_role(self, employee: Employee, role_name: str) -> bool:
+        """Check if Employee have a role with provided role name.
+
+        Args:
+            employee: Employee object.
+            role_name: Employee role name.
+
+        Returns:
+        bool of check if Employee have a role with provided role name.
+        """
+        return await self._employee_has_role(employee, role_name)
+
+    async def _employee_has_role(self, employee: Employee, role_name: str) -> bool:
+        return any(role_name == employee_role.name for employee_role in employee.roles)
