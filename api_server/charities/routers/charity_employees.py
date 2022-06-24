@@ -4,11 +4,13 @@ from fastapi import APIRouter, Depends, status
 
 from fastapi_jwt_auth import AuthJWT
 
+from charities.routers.employee_roles import employee_roles_router
 from charities.schemas import EmployeeInputSchema, EmployeeOutputMessageSchema, EmployeeOutputSchema
 from charities.services import CharityEmployeeService
 from common.schemas.responses import ResponseBaseSchema
 
 charity_employees_router = APIRouter(prefix='/employees', tags=['Charity-employees'])
+charity_employees_router.include_router(employee_roles_router, prefix='/{employee_id}')
 
 
 @charity_employees_router.post(
