@@ -56,7 +56,7 @@ async def get_charity_employees(
         charity_employee_service: dependency as business logic instance.
 
     Returns:
-    ResponseBaseSchema object with EmployeeOutputSchema object as response data.
+    ResponseBaseSchema object with list of EmployeeOutputSchema object as response data.
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
@@ -109,7 +109,7 @@ async def delete_charity_employee(
         Authorize: dependency of AuthJWT for JWT tokens.
 
     Returns:
-    http response with no data and 204 status code.
+    ResponseBaseSchema object with EmployeeOutputMessageSchema object as response data.
     """
     Authorize.jwt_required()
     jwt_subject = Authorize.get_jwt_subject()

@@ -44,6 +44,7 @@ from charities.utils.exceptions import (
     CharityEmployeeRolePermissionError,
     CharityNonRemovableEmployeeError,
     CharityNotFoundError,
+    EmployeeRoleNotFoundError,
     EmployeeRoleNotSupportedError,
     charity_employee_not_found_error_handler,
     charity_employee_permission_error_handler,
@@ -52,6 +53,7 @@ from charities.utils.exceptions import (
     charity_not_found_error_handler,
     employee_already_added_to_charity_error_handler,
     employee_role_already_added_to_employee_error_handler,
+    employee_role_not_found_error_handler,
     employee_role_not_supported_error_handler,
 )
 from common.constants.api import ApiConstants
@@ -174,6 +176,7 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(CharityEmployeeRoleDuplicateError, employee_role_already_added_to_employee_error_handler)
     app.add_exception_handler(CharityEmployeeNotFoundError, charity_employee_not_found_error_handler)
     app.add_exception_handler(CharityNonRemovableEmployeeError, charity_non_removable_employee_error_handler)
+    app.add_exception_handler(EmployeeRoleNotFoundError, employee_role_not_found_error_handler)
     return app
 
 

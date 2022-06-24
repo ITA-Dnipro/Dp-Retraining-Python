@@ -20,6 +20,11 @@ class CharityEmployeeRolePermissionError(HTTPException):
     pass
 
 
+class EmployeeRoleNotFoundError(HTTPException):
+    """Custom Employee role not found error."""
+    pass
+
+
 def employee_role_not_supported_error_handler(request: Request, exc: EmployeeRoleNotSupportedError):
     """Handler for EmployeeRoleNotSupportedError exception that makes http response.
 
@@ -71,6 +76,27 @@ def charity_employee_role_permission_error_handler(request: Request, exc: Charit
 
     Returns:
     http response for raised CharityEmployeeRolePermissionError.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )
+
+
+def employee_role_not_found_error_handler(request: Request, exc: EmployeeRoleNotFoundError):
+    """Handler for EmployeeRoleNotFoundError exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised EmployeeRoleNotFoundError.
+
+    Returns:
+    http response for raised EmployeeRoleNotFoundError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,
