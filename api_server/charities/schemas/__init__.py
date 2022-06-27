@@ -13,7 +13,11 @@ from charities.schemas.charity_employees import (
     EmployeeOutputMessageSchema,
     EmployeeOutputSchema,
 )
-from charities.schemas.employee_roles import EmployeeRoleInputSchema, EmployeeRoleOutputSchema
+from charities.schemas.employee_roles import (
+    EmployeeRoleInputSchema,
+    EmployeeRoleOutputMessageSchema,
+    EmployeeRoleOutputSchema,
+)
 
 __all__ = [
     'CharityFullOutputSchema',
@@ -27,4 +31,5 @@ __all__ = [
     'EmployeeDBSchema',
     'EmployeeOutputSchema',
     'EmployeeOutputMessageSchema',
+    'EmployeeRoleOutputMessageSchema',
 ]

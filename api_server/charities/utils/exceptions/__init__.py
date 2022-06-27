@@ -12,9 +12,11 @@ from charities.utils.exceptions.charity_employees import (
 from charities.utils.exceptions.employee_roles import (
     CharityEmployeeRoleDuplicateError,
     CharityEmployeeRolePermissionError,
+    EmployeeNonRemovableEmployeeRoleError,
     EmployeeRoleNotFoundError,
     EmployeeRoleNotSupportedError,
     charity_employee_role_permission_error_handler,
+    employee_non_removable_employee_role_error_handler,
     employee_role_already_added_to_employee_error_handler,
     employee_role_not_found_error_handler,
     employee_role_not_supported_error_handler,
@@ -39,4 +41,6 @@ __all__ = [
     'charity_non_removable_employee_error_handler',
     'EmployeeRoleNotFoundError',
     'employee_role_not_found_error_handler',
+    'EmployeeNonRemovableEmployeeRoleError',
+    'employee_non_removable_employee_role_error_handler',
 ]

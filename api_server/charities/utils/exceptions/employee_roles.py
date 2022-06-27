@@ -25,6 +25,11 @@ class EmployeeRoleNotFoundError(HTTPException):
     pass
 
 
+class EmployeeNonRemovableEmployeeRoleError(HTTPException):
+    """Custom Employee non removable EmployeeRole error."""
+    pass
+
+
 def employee_role_not_supported_error_handler(request: Request, exc: EmployeeRoleNotSupportedError):
     """Handler for EmployeeRoleNotSupportedError exception that makes http response.
 
@@ -97,6 +102,27 @@ def employee_role_not_found_error_handler(request: Request, exc: EmployeeRoleNot
 
     Returns:
     http response for raised EmployeeRoleNotFoundError.
+    """
+    response = ResponseBaseSchema(
+        status_code=exc.status_code,
+        data=[],
+        errors=[{"detail": exc.detail}],
+    ).dict()
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=response,
+    )
+
+
+def employee_non_removable_employee_role_error_handler(request: Request, exc: EmployeeNonRemovableEmployeeRoleError):
+    """Handler for EmployeeNonRemovableEmployeeRoleError exception that makes http response.
+
+    Args:
+        request: FastAPI Request object.
+        exc: raised EmployeeNonRemovableEmployeeRoleError.
+
+    Returns:
+    http response for raised EmployeeNonRemovableEmployeeRoleError.
     """
     response = ResponseBaseSchema(
         status_code=exc.status_code,

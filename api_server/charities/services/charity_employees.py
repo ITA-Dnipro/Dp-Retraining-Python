@@ -170,7 +170,7 @@ class CharityEmployeeService(CharityCommonService):
             # Checking if currently authenticated employee have sufficient roles to perform action.
             authenticated_employee = await self.get_employee_from_charity_by_username(db_charity, jwt_subject)
             authenticated_employee_role_names = [role.name for role in authenticated_employee.roles]
-            # Getting allowed roles for eployee_to_delete roles.
+            # Getting allowed roles for employee_to_delete roles.
             employee_to_delete = await self.get_employee_from_charity_by_id(db_charity, employee_id)
             employee_to_delete_role_names = [role.name for role in employee_to_delete.roles]
             employee_to_delete_allowed_roles = get_allowed_roles_for_employee_roles(

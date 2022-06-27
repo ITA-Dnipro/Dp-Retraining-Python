@@ -104,3 +104,26 @@ class EmployeeRoleDBService:
         self._log.debug(
             f'EmployeeRole with name: "{role.name}" added to CharityEmployeeAssociation with id: {charity_employee.id}.'
         )
+
+    async def remove_employee_role_from_charity_employee(
+            self, charity_employee: CharityEmployeeAssociation, role: EmployeeRole,
+    ) -> None:
+        """Removes EmployeeRole from CharityEmployeeAssociation.roles collection.
+
+        Args:
+            charity_employee: CharityEmployeeAssociation object.
+            role: EmployeeRole object.
+
+        Returns:
+        Nothing.
+        """
+        return await self._remove_employee_role_from_charity_employee(charity_employee, role)
+
+    async def _remove_employee_role_from_charity_employee(
+            self, charity_employee: CharityEmployeeAssociation, role: EmployeeRole,
+    ) -> None:
+        charity_employee.roles.remove(role)
+        await self.session.commit()
+        self._log.debug(
+            f'EmployeeRole with id: "{role.id}" removed from CharityEmployeeAssociation with id: {charity_employee.id}.'
+        )

@@ -9,13 +9,17 @@ from charities.models import Employee, EmployeeRole
 from charities.schemas import EmployeeRoleInputSchema
 from charities.services.charity_employees import CharityEmployeeService
 from charities.services.commons import CharityCommonService
-from charities.utils.exceptions import CharityEmployeeRoleDuplicateError, EmployeeRoleNotFoundError
+from charities.utils.exceptions import (
+    CharityEmployeeRoleDuplicateError,
+    EmployeeNonRemovableEmployeeRoleError,
+    EmployeeRoleNotFoundError,
+)
 from charities.utils.role_permissions import (
     employee_role_validator,
     get_allowed_role_for_employee_role,
     get_allowed_roles_for_employee_roles,
 )
-from common.constants.charities import CharityEmployeeAllowedRolesConstants
+from common.constants.charities import CharityEmployeeAllowedRolesConstants, EmployeeRoleServiceConstants
 from common.exceptions.charities import EmployeeRolesExceptionMsgs
 from db import get_session
 from utils.logging import setup_logging
@@ -183,3 +187,89 @@ class EmployeeRoleService(CharityCommonService):
             self._log.debug(err_msg)
             raise EmployeeRoleNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
         return employee_role
+
+    async def remove_role_from_employee(
+            self, charity_id: UUID, employee_id: UUID, role_id: UUID, jwt_subject: str,
+    ) -> dict:
+        """Removes EmployeeRole for Employee.roles collection.
+
+        Args:
+            charity_id: UUID of charity.
+            employee_id: UUID of employee.
+            role_id: UUID of EmployeeRole.
+            jwt_subject: decoded jwt identity.
+
+        Returns:
+        dict with successful EmployeeRole removal message.
+        """
+        return await self._remove_role_from_employee(charity_id, employee_id, role_id, jwt_subject)
+
+    async def _remove_role_from_employee(
+            self, charity_id: UUID, employee_id: UUID, role_id: UUID, jwt_subject: str,
+    ) -> dict:
+        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        # Checking if currently authenticated employee have sufficient roles to perform action.
+        authenticated_employee = await self.charity_employee_service.get_employee_from_charity_by_username(
+            db_charity,
+            jwt_subject,
+        )
+        authenticated_employee_role_names = [role.name for role in authenticated_employee.roles]
+        # Getting allowed roles for employee_to_remove_role.
+        employee_to_remove_role = await self.charity_employee_service.get_employee_from_charity_by_id(
+            db_charity,
+            employee_id,
+        )
+        employee_to_remove_role_role_names = [role.name for role in employee_to_remove_role.roles]
+        employee_to_remove_role_allowed_roles = get_allowed_roles_for_employee_roles(
+            roles=employee_to_remove_role_role_names,
+            allowed_roles=CharityEmployeeAllowedRolesConstants.DELETE_EMPLOYEE_ROLES_MAPPING.value,
+        )
+        if employee_role_validator(
+                employee_roles=authenticated_employee_role_names,
+                allowed_roles=employee_to_remove_role_allowed_roles,
+        ):
+            role_to_remove = await self.get_role_from_employee_by_id(employee=employee_to_remove_role, role_id=role_id)
+            # Checking if Charity have at least one Employee with supervisor role.
+            total_supervisors_in_charity = await self.count_employee_role_in_charity(
+                charity=db_charity,
+                role_name=CharityEmployeeAllowedRolesConstants.SUPERVISOR.value,
+            )
+            employee_role_to_remove_is_supervisor = await self.employee_has_role(
+                employee=employee_to_remove_role,
+                role_name=CharityEmployeeAllowedRolesConstants.SUPERVISOR.value,
+            )
+            if total_supervisors_in_charity < 2 and employee_role_to_remove_is_supervisor:
+                err_msg = EmployeeRolesExceptionMsgs.EMPLOYEE_ROLE_NON_REMOVABLE_LAST_SUPERVISOR.value.format(
+                    employee_role=CharityEmployeeAllowedRolesConstants.SUPERVISOR.value,
+                    employee_id=employee_to_remove_role.id,
+                    role_count=total_supervisors_in_charity,
+                )
+                self._log.debug(err_msg)
+                raise EmployeeNonRemovableEmployeeRoleError(status_code=status.HTTP_403_FORBIDDEN, detail=err_msg)
+            # Checking if employee removing his only role.
+            total_employee_to_remove_roles = len(employee_to_remove_role.roles)
+            if total_employee_to_remove_roles < 2:
+                err_msg = EmployeeRolesExceptionMsgs.EMPLOYEE_ROLE_NON_REMOVABLE_LAST_ROLE.value.format(
+                    employee_role=role_to_remove.name,
+                    employee_id=employee_to_remove_role.id,
+                    role_count=total_employee_to_remove_roles,
+                )
+                self._log.debug(err_msg)
+                raise EmployeeNonRemovableEmployeeRoleError(status_code=status.HTTP_403_FORBIDDEN, detail=err_msg)
+            charity_employee_to_remove_role = await self.charity_employee_service.get_charity_employee_by_charity_and_employee_id( # noqa
+                charity_id,
+                employee_id,
+            )
+            # Removing role from charity_employee.
+            await self.employee_role_db_service.remove_employee_role_from_charity_employee(
+                charity_employee_to_remove_role,
+                role_to_remove,
+            )
+            #
+            EmployeeRoleServiceConstants.SUCCESSSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value['message'] = (
+                EmployeeRoleServiceConstants.SUCCESSSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value['message'].format(
+                    role_id=role_to_remove.id,
+                    employee_id=employee_to_remove_role.id,
+                )
+            )
+            return EmployeeRoleServiceConstants.SUCCESSSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value
