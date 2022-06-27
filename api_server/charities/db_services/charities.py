@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import func, update
+from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased, relationship, subqueryload
@@ -73,10 +73,16 @@ class CharityDBService:
             ).join(
                 CharityEmployeeAssociation,
                 CharityEmployeeAssociation.id == CharityEmployeeRoleAssociation.charity_employee_id
+            ).join(
+                Charity,
+                CharityEmployeeAssociation.charity_id == Charity.id
             ).subquery()
         )
         EmployeeRoleAlias = aliased(EmployeeRole, roles_subquery)
-        Employee.roles = relationship(EmployeeRoleAlias, primaryjoin=Employee.id == roles_subquery.c.employee_id)
+        Employee.roles = relationship(
+            EmployeeRoleAlias,
+            primaryjoin=and_(Employee.id == roles_subquery.c.employee_id, id_ == roles_subquery.c.charity_id)
+        )
         q = select(Charity).where(Charity.id == id_).options(
             subqueryload(Charity.employees).subqueryload(Employee.roles),
         )

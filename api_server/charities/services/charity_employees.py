@@ -5,7 +5,7 @@ from fastapi import Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityEmployeeDBService, EmployeeDBService, EmployeeRoleDBService
-from charities.models import Charity, Employee
+from charities.models import Charity, CharityEmployeeAssociation, Employee
 from charities.schemas import EmployeeDBSchema, EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 from charities.utils.exceptions import CharityEmployeeNotFoundError, CharityNonRemovableEmployeeError
@@ -36,7 +36,7 @@ class CharityEmployeeService(CharityCommonService):
     async def add_employee_to_charity(
             self, charity_id: UUID, jwt_subject: str, employee_data: EmployeeInputSchema,
     ) -> Employee:
-        """Add User to Charity object in the database via many-to-many relationship.
+        """Add Employee to Charity object in the database via many-to-many relationship.
 
         Args:
             charity_id: UUID of charity.
@@ -44,7 +44,7 @@ class CharityEmployeeService(CharityCommonService):
             employee_data: Serialized EmployeeInputSchema object.
 
         Returns:
-        Charity object with User added to many-to-many relationship.
+        Employee added to Charity via many-to-many relationship.
         """
         return await self._add_employee_to_charity(charity_id, jwt_subject, employee_data)
 
@@ -118,9 +118,9 @@ class CharityEmployeeService(CharityCommonService):
 
     async def _get_charity_employee_by_id(self, charity_id: UUID, employee_id: UUID) -> Employee:
         db_charity = await self.get_charity_by_id_with_relationships(charity_id)
-        return await self.get_employee_from_charity(db_charity, employee_id)
+        return await self.get_employee_from_charity_by_id(db_charity, employee_id)
 
-    async def get_employee_from_charity(self, charity: Charity, employee_id: UUID) -> Employee:
+    async def get_employee_from_charity_by_id(self, charity: Charity, employee_id: UUID) -> Employee:
         """Get Employee object by id from Charity.employees collection.
 
         Args:
@@ -133,16 +133,17 @@ class CharityEmployeeService(CharityCommonService):
         Returns:
         Single charity's Employee object filtered by id.
         """
-        return await self._get_employee_from_charity(charity, employee_id)
+        return await self._get_employee_from_charity_by_id(charity, employee_id)
 
-    async def _get_employee_from_charity(self, charity: Charity, employee_id: UUID) -> Employee:
+    async def _get_employee_from_charity_by_id(self, charity: Charity, employee_id: UUID) -> Employee:
         for employee in charity.employees:
             if employee.id == employee_id:
                 break
         else:
             err_msg = CharityEmployeesExceptionMsgs.EMPLOYEE_NOT_FOUND.value.format(
+                field_name='id',
+                field_value=employee_id,
                 charity_id=charity.id,
-                employee_id=employee_id,
             )
             self._log.debug(err_msg)
             raise CharityEmployeeNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
@@ -167,12 +168,10 @@ class CharityEmployeeService(CharityCommonService):
         db_charity_employee_usernames = [employee.user.username for employee in db_charity.employees]
         if jwt_charity_validator(jwt_subject=jwt_subject, usernames=db_charity_employee_usernames):
             # Checking if currently authenticated employee have sufficient roles to perform action.
-            for authenticated_employee in db_charity.employees:
-                if authenticated_employee.user.username == jwt_subject:
-                    break
+            authenticated_employee = await self.get_employee_from_charity_by_username(db_charity, jwt_subject)
             authenticated_employee_role_names = [role.name for role in authenticated_employee.roles]
             # Getting allowed roles for eployee_to_delete roles.
-            employee_to_delete = await self.get_employee_from_charity(db_charity, employee_id)
+            employee_to_delete = await self.get_employee_from_charity_by_id(db_charity, employee_id)
             employee_to_delete_role_names = [role.name for role in employee_to_delete.roles]
             employee_to_delete_allowed_roles = get_allowed_roles_for_employee_roles(
                 roles=employee_to_delete_role_names,
@@ -209,37 +208,62 @@ class CharityEmployeeService(CharityCommonService):
                 )
                 return CharityEmployeeServiceConstants.SUCCESSSFUL_EMPLOYEE_REMOVAL_MSG.value
 
-    async def count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
-        """Counts how many Charity.employees have specific role.
+    async def get_employee_from_charity_by_username(self, charity: Charity, username: str) -> Employee:
+        """Get Employee object by User.username from Charity.employees collection.
 
         Args:
             charity: Charity object.
-            role_name: Employee role name.
+            username: User username.
+
+        Raise:
+            CharityEmployeeNotFoundError in case employee not present in Charity.employees collection.
 
         Returns:
-        int of how many Charity.employees have specific role.
+        Single charity's Employee object filtered by User.username.
         """
-        return await self._count_employee_role_in_charity(charity, role_name)
+        return await self._get_employee_from_charity_by_username(charity, username)
 
-    async def _count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
-        total_roles = 0
+    async def _get_employee_from_charity_by_username(self, charity: Charity, username: str) -> Employee:
         for employee in charity.employees:
-            for role in employee.roles:
-                if role.name == role_name:
-                    total_roles += 1
-        return total_roles
+            if employee.user.username == username:
+                break
+        else:
+            err_msg = CharityEmployeesExceptionMsgs.EMPLOYEE_NOT_FOUND.value.format(
+                field_name='username',
+                field_value=username,
+                charity_id=charity.id,
+            )
+            self._log.debug(err_msg)
+            raise CharityEmployeeNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return employee
 
-    async def employee_has_role(self, employee: Employee, role_name: str) -> bool:
-        """Check if Employee have a role with provided role name.
+    async def get_charity_employee_by_charity_and_employee_id(
+            self, charity_id: UUID, employee_id: UUID,
+    ) -> CharityEmployeeAssociation | None:
+        """Get CharityEmployeeAssociation object from database filtered by charity_id and employee_id.
 
         Args:
-            employee: Employee object.
-            role_name: Employee role name.
+            charity_id: UUID of a Charity object.
+            employee_id: UUID of a Employee object.
 
         Returns:
-        bool of check if Employee have a role with provided role name.
+        Single CharityEmployeeAssociation filtered by charity_id and employee_id.
         """
-        return await self._employee_has_role(employee, role_name)
+        return await self._get_charity_employee_by_charity_and_employee_id(charity_id, employee_id)
 
-    async def _employee_has_role(self, employee: Employee, role_name: str) -> bool:
-        return any(role_name == employee_role.name for employee_role in employee.roles)
+    async def _get_charity_employee_by_charity_and_employee_id(
+            self, charity_id: UUID, employee_id: UUID,
+    ) -> CharityEmployeeAssociation | None:
+        charity_employee = await self.charity_employee_db_service.get_charity_employee_by_charity_and_employee_id(
+            charity_id,
+            employee_id,
+        )
+        if not charity_employee:
+            err_msg = CharityEmployeesExceptionMsgs.EMPLOYEE_NOT_FOUND.value.format(
+                field_name='id',
+                field_value=employee_id,
+                charity_id=charity_id,
+            )
+            self._log.debug(err_msg)
+            raise CharityEmployeeNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        return charity_employee

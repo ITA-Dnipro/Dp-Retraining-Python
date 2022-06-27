@@ -82,3 +82,38 @@ class CharityCommonService:
             self._log.debug(err_msg)
             raise CharityNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
         return await self.charity_db_service.refresh_charity(charity)
+
+    async def count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
+        """Counts how many Charity.employees have specific role.
+
+        Args:
+            charity: Charity object.
+            role_name: Employee role name.
+
+        Returns:
+        int of how many Charity.employees have specific role.
+        """
+        return await self._count_employee_role_in_charity(charity, role_name)
+
+    async def _count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
+        total_roles = 0
+        for employee in charity.employees:
+            for role in employee.roles:
+                if role.name == role_name:
+                    total_roles += 1
+        return total_roles
+
+    async def employee_has_role(self, employee: Employee, role_name: str) -> bool:
+        """Check if Employee have a role with provided role name.
+
+        Args:
+            employee: Employee object.
+            role_name: Employee role name.
+
+        Returns:
+        bool of check if Employee have a role with provided role name.
+        """
+        return await self._employee_has_role(employee, role_name)
+
+    async def _employee_has_role(self, employee: Employee, role_name: str) -> bool:
+        return any(role_name == employee_role.name for employee_role in employee.roles)

@@ -93,7 +93,8 @@ class EmployeeRoleDBService:
             await self.session.commit()
         except IntegrityError as exc:
             err_msg = EmployeeRolesExceptionMsgs.ROLE_ALREADY_ADDED_TO_EMPLOYEE.value.format(
-                role_id=charity_employee_role_association.role_id,
+                field_name='id',
+                field_value=charity_employee_role_association.role_id,
                 employee_id=charity_employee_role_association.charity_employee_id,
             )
             self._log.debug(exc)
