@@ -1,5 +1,8 @@
 from unittest.mock import ANY
 
+from charities.tests.test_data import response_charity_employees_test_data
+from common.tests.test_data.charities import request_test_charity_data
+
 # GET
 RESPONSE_GET_CHARITIES_EMPTY_DB = {
     'data': {
@@ -34,4 +37,22 @@ RESPONSE_GET_CHARITIES = {
     },
     'errors': [],
     'status_code': 200
+}
+RESPONSE_GET_CHARITY = {
+    'data': {
+        'description': 'Good deeds charity, making good deeds since 2000.',
+        'email': 'good.deeds@totalynotemail.com',
+        'employees': [response_charity_employees_test_data.RESPONSE_GET_CHARITY_EMPLOYEE],
+        'fundraisers': [],
+        'id': ANY,
+        'phone_number': '+380501112233',
+        'title': 'Good deeds charity'},
+    'errors': [],
+    'status_code': 200
+}
+# Errors
+RESPONSE_CHARITY_NOT_FOUND = {
+    'data': [],
+    'errors': [{'detail': f"Charity with id: '{request_test_charity_data.DUMMY_CHARITY_UUID}' not found."}],
+    'status_code': 404,
 }
