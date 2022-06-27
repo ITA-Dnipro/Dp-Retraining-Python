@@ -30,11 +30,15 @@ from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
 from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.services import AuthService
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
+from charities.models import Charity
+from charities.schemas import CharityInputSchema
+from charities.services import CharityService
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.auth import request_test_auth_email_confirmation_data
+from common.tests.test_data.charities import request_test_charity_data
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
@@ -679,3 +683,59 @@ class TestMixin:
         An instance of FrozenDateTimeFactory object.
         """
         return self.patch_model_time
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def charity_service(self, db_session: AsyncSession) -> CharityService:
+        """A pytest fixture that creates instance of charity_service business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of CharityService business logic class.
+        """
+        return CharityService(session=db_session)
+
+    @pytest_asyncio.fixture
+    async def test_charity(
+            self, charity_service: CharityService, patch_model_current_time: fixture, request: fixture,
+            authenticated_test_user: User,
+    ) -> Charity:
+        """Create test charity data and store it in test database.
+
+        Args:
+            charity_service: instance of business logic class.
+            patch_model_current_time: pytest fixture that alters datetime that saves in db model.
+            request: native pytest fixture.
+            authenticated_test_user: pytest fixture, add user to database and add auth cookies to client fixture.
+
+        Returns:
+        newly created Charity object.
+        """
+        if not hasattr(request, 'param'):
+            return await self._create_charity(
+                charity_service=charity_service,
+                charity=CharityInputSchema(**request_test_charity_data.ADD_CHARITY_TEST_DATA),
+                jwt_subject=authenticated_test_user.username,
+            )
+        with patch_model_current_time(**request.param):
+            return await self._create_charity(
+                charity_service=charity_service,
+                charity=CharityInputSchema(**request_test_charity_data.ADD_CHARITY_TEST_DATA),
+                jwt_subject=authenticated_test_user.username,
+            )
+
+    async def _create_charity(
+            self, charity_service: CharityService, charity: CharityInputSchema, jwt_subject: str,
+    ) -> Charity:
+        """Stores charity test data in test database.
+
+        Args:
+            charity_service: instance of business logic class.
+            charity: serialized CharityInputSchema object.
+            jwt_subject: decoded jwt identity.
+
+        Returns:
+        newly created User object.
+        """
+        return await charity_service.add_charity(charity=charity, jwt_subject=jwt_subject)
