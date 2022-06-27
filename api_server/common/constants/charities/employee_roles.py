@@ -14,6 +14,6 @@ class EmployeeRoleSchemaConstants(Enum):
 
 class EmployeeRoleServiceConstants(Enum):
     """EmployeeRole Service constants."""
-    SUCCESSSFUL_EMPLOYEE_ROLE_REMOVAL_MSG = {
+    SUCCESSFUL_EMPLOYEE_ROLE_REMOVAL_MSG = {
         'message': "EmployeeRole with id: '{role_id}' successfully removed from Employee with id: '{employee_id}'."
     }

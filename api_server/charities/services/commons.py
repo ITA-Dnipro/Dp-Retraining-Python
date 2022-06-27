@@ -52,7 +52,7 @@ class CharityCommonService:
             charity: Charity object.
 
         Returns:
-        Charity object with Employee added to many-to-many relationship.
+        A Charity object with Employee added to many-to-many relationship.
         """
         return await self._save_employee_to_charity(employee, charity)
 
@@ -84,14 +84,14 @@ class CharityCommonService:
         return await self.charity_db_service.refresh_charity(charity)
 
     async def count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
-        """Counts how many Charity.employees have specific role.
+        """Counts how many 'Charity.employees' have specific role.
 
         Args:
             charity: Charity object.
             role_name: Employee role name.
 
         Returns:
-        int of how many Charity.employees have specific role.
+        int of how many 'Charity.employees' have specific role.
         """
         return await self._count_employee_role_in_charity(charity, role_name)
 

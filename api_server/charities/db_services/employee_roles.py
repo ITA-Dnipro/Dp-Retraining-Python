@@ -2,13 +2,11 @@ from uuid import UUID
 
 from fastapi import status
 
-from sqlalchemy import join
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import aliased, relationship, subqueryload
 
-from charities.models import Charity, CharityEmployeeAssociation, CharityEmployeeRoleAssociation, Employee, EmployeeRole
+from charities.models import CharityEmployeeAssociation, CharityEmployeeRoleAssociation, EmployeeRole
 from charities.schemas import EmployeeRoleInputSchema
 from charities.utils.exceptions import CharityEmployeeRoleDuplicateError
 from common.exceptions.charities import EmployeeRolesExceptionMsgs
@@ -108,7 +106,7 @@ class EmployeeRoleDBService:
     async def remove_employee_role_from_charity_employee(
             self, charity_employee: CharityEmployeeAssociation, role: EmployeeRole,
     ) -> None:
-        """Removes EmployeeRole from CharityEmployeeAssociation.roles collection.
+        """Removes EmployeeRole from 'CharityEmployeeAssociation.roles' collection.
 
         Args:
             charity_employee: CharityEmployeeAssociation object.

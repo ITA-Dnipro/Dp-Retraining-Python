@@ -109,19 +109,6 @@ class CharityUpdateSchema(BaseModel):
         orm_mode = True
 
 
-class AddManagerSchema(BaseModel):
-    user_id: UUID
-    is_supermanager: bool
-
-
-class ManagerResponseSchema(BaseModel):
-    is_supermanager: bool
-    # user: UserOutputSchema
-
-    class Config:
-        orm_mode = True
-
-
 class CharityPaginatedOutputSchema(BaseModel):
     """Charity paginated output schema for Charity model."""
     current_page: int

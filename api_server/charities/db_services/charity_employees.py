@@ -26,7 +26,7 @@ class CharityEmployeeDBService:
             charity: Charity object.
 
         Returns:
-        Charity object with Employee added to many-to-many relationship.
+        A Charity object with Employee added to many-to-many relationship.
         """
         return await self._add_employee_to_charity(employee, charity)
 
@@ -52,7 +52,7 @@ class CharityEmployeeDBService:
         return charity_employee_association
 
     async def remove_employee_from_charity(self, charity: Charity, employee: Employee) -> None:
-        """Removes Employee from Charity.employees collection.
+        """Removes Employee from 'Charity.employees' collection.
 
         Args:
             charity: Charity object.
@@ -75,7 +75,7 @@ class CharityEmployeeDBService:
 
         Args:
             charity_id: UUID of a Charity object.
-            employee_id: UUID of a Employee object.
+            employee_id: UUID of an Employee object.
 
         Returns:
         Single CharityEmployeeAssociation filtered by charity_id and employee_id.

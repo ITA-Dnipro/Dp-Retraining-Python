@@ -30,13 +30,11 @@ from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
 from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.services import AuthService
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
-from charities.models import Charity
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.auth import request_test_auth_email_confirmation_data
-from common.tests.test_data.charity.charity_requests import ADDITIONAL_USER_TEST_DATA, initialize_charity_data
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
@@ -490,133 +488,6 @@ class TestMixin:
         mocker.patch('users.utils.aws_s3.S3Client.delete_file_objects', side_effect=async_mock)
         async_mock.return_value = user_pictures_mock_data.S3Client_delete_images_in_s3_valid_response
         return async_mock
-
-    # @staticmethod
-    # async def _initialize_charity(user: User, db_session: AsyncSession, charity_title: str, is_director: bool,
-    #                               is_supermanager: bool) -> Charity:
-    #     """
-    #     Initializes Charity in database.
-    #     Args:
-    #             user: instance of User business logic class.
-    #             db_session: pytest fixture that creates test sqlalchemy session.
-    # 
-    #     Returns:
-    #         newly created Charity object.
-    #     """
-    #     organisation = Charity(**initialize_charity_data(charity_title))
-    #     association = CharityUserAssociation()
-    #     association.user = user
-    #     association.is_director = is_director
-    #     association.is_supermanager = is_supermanager
-    #     organisation.users_association.append(association)
-    # 
-    #     db_session.add(organisation)
-    #     await db_session.commit()
-    #     await db_session.refresh(organisation)
-    #     return organisation
-
-    # @pytest_asyncio.fixture
-    # async def charity(self, user_service: UserService, db_session: AsyncSession) -> Charity:
-    #     """
-    #         Create test charity data and store it in test database.
-    # 
-    #         Returns:
-    #         Charity object and not authenticated User object.
-    #         """
-    # 
-    #     user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-    #     organisation = await self._initialize_charity(
-    #         user=user,
-    #         db_session=db_session,
-    #         charity_title="Charity Organisation",
-    #         is_director=True,
-    #         is_supermanager=True
-    #     )
-    #     return organisation
-
-    # @pytest_asyncio.fixture
-    # async def charity_with_authenticated_manager(self,
-    #                                              user_service: UserService,
-    #                                              db_session: AsyncSession,
-    #                                              auth_service: AuthService,
-    #                                              client: fixture, ) -> Charity:
-    #     """
-    #     Create authenticated test charity data and store it in test database.
-    # 
-    #         Returns:
-    #     Charity object with authenticated user.
-    #     """
-    #     additional_user = await self._create_user(user_service, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
-    #     user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-    #     organisation = await self._initialize_charity(user=user,
-    #                                                   db_session=db_session,
-    #                                                   charity_title="Charity Organisation",
-    #                                                   is_supermanager=False,
-    #                                                   is_director=False)
-    #     association = CharityUserAssociation()
-    #     association.user = additional_user
-    #     association.charity = organisation
-    #     association.is_supermanager = False
-    # 
-    #     db_session.add(association)
-    #     await db_session.commit()
-    # 
-    #     await self._create_authenticated_user(user, auth_service, client)
-    # 
-    #     return organisation
-
-    # @pytest_asyncio.fixture
-    # async def charity_with_authenticated_director(self,
-    #                                               user_service: UserService,
-    #                                               db_session: AsyncSession,
-    #                                               auth_service: AuthService,
-    #                                               client: fixture, ) -> Charity:
-    #     """
-    #     Create authenticated test charity data and store it in test database.
-    # 
-    #         Returns:
-    #     Charity object with authenticated user.
-    #     """
-    #     additional_user = await self._create_user(user_service, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
-    #     user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-    #     organisation = await self._initialize_charity(user=user,
-    #                                                   db_session=db_session,
-    #                                                   charity_title="Charity Organisation",
-    #                                                   is_supermanager=True,
-    #                                                   is_director=True)
-    #     association = CharityUserAssociation()
-    #     association.user = additional_user
-    #     association.charity = organisation
-    #     association.is_supermanager = True
-    # 
-    #     db_session.add(association)
-    #     await db_session.commit()
-    #     await self._create_authenticated_user(user, auth_service, client)
-    # 
-    #     return organisation
-
-    # @pytest_asyncio.fixture
-    # async def authenticated_random_test_user(self, random_test_user: User,
-    #                                          auth_service: AuthService,
-    #                                          client: fixture):
-    #     return await self._create_authenticated_user(random_test_user, auth_service, client)
-
-    # @pytest_asyncio.fixture
-    # async def many_charities(
-    #         self,
-    #         user_service: UserService,
-    #         db_session: AsyncSession,
-    #         auth_service: AuthService,
-    #         client: fixture
-    # ):
-    #     user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-    #     charity_titles = ("organisation D", "organisation B", "organisation A", "organisation Y")
-    #     organisations = [
-    #         await self._initialize_charity(user=user, db_session=db_session, charity_title=title, is_director=True,
-    #                                        is_supermanager=True)
-    #         for title in charity_titles]
-    #     await self._create_authenticated_user(user, auth_service, client)
-    #     return organisations
 
     @pytest_asyncio.fixture(autouse=True)
     async def email_confirmation_token_crud(self, db_session: AsyncSession) -> EmailConfirmationTokenCRUD:

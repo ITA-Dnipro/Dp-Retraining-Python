@@ -76,14 +76,14 @@ class EmployeeRoleService(CharityCommonService):
         return await self.get_role_from_employee_by_id(db_charity_employee, role_id)
 
     async def get_role_from_employee_by_id(self, employee: Employee, role_id: UUID) -> EmployeeRole:
-        """Get EmployeeRole object from Employee.roles collection filtered by id.
+        """Get EmployeeRole object from 'Employee.roles' collection filtered by id.
 
         Args:
             employee: Employee object.
             role_id: UUID of a EmployeeRole object.
 
         Raise:
-            EmployeeRoleNotFoundError in case EmployeeRole not present in Employee.roles collection.
+            EmployeeRoleNotFoundError in case EmployeeRole not present in 'Employee.roles' collection.
 
         Returns:
         Single employee's EmployeeRole object filtered by id.
@@ -191,7 +191,7 @@ class EmployeeRoleService(CharityCommonService):
     async def remove_role_from_employee(
             self, charity_id: UUID, employee_id: UUID, role_id: UUID, jwt_subject: str,
     ) -> dict:
-        """Removes EmployeeRole for Employee.roles collection.
+        """Removes EmployeeRole for 'Employee.roles' collection.
 
         Args:
             charity_id: UUID of charity.
@@ -266,10 +266,10 @@ class EmployeeRoleService(CharityCommonService):
                 role_to_remove,
             )
             #
-            EmployeeRoleServiceConstants.SUCCESSSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value['message'] = (
-                EmployeeRoleServiceConstants.SUCCESSSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value['message'].format(
+            EmployeeRoleServiceConstants.SUCCESSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value['message'] = (
+                EmployeeRoleServiceConstants.SUCCESSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value['message'].format(
                     role_id=role_to_remove.id,
                     employee_id=employee_to_remove_role.id,
                 )
             )
-            return EmployeeRoleServiceConstants.SUCCESSSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value
+            return EmployeeRoleServiceConstants.SUCCESSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value

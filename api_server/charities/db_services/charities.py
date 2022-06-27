@@ -37,7 +37,7 @@ class CharityDBService:
         return result.scalars().one_or_none()
 
     async def add_charity(self, charity: CharityInputSchema) -> Charity:
-        """Add Charity object to the database.
+        """Add a Charity object to the database.
 
         Args:
             charity: CharityInputSchema object.
@@ -120,7 +120,7 @@ class CharityDBService:
         return total_charities
 
     async def update_charity(self, id_: UUID, update_data: CharityUpdateSchema) -> None:
-        """Updates Charity object in the database.
+        """Updates a Charity object in the database.
 
         Args:
             id_: UUID of charity.

@@ -51,7 +51,7 @@ class CharityEmployeeService(CharityCommonService):
     async def _add_employee_to_charity(
             self, charity_id: UUID, jwt_subject: str, employee_data: EmployeeInputSchema,
     ) -> Employee:
-        # Getting allowed roles for new eployee role.
+        # Getting allowed roles for new employee role.
         allowed_roles = get_allowed_role_for_employee_role(
             role_name=employee_data.role,
             allowed_roles=CharityEmployeeAllowedRolesConstants.ADD_EMPLOYEE_ROLES_MAPPING.value,
@@ -109,7 +109,7 @@ class CharityEmployeeService(CharityCommonService):
 
         Args:
             charity_id: UUID of a Charity object.
-            employee_id: UUID of a Employee object.
+            employee_id: UUID of an Employee object.
 
         Returns:
         Single charity's Employee object filtered by id.
@@ -121,14 +121,14 @@ class CharityEmployeeService(CharityCommonService):
         return await self.get_employee_from_charity_by_id(db_charity, employee_id)
 
     async def get_employee_from_charity_by_id(self, charity: Charity, employee_id: UUID) -> Employee:
-        """Get Employee object by id from Charity.employees collection.
+        """Get Employee object by id from 'Charity.employees' collection.
 
         Args:
             charity: Charity object.
-            employee_id: UUID of a Employee object.
+            employee_id: UUID of an Employee object.
 
         Raise:
-            CharityEmployeeNotFoundError in case employee not present in Charity.employees collection.
+            CharityEmployeeNotFoundError in case employee not present in 'Charity.employees' collection.
 
         Returns:
         Single charity's Employee object filtered by id.
@@ -154,7 +154,7 @@ class CharityEmployeeService(CharityCommonService):
 
         Args:
             charity_id: UUID of a Charity object.
-            employee_id: UUID of a Employee object.
+            employee_id: UUID of an Employee object.
             jwt_subject: decoded jwt identity.
 
         Returns:
@@ -200,23 +200,23 @@ class CharityEmployeeService(CharityCommonService):
                     raise CharityNonRemovableEmployeeError(status_code=status.HTTP_403_FORBIDDEN, detail=err_msg)
                 # Removing Employee from Charity.employees.
                 await self.charity_employee_db_service.remove_employee_from_charity(db_charity, employee_to_delete)
-                CharityEmployeeServiceConstants.SUCCESSSFUL_EMPLOYEE_REMOVAL_MSG.value['message'] = (
-                    CharityEmployeeServiceConstants.SUCCESSSFUL_EMPLOYEE_REMOVAL_MSG.value['message'].format(
+                CharityEmployeeServiceConstants.SUCCESSFUL_EMPLOYEE_REMOVAL_MSG.value['message'] = (
+                    CharityEmployeeServiceConstants.SUCCESSFUL_EMPLOYEE_REMOVAL_MSG.value['message'].format(
                         charity_id=db_charity.id,
                         employee_id=employee_to_delete.id,
                     )
                 )
-                return CharityEmployeeServiceConstants.SUCCESSSFUL_EMPLOYEE_REMOVAL_MSG.value
+                return CharityEmployeeServiceConstants.SUCCESSFUL_EMPLOYEE_REMOVAL_MSG.value
 
     async def get_employee_from_charity_by_username(self, charity: Charity, username: str) -> Employee:
-        """Get Employee object by User.username from Charity.employees collection.
+        """Get Employee object by 'User.username' from 'Charity.employees' collection.
 
         Args:
             charity: Charity object.
             username: User username.
 
         Raise:
-            CharityEmployeeNotFoundError in case employee not present in Charity.employees collection.
+            CharityEmployeeNotFoundError in case employee not present in 'Charity.employees' collection.
 
         Returns:
         Single charity's Employee object filtered by User.username.
@@ -244,7 +244,7 @@ class CharityEmployeeService(CharityCommonService):
 
         Args:
             charity_id: UUID of a Charity object.
-            employee_id: UUID of a Employee object.
+            employee_id: UUID of an Employee object.
 
         Returns:
         Single CharityEmployeeAssociation filtered by charity_id and employee_id.

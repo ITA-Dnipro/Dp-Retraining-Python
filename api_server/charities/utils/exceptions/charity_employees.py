@@ -21,7 +21,7 @@ class CharityEmployeeDuplicateError(HTTPException):
 
 
 class CharityNonRemovableEmployeeError(HTTPException):
-    """Custom Charity non removable Employee error."""
+    """Custom Charity non-removable Employee error."""
     pass
 
 

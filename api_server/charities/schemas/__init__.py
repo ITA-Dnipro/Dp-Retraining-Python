@@ -1,11 +1,9 @@
 from charities.schemas.charities import (
-    AddManagerSchema,
     CharityFullOutputSchema,
     CharityInputSchema,
     CharityOutputSchema,
     CharityPaginatedOutputSchema,
     CharityUpdateSchema,
-    ManagerResponseSchema,
 )
 from charities.schemas.charity_employees import (
     EmployeeDBSchema,
