@@ -24,4 +24,4 @@ class HealthChecksConstants(enum.Enum):
 
     ROOT_FILEPATH = '/'
     API_SERVER_STARTUP_FILENAME = 'api_server_startup.py'
-    STDOUT_TIMEOUT_SEC = 10
+    STDOUT_TIMEOUT_SEC = 15

@@ -69,9 +69,6 @@ class TestMixin:
             echo=app.app_config.API_SQLALCHEMY_ECHO,
             future=app.app_config.API_SQLALCHEMY_FUTURE,
         )
-        async with engine.begin() as conn:
-            from charities.tests.gist_models import metadata
-            await conn.run_sync(metadata.create_all)
         async_session = sessionmaker(
             engine, class_=AsyncSession, expire_on_commit=False,
         )
