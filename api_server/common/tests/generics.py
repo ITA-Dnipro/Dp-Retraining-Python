@@ -735,3 +735,55 @@ class TestMixin:
         newly created User object.
         """
         return await charity_service.add_charity(charity=charity, jwt_subject=jwt_subject)
+
+    @pytest_asyncio.fixture
+    async def authenticated_random_test_user(
+            self, client: fixture, auth_service: AuthService, random_test_user: User,
+    ) -> User:
+        """Create random authenticated test user data and store it in test database.
+
+        Args:
+            client: pytest fixture that creates test httpx client.
+            auth_service: instance of auth business logic class.
+            random_test_user: pytest fixture, add user with random data to database.
+
+        Returns:
+        newly created User object.
+        """
+        return await self._create_authenticated_user(random_test_user, auth_service, client)
+
+    @pytest_asyncio.fixture
+    async def random_test_charity(
+            self, charity_service: CharityService, patch_model_current_time: fixture, request: fixture,
+            authenticated_random_test_user: User,
+    ) -> Charity:
+        """Create test charity with random test data and store it in test database.
+
+        Args:
+            charity_service: instance of business logic class.
+            patch_model_current_time: pytest fixture that alters datetime that saves in db model.
+            request: native pytest fixture.
+            authenticated_random_test_user: pytest fixture, add user with random data to database and
+            auth cookies to client fixture.
+
+        Returns:
+        newly created Charity object.
+        """
+        RANDOM_CHARITY_TEST_DATA = {
+            'title': f'Good deeds charity{uuid4()}',
+            'description': f'Good deeds charity, making good deeds since 2000 {uuid4()}.',
+            'phone_number': f'+38{random.randrange(1000000000, 9999999999)}',
+            'email': f'good.deeds{random.randrange(1000000000, 9999999999)}@totalynotemail.com',
+        }
+        if not hasattr(request, 'param'):
+            return await self._create_charity(
+                charity_service=charity_service,
+                charity=CharityInputSchema(**RANDOM_CHARITY_TEST_DATA),
+                jwt_subject=authenticated_random_test_user.username,
+            )
+        with patch_model_current_time(**request.param):
+            return await self._create_charity(
+                charity_service=charity_service,
+                charity=CharityInputSchema(**RANDOM_CHARITY_TEST_DATA),
+                jwt_subject=authenticated_random_test_user.username,
+            )

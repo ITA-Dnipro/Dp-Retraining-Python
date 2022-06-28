@@ -3,7 +3,7 @@ from enum import Enum
 
 class CharitySchemaConstants(Enum):
     """Charities schema constants."""
-    EMAIL_REGEX = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+    EMAIL_REGEX = r'(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'
 
     CHAR_SIZE_2 = 2
     CHAR_SIZE_128 = 128

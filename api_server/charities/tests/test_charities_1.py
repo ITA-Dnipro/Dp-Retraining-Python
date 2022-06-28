@@ -157,3 +157,57 @@ class TestCasePostCharities(TestMixin):
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
         assert (await db_session.execute(select(func.count(Employee.id)))).scalar_one() == 1
+
+
+class TestCasePutCharity(TestMixin):
+
+    @pytest.mark.asyncio
+    async def test_put_charity_valid_payload(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_charity: Charity,
+    ) -> None:
+        """Test PUT '/charities' endpoint with valid payload and charity data added to the db.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            test_charity: pytest fixture, add charity to database.
+
+        Returns:
+        Nothing.
+        """
+        url = app.url_path_for('put_charity', id=test_charity.id)
+        response = await client.put(url, json=request_test_charity_data.UPDATE_CHARITY_TEST_DATA)
+        response_data = response.json()
+        expected_result = response_charities_test_data.RESPONSE_PUT_CHARITY
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_200_OK
+        assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(Employee.id)))).scalar_one() == 1
+
+    @pytest.mark.asyncio
+    async def test_put_charity_employee_updating_charity_where_he_is_not_listed(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, random_test_charity: Charity,
+            authenticated_test_user: User,
+    ) -> None:
+        """Test PUT '/charities' endpoint with valid payload and employee tries to update charity
+        where he is not listed as an employee.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            random_test_charity: pytest fixture, add charity with random data to database.
+            authenticated_test_user: pytest fixture, add user to database and auth cookies to client fixture.
+
+        Returns:
+        Nothing.
+        """
+        url = app.url_path_for('put_charity', id=random_test_charity.id)
+        response = await client.put(url, json=request_test_charity_data.UPDATE_CHARITY_TEST_DATA)
+        response_data = response.json()
+        expected_result = response_charities_test_data.RESPONSE_EMPLOYEE_NOT_LISTED_IN_CHARITY_EMPLOYEES
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(Employee.id)))).scalar_one() == 1

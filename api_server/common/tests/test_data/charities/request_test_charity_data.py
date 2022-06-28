@@ -5,3 +5,9 @@ ADD_CHARITY_TEST_DATA = {
     'email': 'good.deeds@totalynotemail.com',
 }
 DUMMY_CHARITY_UUID = '4c1b7fb5-20f2-4988-b075-e4cc236f7752'
+UPDATE_CHARITY_TEST_DATA = {
+    'title': 'Updated Good deeds charity',
+    'description': 'Updated Good deeds charity, making good deeds since 2000.',
+    'phone_number': '+380512223344',
+    'email': 'updated-good.deeds@totalynotemail.com',
+}

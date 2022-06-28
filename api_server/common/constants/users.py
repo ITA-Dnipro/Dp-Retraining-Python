@@ -29,7 +29,7 @@ class UserSchemaConstants(enum.Enum):
     CHAR_SIZE_256 = 256
 
     # Regex.
-    EMAIL_REGEX = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+    EMAIL_REGEX = r'(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'
 
 
 class UserServiceConstants(enum.Enum):
