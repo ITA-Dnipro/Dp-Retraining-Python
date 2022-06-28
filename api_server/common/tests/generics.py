@@ -695,7 +695,7 @@ class TestMixin:
     @pytest_asyncio.fixture
     async def test_charity(
             self, charity_service: CharityService, patch_model_current_time: fixture, request: fixture,
-            authenticated_test_user: User,
+            authenticated_test_user: User, db_session: AsyncSession,
     ) -> Charity:
         """Create test charity data and store it in test database.
 
@@ -704,22 +704,27 @@ class TestMixin:
             patch_model_current_time: pytest fixture that alters datetime that saves in db model.
             request: native pytest fixture.
             authenticated_test_user: pytest fixture, add user to database and add auth cookies to client fixture.
+            db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
         newly created Charity object.
         """
         if not hasattr(request, 'param'):
-            return await self._create_charity(
+            charity = await self._create_charity(
                 charity_service=charity_service,
                 charity=CharityInputSchema(**request_test_charity_data.ADD_CHARITY_TEST_DATA),
                 jwt_subject=authenticated_test_user.username,
             )
+            await db_session.refresh(authenticated_test_user)
+            return charity
         with patch_model_current_time(**request.param):
-            return await self._create_charity(
+            charity = await self._create_charity(
                 charity_service=charity_service,
                 charity=CharityInputSchema(**request_test_charity_data.ADD_CHARITY_TEST_DATA),
                 jwt_subject=authenticated_test_user.username,
             )
+            await db_session.refresh(authenticated_test_user)
+            return charity
 
     async def _create_charity(
             self, charity_service: CharityService, charity: CharityInputSchema, jwt_subject: str,
