@@ -760,7 +760,7 @@ class TestMixin:
     @pytest_asyncio.fixture
     async def random_test_charity(
             self, charity_service: CharityService, patch_model_current_time: fixture, request: fixture,
-            authenticated_random_test_user: User,
+            authenticated_random_test_user: User, db_session: AsyncSession,
     ) -> Charity:
         """Create test charity with random test data and store it in test database.
 
@@ -770,6 +770,7 @@ class TestMixin:
             request: native pytest fixture.
             authenticated_random_test_user: pytest fixture, add user with random data to database and
             auth cookies to client fixture.
+            db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
         newly created Charity object.
@@ -781,14 +782,18 @@ class TestMixin:
             'email': f'good.deeds{random.randrange(1000000000, 9999999999)}@totalynotemail.com',
         }
         if not hasattr(request, 'param'):
-            return await self._create_charity(
+            charity = await self._create_charity(
                 charity_service=charity_service,
                 charity=CharityInputSchema(**RANDOM_CHARITY_TEST_DATA),
                 jwt_subject=authenticated_random_test_user.username,
             )
+            await db_session.refresh(authenticated_random_test_user)
+            return charity
         with patch_model_current_time(**request.param):
-            return await self._create_charity(
+            charity = await self._create_charity(
                 charity_service=charity_service,
                 charity=CharityInputSchema(**RANDOM_CHARITY_TEST_DATA),
                 jwt_subject=authenticated_random_test_user.username,
             )
+            await db_session.refresh(authenticated_random_test_user)
+            return charity
