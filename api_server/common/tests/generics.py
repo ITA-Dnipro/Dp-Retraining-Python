@@ -330,11 +330,7 @@ class TestMixin:
         """
         Authorize = AuthJWT()
         user_claims = {
-            'user_data': {
-                'id': str(user.id),
-                'email': user.email,
-                'phone': user.phone_number,
-            },
+            'user_data': {'id': str(user.id)},
         }
         access_token = Authorize.create_access_token(
             subject=user.username,

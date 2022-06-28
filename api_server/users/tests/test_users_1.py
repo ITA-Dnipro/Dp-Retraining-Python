@@ -168,7 +168,7 @@ class TestCasePostUsers(TestMixin):
         url = app.url_path_for('post_users')
         response = await client.post(url, json=request_test_user_data.ADD_USER_TEST_DATA)
         response_data = response.json()
-        expected_result = response_test_user_data.RESPONSE_USER_DUPLICATE_USERNAME
+        expected_result = response_test_user_data.RESPONSE_USER_DUPLICATE_EMAIL
         assert response_data == expected_result
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert (await db_session.execute(select(func.count(User.id)))).scalar_one() == 1
