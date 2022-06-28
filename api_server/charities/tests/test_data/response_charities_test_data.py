@@ -79,6 +79,8 @@ RESPONSE_PUT_CHARITY = {
     'errors': [],
     'status_code': 200
 }
+# DELETE
+RESPONSE_DELETE_CHARITY = b''
 # Errors
 RESPONSE_CHARITY_NOT_FOUND = {
     'data': [],
@@ -101,5 +103,5 @@ RESPONSE_EMPLOYEE_NOT_LISTED_IN_CHARITY_EMPLOYEES = {
             )
         }
     ],
-    'status_code': 401
+    'status_code': 403
 }

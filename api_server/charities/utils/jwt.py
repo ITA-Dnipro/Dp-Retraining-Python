@@ -22,7 +22,7 @@ def jwt_charity_validator(jwt_subject: str, usernames: list) -> bool:
     if check:
         return check
     raise CharityEmployeePermissionError(
-        status_code=status.HTTP_401_UNAUTHORIZED,
+        status_code=status.HTTP_403_FORBIDDEN,
         detail=CharityEmployeesExceptionMsgs.NO_EMPLOYEE_IN_CHARITY.value.format(
             username=jwt_subject,
         ),
