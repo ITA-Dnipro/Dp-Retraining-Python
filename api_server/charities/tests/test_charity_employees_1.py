@@ -1,6 +1,7 @@
 from fastapi import FastAPI, status
 
 from httpx import AsyncClient
+from pytest import fixture
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 import pytest
@@ -9,6 +10,7 @@ from charities.models import Charity, Employee
 from charities.tests.test_data import response_charity_employees_test_data
 from common.tests.generics import TestMixin
 from common.tests.test_data.charities import request_test_charity_employee_data
+from common.tests.test_data.users import request_test_user_data
 from users.models import User
 
 
@@ -138,3 +140,39 @@ class TestCasePostCharityEmployees(TestMixin):
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
         assert (await db_session.execute(select(func.count(Employee.id)))).scalar_one() == 1
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'login_as',
+        [{'username': request_test_user_data.ADD_USER_TEST_DATA['username']}],
+        indirect=['login_as'],
+    )
+    async def test_post_charity_employees_manager_tries_to_add_supervisor(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, random_test_charity: Charity,
+            test_employee_manager: Employee, login_as: fixture,
+    ) -> None:
+        """Test POST '/charities/{charity_id}/employees' endpoint with employee with role 'manager' tries to add
+        employee with 'supervisor' role.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            random_test_charity: pytest fixture, add charity with random data to database.
+            test_employee_manager: pytest fixture, add employee with manager role to random_test_charity.
+            login_as: pytest fixture, finds and authenticate user by provided username.
+
+        Returns:
+        Nothing.
+        """
+        url = app.url_path_for('post_charity_employees', charity_id=random_test_charity.id)
+        response = await client.post(
+            url,
+            json=request_test_charity_employee_data.ADD_CHARITY_EMPLOYEE_SUPERVISOR_TEST_DATA,
+        )
+        response_data = response.json()
+        expected_result = response_charity_employees_test_data.RESPONSE_EMPLOYEE_ROLE_MANAGER_NOT_ENOUGH_PERMISSIONS
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(Employee.id)))).scalar_one() == 2

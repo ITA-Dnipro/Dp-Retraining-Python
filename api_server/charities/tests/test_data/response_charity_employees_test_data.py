@@ -40,3 +40,12 @@ RESPONSE_CHARITY_EMPLOYEES_ALREADY_ADDED = {
     ],
     'status_code': 400
 }
+RESPONSE_EMPLOYEE_ROLE_MANAGER_NOT_ENOUGH_PERMISSIONS = {
+    'data': [],
+    'errors': [
+        {
+            'detail': "Employee with roles: ['manager'] does not have permission to perform this action."
+        }
+    ],
+    'status_code': 403
+}
