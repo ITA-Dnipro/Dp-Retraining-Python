@@ -30,6 +30,14 @@ RESPONSE_POST_CHARITY_EMPLOYEES_MANAGER_ROLE = {
     'errors': [],
     'status_code': 201,
 }
+# DELETE
+RESPONSE_DELETE_CHARITY_EMPLOYEE_VALID_REMOVAL_MSG = {
+    'data': {
+        'message': "Employee with id: '{employee_id}' successfully removed from Charity with id: '{charity_id}'."
+    },
+    'errors': [],
+    'status_code': 200
+}
 # Errors
 RESPONSE_CHARITY_EMPLOYEES_ALREADY_ADDED = {
     'data': [],
@@ -45,6 +53,18 @@ RESPONSE_EMPLOYEE_ROLE_MANAGER_NOT_ENOUGH_PERMISSIONS = {
     'errors': [
         {
             'detail': "Employee with roles: ['manager'] does not have permission to perform this action."
+        }
+    ],
+    'status_code': 403
+}
+RESPONSE_CHARITY_EMPLOYEE_LAST_SUPERVISOR_IN_CHARITY = {
+    'data': [],
+    'errors': [
+        {
+            'detail': (
+                "Employee with role: 'supervisor' can not be removed from Charity with id: '{charity_id}', "
+                "because Charity have only: '1' supervisor."
+            )
         }
     ],
     'status_code': 403

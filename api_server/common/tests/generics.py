@@ -832,7 +832,7 @@ class TestMixin:
     @pytest_asyncio.fixture
     async def test_employee_manager(
             self, random_test_charity: Charity, charity_employee_service: CharityEmployeeService,
-            authenticated_random_test_user: User, test_user: User,
+            authenticated_random_test_user: User, test_user: User, db_session: AsyncSession,
     ) -> None:
         """Add test_user to random_test_charity.employees as an Employee with 'manager' EmployeeRole.
 
@@ -842,11 +842,12 @@ class TestMixin:
             authenticated_random_test_user: pytest fixture, add user with random data to database and
             auth cookies to client fixture.
             test_user: pytest fixture, add user test data to the database.
+            db_session: pytest fixture that creates test sqlalchemy session.
 
         Returns:
 
         """
-        return await self._add_employee_to_charity(
+        employee = await self._add_employee_to_charity(
             charity_employee_service=charity_employee_service,
             charity_id=random_test_charity.id,
             jwt_subject=authenticated_random_test_user.username,
@@ -854,6 +855,8 @@ class TestMixin:
                 **request_test_charity_employee_data.ADD_CHARITY_EMPLOYEE_MANAGER_TEST_DATA
             ),
         )
+        await db_session.refresh(random_test_charity)
+        return employee
 
     @pytest_asyncio.fixture
     async def login_as(
