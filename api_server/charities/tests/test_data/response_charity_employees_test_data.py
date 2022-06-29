@@ -69,3 +69,12 @@ RESPONSE_CHARITY_EMPLOYEE_LAST_SUPERVISOR_IN_CHARITY = {
     ],
     'status_code': 403
 }
+RESPONSE_CHARITY_EMPLOYEE_NOT_FOUND_IN_CHARITY = {
+    'data': [],
+    'errors': [
+        {
+            'detail': "Employee with id: '{employee_id}' not found in Charity with id: '{charity_id}'."
+        }
+    ],
+    'status_code': 404
+}
