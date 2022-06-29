@@ -64,7 +64,7 @@ async def get_employee_role(
     )
 
 
-@employee_roles_router.post('/', response_model=ResponseBaseSchema)
+@employee_roles_router.post('/', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
 async def post_employee_roles(
         charity_id: UUID,
         employee_id: UUID,
@@ -87,7 +87,7 @@ async def post_employee_roles(
     jwt_subject = Authorize.get_jwt_subject()
 
     return ResponseBaseSchema(
-        status_code=status.HTTP_200_OK,
+        status_code=status.HTTP_201_CREATED,
         data=EmployeeRoleOutputSchema.from_orm(
             await employee_roles_service.add_role_to_employee(charity_id, employee_id, jwt_subject, role_data)
         ),

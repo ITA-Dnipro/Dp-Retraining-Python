@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 import pytest
 
-from charities.models import Charity, Employee
+from charities.models import Charity, CharityEmployeeRoleAssociation, Employee
 from charities.tests.test_data import response_charity_employees_test_data, response_employee_roles_test_data
 from common.tests.generics import TestMixin
 from common.tests.test_data.charities import request_test_charity_employee_data, request_test_employee_role_data
@@ -150,3 +150,111 @@ class TestCaseGetEmployeeRole(TestMixin):
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
         assert (await db_session.execute(select(func.count(Employee.id)))).scalar_one() == 1
+
+
+class TestCasePostEmployeeRoles(TestMixin):
+
+    @pytest.mark.asyncio
+    async def test_post_employee_roles_valid_payload(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_charity: Charity,
+            authenticated_test_user: User,
+    ) -> None:
+        """Test POST '/charities/{charity_id}/employees/{employee_id}/roles' endpoint with charity test data
+        added to the db and valid role payload.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            test_charity: pytest fixture, add charity to database.
+            authenticated_test_user: pytest fixture, add user to database and auth cookies to client fixture.
+
+        Returns:
+        Nothing.
+        """
+        assert (await db_session.execute(select(func.count(CharityEmployeeRoleAssociation.id)))).scalar_one() == 1
+        url = app.url_path_for(
+            'post_employee_roles',
+            charity_id=test_charity.id,
+            employee_id=authenticated_test_user.employee.id,
+        )
+        response = await client.post(url, json=request_test_employee_role_data.ADD_EMPLOYEE_ROLE_MANAGER_TEST_DATA)
+        response_data = response.json()
+        expected_result = response_employee_roles_test_data.RESPONSE_POST_EMPLOYEE_ROLE_MANAGER_ROLE
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_201_CREATED
+        assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(CharityEmployeeRoleAssociation.id)))).scalar_one() == 2
+
+    @pytest.mark.asyncio
+    async def test_post_employee_roles_duplicate_creation(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_charity: Charity,
+            authenticated_test_user: User,
+    ) -> None:
+        """Test POST '/charities/{charity_id}/employees/{employee_id}/roles' endpoint with charity test data
+        added to the db and invalid role payload, role already exists.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            test_charity: pytest fixture, add charity to database.
+            authenticated_test_user: pytest fixture, add user to database and auth cookies to client fixture.
+
+        Returns:
+        Nothing.
+        """
+        assert (await db_session.execute(select(func.count(CharityEmployeeRoleAssociation.id)))).scalar_one() == 1
+        url = app.url_path_for(
+            'post_employee_roles',
+            charity_id=test_charity.id,
+            employee_id=authenticated_test_user.employee.id,
+        )
+        response = await client.post(url, json=request_test_employee_role_data.ADD_EMPLOYEE_ROLE_SUPERVISOR_TEST_DATA)
+        response_data = response.json()
+        expected_result = response_employee_roles_test_data.RESPONSE_EMPLOYEE_ROLES_SUPERVISOR_ROLE_ALREADY_EXISTS
+        expected_result['errors'][0]['detail'] = expected_result['errors'][0]['detail'].format(
+            employee_id=authenticated_test_user.employee.id,
+        )
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(CharityEmployeeRoleAssociation.id)))).scalar_one() == 1
+
+    @pytest.mark.asyncio
+    async def test_post_employee_roles_add_not_supported_role(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_charity: Charity,
+            authenticated_test_user: User,
+    ) -> None:
+        """Test POST '/charities/{charity_id}/employees/{employee_id}/roles' endpoint with charity test data
+        added to the db and invalid role payload, not supported role name.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            test_charity: pytest fixture, add charity to database.
+            authenticated_test_user: pytest fixture, add user to database and auth cookies to client fixture.
+
+        Returns:
+        Nothing.
+        """
+        assert (await db_session.execute(select(func.count(CharityEmployeeRoleAssociation.id)))).scalar_one() == 1
+        url = app.url_path_for(
+            'post_employee_roles',
+            charity_id=test_charity.id,
+            employee_id=authenticated_test_user.employee.id,
+        )
+        response = await client.post(
+            url,
+            json=request_test_employee_role_data.ADD_EMPLOYEE_ROLE_NOT_SUPPORTED_ROLE_TEST_DATA,
+        )
+        response_data = response.json()
+        expected_result = response_employee_roles_test_data.RESPONSE_EMPLOYEE_ROLES_NOT_SUPPORTED_ROLE
+        expected_result['errors'][0]['detail'] = expected_result['errors'][0]['detail'].format(
+            role_name=request_test_employee_role_data.ADD_EMPLOYEE_ROLE_NOT_SUPPORTED_ROLE_TEST_DATA['name'],
+        )
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(CharityEmployeeRoleAssociation.id)))).scalar_one() == 1
