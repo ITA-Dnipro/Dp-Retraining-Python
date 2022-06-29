@@ -30,15 +30,19 @@ from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
 from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.services import AuthService
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
-from charities.models import Charity
-from charities.schemas import CharityInputSchema, EmployeeInputSchema
-from charities.services import CharityEmployeeService, CharityService
+from charities.models import Charity, Employee
+from charities.schemas import CharityInputSchema, EmployeeInputSchema, EmployeeRoleInputSchema
+from charities.services import CharityEmployeeService, CharityService, EmployeeRoleService
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.auth import request_test_auth_email_confirmation_data
-from common.tests.test_data.charities import request_test_charity_data, request_test_charity_employee_data
+from common.tests.test_data.charities import (
+    request_test_charity_data,
+    request_test_charity_employee_data,
+    request_test_employee_role_data,
+)
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
@@ -877,3 +881,62 @@ class TestMixin:
             pass
         user = await user_service.get_user_by_username(request.param['username'])
         await self._authenticate_user(user=user, auth_service=auth_service, client=client)
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def employee_role_service(self, db_session: AsyncSession) -> EmployeeRoleService:
+        """A pytest fixture that creates instance of EmployeeRoleService business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of EmployeeRoleService business logic class.
+        """
+        return EmployeeRoleService(session=db_session)
+
+    async def _add_role_to_employee(
+            self, employee_role_service: EmployeeRoleService, charity_id: UUID, employee_id: UUID, jwt_subject: str,
+            role_data: EmployeeRoleInputSchema,
+    ) -> Charity:
+        """Add employee role test data to employee in test database.
+
+        Args:
+            employee_role_service: instance of business logic class.
+            charity_id: UUID of charity.
+            employee_id: UUID of employee.
+            jwt_subject: decoded jwt identity.
+            role_data: Serialized EmployeeRoleInputSchema object.
+
+        Returns:
+        newly created EmployeeRole object.
+        """
+        employee_role = await employee_role_service.add_role_to_employee(
+            charity_id=charity_id, employee_id=employee_id, jwt_subject=jwt_subject, role_data=role_data,
+        )
+        return employee_role
+
+    @pytest_asyncio.fixture
+    async def test_employee_manager_and_supervisor(
+            self, employee_role_service: EmployeeRoleService, random_test_charity: Charity,
+            authenticated_random_test_user: User, test_employee_manager: Employee,
+    ):
+        """
+
+        Args:
+            employee_role_service: instance of business logic class.
+            random_test_charity: random_test_charity: pytest fixture add charity with random data to the database.
+            authenticated_random_test_user: pytest fixture, add user with random data to database and
+            auth cookies to client fixture.
+            test_employee_manager: pytest fixture, add employee with manager role to charity employees.
+
+        Returns:
+
+        """
+        await self._add_role_to_employee(
+            employee_role_service=employee_role_service,
+            charity_id=random_test_charity.id,
+            employee_id=test_employee_manager.id,
+            jwt_subject=authenticated_random_test_user.username,
+            role_data=EmployeeRoleInputSchema(**request_test_employee_role_data.ADD_EMPLOYEE_ROLE_SUPERVISOR_TEST_DATA),
+        )
+        return test_employee_manager

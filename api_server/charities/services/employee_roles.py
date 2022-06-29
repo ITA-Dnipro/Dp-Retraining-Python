@@ -115,7 +115,7 @@ class EmployeeRoleService(CharityCommonService):
             role_data: Serialized EmployeeRoleInputSchema object.
 
         Returns:
-
+        Newly added to employee EmployeeRole object.
         """
         return await self._add_role_to_employee(charity_id, employee_id, jwt_subject, role_data)
 

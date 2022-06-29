@@ -25,6 +25,14 @@ RESPONSE_POST_EMPLOYEE_ROLE_MANAGER_ROLE = {
     'errors': [],
     'status_code': 201
 }
+# DELETE
+RESPONSE_DELETE_EMPLOYEE_ROLE = {
+    'data': {
+        'message': "EmployeeRole with id: '{role_id}' successfully removed from Employee with id: '{employee_id}'."
+    },
+    'errors': [],
+    'status_code': 200
+}
 # Errors
 RESPONSE_EMPLOYEE_ROLES_ROLE_NOT_FOUND_IN_EMPLOYEE = {
     'data': [],
@@ -52,4 +60,16 @@ RESPONSE_EMPLOYEE_ROLES_NOT_SUPPORTED_ROLE = {
         }
     ],
     'status_code': 400
+}
+RESPONSE_EMPLOYEE_ROLES_LAST_SUPERVISOR_IN_CHARITY = {
+    'data': [],
+    'errors': [
+        {
+            'detail': (
+                "EmployeeRole: 'supervisor' can not be removed from Employee with id: '{employee_id}', "
+                "because Charity have only: '1' supervisor."
+            )
+        }
+    ],
+    'status_code': 403
 }
