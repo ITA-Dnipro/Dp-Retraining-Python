@@ -78,6 +78,7 @@ class CharityDBService:
                 CharityEmployeeAssociation.charity_id == Charity.id
             ).subquery()
         )
+        self._log.debug(f'EmployeeRole subquery: {roles_subquery}')
         EmployeeRoleAlias = aliased(EmployeeRole, roles_subquery)
         Employee.roles = relationship(
             EmployeeRoleAlias,

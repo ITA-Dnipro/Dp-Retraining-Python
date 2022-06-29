@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 import os
 import random
 import time
@@ -31,14 +31,14 @@ from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.services import AuthService
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
 from charities.models import Charity
-from charities.schemas import CharityInputSchema
-from charities.services import CharityService
+from charities.schemas import CharityInputSchema, EmployeeInputSchema
+from charities.services import CharityEmployeeService, CharityService
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.auth import request_test_auth_email_confirmation_data
-from common.tests.test_data.charities import request_test_charity_data
+from common.tests.test_data.charities import request_test_charity_data, request_test_charity_employee_data
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
@@ -315,9 +315,9 @@ class TestMixin:
         newly created User object.
         """
         user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        return await self._create_authenticated_user(user, auth_service, client)
+        return await self._authenticate_user(user, auth_service, client)
 
-    async def _create_authenticated_user(self, user: User, auth_service: AuthService, client: fixture) -> User:
+    async def _authenticate_user(self, user: User, auth_service: AuthService, client: fixture) -> User:
         """Modifies 'client' fixture by adding JWT cookies for user authentication.
 
         Args:
@@ -410,7 +410,7 @@ class TestMixin:
         newly created UserPicture object.
         """
         user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        await self._create_authenticated_user(user, auth_service, client)
+        await self._authenticate_user(user, auth_service, client)
         return await user_picture_crud.add_user_picture(user.id)
 
     @pytest_asyncio.fixture(autouse=True)
@@ -755,7 +755,7 @@ class TestMixin:
         Returns:
         newly created User object.
         """
-        return await self._create_authenticated_user(random_test_user, auth_service, client)
+        return await self._authenticate_user(random_test_user, auth_service, client)
 
     @pytest_asyncio.fixture
     async def random_test_charity(
@@ -797,3 +797,80 @@ class TestMixin:
             )
             await db_session.refresh(authenticated_random_test_user)
             return charity
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def charity_employee_service(self, db_session: AsyncSession) -> CharityEmployeeService:
+        """A pytest fixture that creates instance of charity_employee_service business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of CharityEmployeeService business logic class.
+        """
+        return CharityEmployeeService(session=db_session)
+
+    async def _add_employee_to_charity(
+            self, charity_employee_service: CharityEmployeeService, charity_id: UUID, jwt_subject: str,
+            employee_data: EmployeeInputSchema,
+    ) -> Charity:
+        """Add employee test data to charity in test database.
+
+        Args:
+            charity_employee_service: instance of business logic class.
+            charity_id: UUID of charity.
+            jwt_subject: decoded jwt identity.
+            employee_data: Serialized EmployeeInputSchema object.
+
+        Returns:
+        newly created User object.
+        """
+        return await charity_employee_service.add_employee_to_charity(
+            charity_id=charity_id, jwt_subject=jwt_subject, employee_data=employee_data,
+        )
+
+    @pytest_asyncio.fixture
+    async def test_employee_manager(
+            self, random_test_charity: Charity, charity_employee_service: CharityEmployeeService,
+            authenticated_random_test_user: User, test_user: User,
+    ) -> None:
+        """Add test_user to random_test_charity.employees as an Employee with 'manager' EmployeeRole.
+
+        Args:
+            random_test_charity: pytest fixture add charity with random data to the database.
+            charity_employee_service: instance of business logic class.
+            authenticated_random_test_user: pytest fixture, add user with random data to database and
+            auth cookies to client fixture.
+            test_user: pytest fixture, add user test data to the database.
+
+        Returns:
+
+        """
+        return await self._add_employee_to_charity(
+            charity_employee_service=charity_employee_service,
+            charity_id=random_test_charity.id,
+            jwt_subject=authenticated_random_test_user.username,
+            employee_data=EmployeeInputSchema(
+                **request_test_charity_employee_data.ADD_CHARITY_EMPLOYEE_MANAGER_TEST_DATA
+            ),
+        )
+
+    @pytest_asyncio.fixture
+    async def login_as(
+            self, user_service: UserService, auth_service: AuthService, client: fixture, request: fixture,
+    ) -> None:
+        """Finds and authenticate user by username from request.params.
+
+        Args:
+            user_service: instance of business logic class.
+            auth_service: instance of business logic class.
+            client: client: pytest fixture that creates test httpx client.
+            request: native pytest fixture.
+
+        Returns:
+
+        """
+        if not hasattr(request, 'param'):
+            pass
+        user = await user_service.get_user_by_username(request.param['username'])
+        await self._authenticate_user(user=user, auth_service=auth_service, client=client)

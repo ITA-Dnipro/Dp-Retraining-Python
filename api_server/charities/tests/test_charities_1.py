@@ -1,6 +1,7 @@
 from fastapi import FastAPI, status
 
 from httpx import AsyncClient
+from pytest import fixture
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 import pytest
@@ -9,6 +10,7 @@ from charities.models import Charity, Employee
 from charities.tests.test_data import response_charities_test_data
 from common.tests.generics import TestMixin
 from common.tests.test_data.charities import request_test_charity_data
+from common.tests.test_data.users import request_test_user_data
 from users.models import User
 
 
@@ -265,3 +267,36 @@ class TestCaseDeleteCharity(TestMixin):
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
         assert (await db_session.execute(select(func.count(Employee.id)))).scalar_one() == 1
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'login_as',
+        [{'username': request_test_user_data.ADD_USER_TEST_DATA['username']}],
+        indirect=['login_as'],
+    )
+    async def test_delete_charity_employee_with_manager_role_deleting_own_charity(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, random_test_charity: Charity,
+            test_employee_manager: Employee, login_as: fixture,
+    ) -> None:
+        """Test DELETE '/charities/{id}' endpoint, employee listed as 'manager' in charity and don't have permission to
+        delete charity.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            random_test_charity: pytest fixture, add charity with random data to database.
+            test_employee_manager: pytest fixture, add employee with manager role to random_test_charity.
+            login_as: pytest fixture, finds and authenticate user by provided username.
+
+        Returns:
+        Nothing.
+        """
+        url = app.url_path_for('delete_charity', id=random_test_charity.id)
+        response = await client.delete(url)
+        response_data = response.json()
+        expected_result = response_charities_test_data.RESPONSE_EMPLOYEE_ROLE_MANAGER_NOT_ENOUGH_PERMISSIONS
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (await db_session.execute(select(func.count(Charity.id)))).scalar_one() == 1
+        assert (await db_session.execute(select(func.count(Employee.id)))).scalar_one() == 2
