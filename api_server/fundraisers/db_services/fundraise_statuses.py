@@ -8,7 +8,7 @@ from fundraisers.schemas import FundraiseStatusInputSchema
 from utils.logging import setup_logging
 
 
-class FundraiseStatusDAO:
+class FundraiseStatusDBService:
 
     def __init__(self, session: AsyncSession) -> None:
         self._log = setup_logging(self.__class__.__name__)

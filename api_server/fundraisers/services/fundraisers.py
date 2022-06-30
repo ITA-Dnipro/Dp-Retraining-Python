@@ -4,10 +4,11 @@ from fastapi import Depends, status
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from charities.services import CharityService
 from common.constants.prepopulates.fundraise_statuses import FundraiseStatusPopulateData
 from common.exceptions.fundraisers import FundraiseExceptionMsgs
 from db import get_session
-from fundraisers.dao import FundraiseDAO, FundraiseStatusDAO
+from fundraisers.db_services import FundraiseDBService, FundraiseStatusDBService
 from fundraisers.models import Fundraise
 from fundraisers.schemas import FundraiseInputSchema, FundraiseUpdateSchema
 from fundraisers.utils.exceptions import FundraiseNotFoundError
@@ -21,8 +22,9 @@ class FundraiseService:
     def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
-        self.fundraise_dao = FundraiseDAO(session=self.session)
-        self.fundraise_status_dao = FundraiseStatusDAO(session=self.session)
+        self.fundraise_db_service = FundraiseDBService(session=self.session)
+        self.fundraise_status_db_service = FundraiseStatusDBService(session=self.session)
+        self.charity_service = CharityService(session=self.session)
 
     async def get_fundraisers(self, page: int, page_size: int) -> PaginationPage:
         """Get Fundraise objects from database.
@@ -37,28 +39,32 @@ class FundraiseService:
         return await self._get_fundraisers(page, page_size)
 
     async def _get_fundraisers(self, page: int, page_size: int) -> PaginationPage:
-        fundraisers = await self.fundraise_dao.get_fundraisers(page, page_size)
-        total_fundraisers = await self.fundraise_dao._get_total_fundraisers()
+        fundraisers = await self.fundraise_db_service.get_fundraisers(page, page_size)
+        total_fundraisers = await self.fundraise_db_service._get_total_fundraisers()
         return PaginationPage(items=fundraisers, page=page, page_size=page_size, total=total_fundraisers)
 
-    async def add_fundraise(self, fundraise: FundraiseInputSchema) -> Fundraise:
+    async def add_fundraise(self, fundraise: FundraiseInputSchema, jwt_subject: str) -> Fundraise:
         """Add Fundraise object to the database.
 
         Args:
             fundraise: FundraiseInputSchema object.
+            jwt_subject: decoded jwt identity.
 
         Returns:
         Newly created Fundraise object.
         """
-        return await self._add_fundraise(fundraise)
+        return await self._add_fundraise(fundraise, jwt_subject)
 
-    async def _add_fundraise(self, fundraise: FundraiseInputSchema) -> Fundraise:
-        db_fundraise = await self.fundraise_dao.add_fundraise(fundraise)
-        db_fundraise_status = await self.fundraise_status_dao.get_fundraise_status_by_name(
-            FundraiseStatusPopulateData.NEW.value,
-        )
-        await self.fundraise_dao.add_status(fundraise=db_fundraise, fundraise_status=db_fundraise_status)
-        return db_fundraise
+    async def _add_fundraise(self, fundraise: FundraiseInputSchema, jwt_subject: str) -> Fundraise:
+        db_charity = await self.charity_service.get_charity_by_id_with_relationships(id_=fundraise.charity_id)
+        usernames = [employee.user.username for employee in db_charity.employees]
+        if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
+            db_fundraise = await self.fundraise_db_service.add_fundraise(fundraise)
+            db_fundraise_status = await self.fundraise_status_db_service.get_fundraise_status_by_name(
+                FundraiseStatusPopulateData.NEW.value,
+            )
+            await self.fundraise_db_service.add_status(fundraise=db_fundraise, fundraise_status=db_fundraise_status)
+            return db_fundraise
 
     async def get_fundraise_by_id(self, id_: UUID) -> Fundraise:
         """Get Fundraise object from database filtered by id.
@@ -74,7 +80,7 @@ class FundraiseService:
         return await self._get_fundraise_by_id(id_)
 
     async def _get_fundraise_by_id(self, id_: UUID) -> Fundraise:
-        fundraise = await self.fundraise_dao.get_fundraise_by_id(id_)
+        fundraise = await self.fundraise_db_service.get_fundraise_by_id(id_)
         if not fundraise:
             err_msg = FundraiseExceptionMsgs.FUNDRAISE_NOT_FOUND.value.format(
                 column='id',
@@ -100,9 +106,9 @@ class FundraiseService:
 
     async def _update_fundraise(self, id_: UUID, jwt_subject: str, update_data: FundraiseUpdateSchema) -> Fundraise:
         fundraise = await self.get_fundraise_by_id(id_)
-        usernames = [user.username for user in fundraise.charity.users]
+        usernames = [employee.user.username for employee in fundraise.charity.employees]
         if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
-            return await self.fundraise_dao.update_fundraise(id_, update_data)
+            return await self.fundraise_db_service.update_fundraise(id_, update_data)
 
     async def delete_fundraise(self, id_: UUID, jwt_subject: str) -> None:
         """Delete Fundraise object from the database.
@@ -118,6 +124,6 @@ class FundraiseService:
 
     async def _delete_fundraise(self, id_: UUID, jwt_subject: str) -> None:
         fundraise = await self.get_fundraise_by_id(id_)
-        usernames = [user.username for user in fundraise.charity.users]
+        usernames = [employee.user.username for employee in fundraise.charity.employees]
         if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
-            return await self.fundraise_dao.delete_fundraise(fundraise)
+            return await self.fundraise_db_service.delete_fundraise(fundraise)

@@ -50,20 +50,24 @@ async def get_fundraisers(
 @fundraisers_router.post('/', response_model=ResponseBaseSchema, status_code=status.HTTP_201_CREATED)
 async def post_fundraisers(
         fundraise: FundraiseInputSchema,
-        fundraise_service: FundraiseService = Depends()
+        fundraise_service: FundraiseService = Depends(),
+        Authorize: AuthJWT = Depends(),
 ) -> ResponseBaseSchema:
     """POST '/fundraisers' endpoint view function.
 
     Args:
         fundraise: Serialized FundraiseInputSchema object.
         fundraise_service: dependency as business logic instance.
+        Authorize: dependency of AuthJWT for JWT tokens.
 
     Returns:
     ResponseBaseSchema object with FundraiseFullOutputSchema object as response data.
     """
+    Authorize.jwt_required()
+    jwt_subject = Authorize.get_jwt_subject()
     return ResponseBaseSchema(
         status_code=status.HTTP_201_CREATED,
-        data=FundraiseFullOutputSchema.from_orm(await fundraise_service.add_fundraise(fundraise)),
+        data=FundraiseFullOutputSchema.from_orm(await fundraise_service.add_fundraise(fundraise, jwt_subject)),
         errors=[],
     )
 
