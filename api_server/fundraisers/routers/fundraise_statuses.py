@@ -11,8 +11,7 @@ fundraise_statuses_router = APIRouter(prefix='/statuses', tags=['Fundraise-statu
 
 @fundraise_statuses_router.get('/', response_model=ResponseBaseSchema)
 async def get_fundraise_statuses(
-        fundraise_id: UUID,
-        fundraise_status_service: FundraiseStatusService = Depends()
+        fundraise_id: UUID, fundraise_status_service: FundraiseStatusService = Depends(),
 ) -> ResponseBaseSchema:
     """GET '/fundraisers/{fundraise_id}/statuses' endpoint view function.
 
@@ -29,5 +28,28 @@ async def get_fundraise_statuses(
             FundraiseStatusOutputSchema.from_orm(status) for status in
             await fundraise_status_service.get_fundraise_statuses(fundraise_id)
         ],
+        errors=[],
+    )
+
+
+@fundraise_statuses_router.get('/{status_id}', response_model=ResponseBaseSchema)
+async def get_fundraise_status(
+        fundraise_id: UUID, status_id: UUID, fundraise_status_service: FundraiseStatusService = Depends(),
+) -> ResponseBaseSchema:
+    """GET '/fundraisers/{fundraise_id}/statuses/{status_id}' endpoint view function.
+
+    Args:
+        fundraise_id: UUID of a fundraise.
+        status_id: UUID of a FundraiseStatus.
+        fundraise_status_service: dependency as business logic instance.
+
+    Returns:
+    ResponseBaseSchema object with FundraiseStatusOutputSchema object as response data.
+    """
+    return ResponseBaseSchema(
+        status_code=status.HTTP_200_OK,
+        data=FundraiseStatusOutputSchema.from_orm(
+            await fundraise_status_service.get_fundraise_status_by_id(fundraise_id, status_id)
+        ),
         errors=[],
     )
