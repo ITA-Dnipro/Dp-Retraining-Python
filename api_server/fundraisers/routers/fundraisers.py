@@ -6,6 +6,7 @@ from fastapi_jwt_auth import AuthJWT
 
 from common.constants.fundraisers import FundraiseRouteConstants
 from common.schemas.responses import ResponseBaseSchema
+from fundraisers.routers.fundraise_statuses import fundraise_statuses_router
 from fundraisers.schemas import (
     FundraiseFullOutputSchema,
     FundraiseInputSchema,
@@ -15,6 +16,7 @@ from fundraisers.schemas import (
 from fundraisers.services import FundraiseService
 
 fundraisers_router = APIRouter(prefix='/fundraisers', tags=['Fundraisers'])
+fundraisers_router.include_router(fundraise_statuses_router, prefix='/{fundraise_id}')
 
 
 @fundraisers_router.get('/', response_model=ResponseBaseSchema)
