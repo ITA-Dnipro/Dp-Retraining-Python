@@ -64,9 +64,13 @@ from fundraisers.utils.exceptions import (
     FundraiseNotFoundError,
     FundraisePermissionError,
     FundraiseStatusNotFoundError,
+    FundraiseStatusNotSupportedError,
+    FundraiseStatusPermissionError,
     fundraise_no_permissions_error_handler,
     fundraise_not_found_error_handler,
     fundraise_status_not_found_error_handler,
+    fundraise_status_not_supported_error_handler,
+    fundraise_status_permission_error_handler,
 )
 from users.routers import users_router
 from users.utils.exceptions import (
@@ -183,6 +187,8 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(EmployeeRoleNotFoundError, employee_role_not_found_error_handler)
     app.add_exception_handler(EmployeeNonRemovableEmployeeRoleError, employee_non_removable_employee_role_error_handler)
     app.add_exception_handler(FundraiseStatusNotFoundError, fundraise_status_not_found_error_handler)
+    app.add_exception_handler(FundraiseStatusNotSupportedError, fundraise_status_not_supported_error_handler)
+    app.add_exception_handler(FundraiseStatusPermissionError, fundraise_status_permission_error_handler)
     return app
 
 

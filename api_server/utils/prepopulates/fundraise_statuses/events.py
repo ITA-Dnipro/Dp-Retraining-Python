@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from common.constants.prepopulates import FundraiseStatusPopulateData
+from common.constants.prepopulates import FundraiseStatusConstants
 from db import create_engine
 from fundraisers.db_services import FundraiseStatusDBService
 from fundraisers.schemas import FundraiseStatusInputSchema
@@ -23,7 +23,7 @@ async def populate_fundraise_statuses_table(config: BaseModel) -> None:
     )
     db_session = create_db_session(engine)
     async with db_session as session:
-        for status in FundraiseStatusPopulateData.ALL_STATUSES.value:
+        for status in FundraiseStatusConstants.ALL_STATUSES.value:
             fundraise_status_db_service = FundraiseStatusDBService(session)
             db_fundraise_status = await fundraise_status_db_service.get_fundraise_status_by_name(name=status)
             if not db_fundraise_status:

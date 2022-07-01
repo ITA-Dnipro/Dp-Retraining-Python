@@ -5,12 +5,12 @@ from fastapi import Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.services import CharityService
-from common.constants.prepopulates.fundraise_statuses import FundraiseStatusPopulateData
+from common.constants.prepopulates.fundraise_statuses import FundraiseStatusConstants
 from common.exceptions.fundraisers import FundraiseExceptionMsgs
 from db import get_session
 from fundraisers.db_services import FundraiseDBService, FundraiseStatusDBService
 from fundraisers.models import Fundraise
-from fundraisers.schemas import FundraiseInputSchema, FundraiseUpdateSchema
+from fundraisers.schemas import FundraiseInputSchema, FundraiseIsDonatableUpdateSchema, FundraiseUpdateSchema
 from fundraisers.utils.exceptions import FundraiseNotFoundError
 from fundraisers.utils.jwt import jwt_fundraise_validator
 from utils.logging import setup_logging
@@ -61,9 +61,12 @@ class FundraiseService:
         if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
             db_fundraise = await self.fundraise_db_service.add_fundraise(fundraise)
             db_fundraise_status = await self.fundraise_status_db_service.get_fundraise_status_by_name(
-                FundraiseStatusPopulateData.NEW.value,
+                FundraiseStatusConstants.NEW.value,
             )
-            await self.fundraise_db_service.add_status(fundraise=db_fundraise, fundraise_status=db_fundraise_status)
+            await self.fundraise_status_db_service.add_status_to_fundraise(
+                fundraise=db_fundraise,
+                fundraise_status=db_fundraise_status,
+            )
             return db_fundraise
 
     async def get_fundraise_by_id(self, id_: UUID) -> Fundraise:
@@ -127,3 +130,23 @@ class FundraiseService:
         usernames = [employee.user.username for employee in fundraise.charity.employees]
         if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
             return await self.fundraise_db_service.delete_fundraise(fundraise)
+
+    async def update_fundraise_is_donatable_status(
+            self, id_: UUID, update_data: FundraiseIsDonatableUpdateSchema
+    ) -> Fundraise:
+        """Updates Fundraise object 'is_donatable' field data in the db.
+
+        Args:
+            id_: UUID of a Fundaise object.
+            update_data: Serialized FundraiseIsDonatableUpdateSchema object.
+
+        Returns:
+        Updated Fundraise object.
+        """
+        return await self._update_fundraise_is_donatable_status(id_, update_data)
+
+    async def _update_fundraise_is_donatable_status(
+            self, id_: UUID, update_data: FundraiseIsDonatableUpdateSchema,
+    ) -> Fundraise:
+        fundraise = await self.get_fundraise_by_id(id_)
+        return await self.fundraise_db_service.update_fundraise_is_donatable_status(fundraise.id, update_data)

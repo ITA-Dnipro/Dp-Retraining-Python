@@ -15,14 +15,18 @@ class FundraiseStatusAssociation(Base):
     __tablename__ = 'fundraise_status_association'
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    fundraise_id = Column(UUID(as_uuid=True), ForeignKey('fundraisers.id'), nullable=False)
-    status_id = Column(UUID(as_uuid=True), ForeignKey('fundraise_statuses.id'), nullable=False)
+    fundraise_id = Column(UUID(as_uuid=True), ForeignKey('fundraisers.id', ondelete='CASCADE'), nullable=False)
+    status_id = Column(UUID(as_uuid=True), ForeignKey('fundraise_statuses.id', ondelete='CASCADE'), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    fundraise = relationship('Fundraise', back_populates='statuses_association', lazy='selectin')
-    status = relationship('FundraiseStatus', back_populates='fundraisers_association', lazy='selectin')
+    fundraise = relationship('Fundraise', back_populates='statuses', lazy='selectin')
+    status = relationship('FundraiseStatus', back_populates='fundraisers', lazy='selectin')
+    name = association_proxy('status', 'name')
 
     def __repr__(self):
-        return f'FundraiseStatusAssociation: fundraise_id={self.fundraise_id}, status_id={self.status_id}'
+        return (
+            f'FundraiseStatusAssociation: fundraise_id={self.fundraise_id}, status_id={self.status_id}, '
+            f'created_at={self.created_at}'
+        )
 
 
 class FundraiseStatus(Base):
@@ -34,10 +38,9 @@ class FundraiseStatus(Base):
     name = Column(String(length=FundraiseStatusModelConstants.CHAR_SIZE_256.value), nullable=False, unique=True)
     created_at = Column(DateTime, server_default=func.now())
 
-    fundraisers_association = relationship(
+    fundraisers = relationship(
         'FundraiseStatusAssociation', back_populates='status', lazy='selectin',
     )
-    fundraisers = association_proxy('fundraisers_association', 'fundraise')
 
     __mapper_args__ = {'eager_defaults': True}
 

@@ -2,6 +2,7 @@ from fundraisers.schemas.fundraise_statuses import FundraiseStatusInputSchema, F
 from fundraisers.schemas.fundraisers import (
     FundraiseFullOutputSchema,
     FundraiseInputSchema,
+    FundraiseIsDonatableUpdateSchema,
     FundraiseOutputSchema,
     FundraisePaginatedOutputSchema,
     FundraiseUpdateSchema,
@@ -15,4 +16,5 @@ __all__ = [
     'FundraiseStatusOutputSchema',
     'FundraiseStatusInputSchema',
     'FundraiseUpdateSchema',
+    'FundraiseIsDonatableUpdateSchema',
 ]

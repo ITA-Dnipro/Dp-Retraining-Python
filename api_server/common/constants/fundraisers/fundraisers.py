@@ -31,14 +31,3 @@ class FundraiseSchemaConstants(enum.Enum):
     MIN_VALUE = 0
     NUM_PRECISION = 20
     NUM_SCALE = 2
-
-
-class FundraiseStatusModelConstants(enum.Enum):
-    """FundraiseStatus model constants."""
-    CHAR_SIZE_256 = 256
-
-
-class FundraiseStatusSchemaConstants(enum.Enum):
-    """FundraiseStatus schema constants."""
-    CHAR_SIZE_2 = 2
-    CHAR_SIZE_256 = 256

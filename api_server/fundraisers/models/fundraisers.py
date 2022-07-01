@@ -1,8 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, Numeric, String, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 
 from common.constants.fundraisers import FundraiseModelConstants
@@ -27,14 +26,14 @@ class Fundraise(Base):
     )
     created_at = Column(DateTime, server_default=func.now())
     ending_at = Column(DateTime, nullable=True)
+    is_donatable = Column(Boolean, nullable=False, default=True)
 
     charity = relationship(
         'Charity', back_populates='fundraisers', uselist=False, lazy='selectin',
     )
-    statuses_association = relationship(
+    statuses = relationship(
         'FundraiseStatusAssociation', back_populates='fundraise', lazy='selectin', cascade='all, delete',
     )
-    statuses = association_proxy('statuses_association', 'status')
 
     __mapper_args__ = {'eager_defaults': True}
 

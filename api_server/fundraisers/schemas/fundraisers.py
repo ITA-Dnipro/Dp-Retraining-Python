@@ -4,10 +4,8 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field, condecimal
-from sqlalchemy.ext.associationproxy import _AssociationList
 
 from common.constants.fundraisers import FundraiseSchemaConstants
-from common.exceptions.schemas import SchemaExceptionMsgs
 
 
 class FundraiseBaseSchema(BaseModel):
@@ -37,35 +35,13 @@ class FundraiseBaseSchema(BaseModel):
 class FundraiseOutputSchema(FundraiseBaseSchema):
     """Fundraise Output schema for Fundraise model."""
     id: UUID = Field(description='Unique identifier of a fundraise.')
+    is_donatable: bool
 
 
 class FundraiseFullOutputSchema(FundraiseOutputSchema):
     """Fundraise Output schema with all nested schemas included."""
     charity: CharityOutputSchema
-    statuses: FundraiseStatusOutputAssociationListSchema
-
-
-class FundraiseStatusOutputAssociationListSchema(_AssociationList):
-    """Custom FundraiseStatusOutput schema for sqlalchemy association_proxy field."""
-
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, association_list: _AssociationList) -> list[FundraiseStatusOutputSchema]:
-        """Custom validator checks if field is sqlalchemy _AssociationList object and serializing it with
-        UserOutputSchema.
-
-        Args:
-            association_list: sqlalchemy _AssociationList object.
-
-        Returns:
-        list of FundraiseStatusOutputSchema objects.
-        """
-        if not isinstance(association_list, _AssociationList):
-            raise TypeError(SchemaExceptionMsgs.INVALID_ASSOCIATION_LIST_TYPE.value)
-        return [FundraiseStatusOutputSchema.from_orm(obj) for obj in association_list]
+    statuses: list[FundraiseStatusOutputSchema]
 
 
 class FundraisePaginatedOutputSchema(BaseModel):
@@ -90,6 +66,11 @@ class FundraiseInputSchema(FundraiseBaseSchema):
 class FundraiseUpdateSchema(FundraiseBaseSchema):
     """Fundraise Update schema for Fundraise model."""
     pass
+
+
+class FundraiseIsDonatableUpdateSchema(BaseModel):
+    """Fundraise is_donatable Update schema for Fundraise model."""
+    is_donatable: bool
 
 
 from charities.schemas.charities import CharityOutputSchema  # noqa

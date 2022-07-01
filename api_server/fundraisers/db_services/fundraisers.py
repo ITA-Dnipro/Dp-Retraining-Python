@@ -4,8 +4,8 @@ from sqlalchemy import func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from fundraisers.models import Fundraise, FundraiseStatus, FundraiseStatusAssociation
-from fundraisers.schemas import FundraiseInputSchema, FundraiseUpdateSchema
+from fundraisers.models import Fundraise
+from fundraisers.schemas import FundraiseInputSchema, FundraiseIsDonatableUpdateSchema, FundraiseUpdateSchema
 from utils.logging import setup_logging
 
 
@@ -61,30 +61,6 @@ class FundraiseDBService:
         self._log.debug(f'Fundraise with id: "{db_fundraise.id}" successfully created.')
         return db_fundraise
 
-    async def add_status(self, fundraise: Fundraise, fundraise_status: FundraiseStatus) -> Fundraise:
-        """Add FundraiseStatus to Fundraise object in the database via many-to-many relationship.
-
-        Args:
-            fundraise: Fundraise object.
-            fundraise_status: FundraiseStatus object.
-
-        Returns:
-        Fundraise object with FundraiseStatus added to many-to-many relationship.
-        """
-        return await self._add_status(fundraise, fundraise_status)
-
-    async def _add_status(self, fundraise: Fundraise, fundraise_status: FundraiseStatus) -> Fundraise:
-        fundraise_status_association = FundraiseStatusAssociation()
-        fundraise_status_association.fundraise = fundraise
-        fundraise_status_association.status = fundraise_status
-        self.session.add(fundraise_status_association)
-        await self.session.commit()
-        await self.session.refresh(fundraise_status_association)
-        self._log.debug(
-            f'FundraiseStatus with name: "{fundraise_status.name}" added to Fundraise with id: {fundraise.id}.'
-        )
-        return fundraise
-
     async def get_fundraise_by_id(self, id_: UUID) -> Fundraise | None:
         """Get Fundraise object from database filtered by id.
 
@@ -139,3 +115,26 @@ class FundraiseDBService:
         await self.session.delete(fundraise)
         await self.session.commit()
         self._log.debug(f'Fundraise with id: "{fundraise.id}" successfully deleted.')
+
+    async def update_fundraise_is_donatable_status(
+            self, id_: UUID, update_data: FundraiseIsDonatableUpdateSchema
+    ) -> Fundraise:
+        """Updates Fundraise object 'is_donatable' field data in the db.
+
+        Args:
+            id_: UUID of a Fundaise object.
+            update_data: Serialized FundraiseIsDonatableUpdateSchema object.
+
+        Returns:
+        Updated Fundraise object.
+        """
+        return await self._update_fundraise_is_donatable_status(id_, update_data)
+
+    async def _update_fundraise_is_donatable_status(
+            self, id_: UUID, update_data: FundraiseIsDonatableUpdateSchema
+    ) -> Fundraise:
+        await self.session.execute(update(Fundraise).where(Fundraise.id == id_).values(**update_data.dict()))
+        await self.session.commit()
+        # Return updated fundraise.
+        self._log.debug(f'Fundraise with id: "{id_}" successfully updated "is_donatable" field.')
+        return await self._get_fundraise_by_id(id_=id_)

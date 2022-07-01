@@ -15,7 +15,7 @@ def employee_role_validator(employee_roles: list, allowed_roles: tuple) -> bool:
         CharityEmployeeRolePermissionError in case of any role from employee_roles not present in allowed_roles list.
 
     Returns:
-    bool of comparison of two values.
+    bool of presence employee_roles in allowed_roles.
     """
     check = any(employee_role in allowed_roles for employee_role in employee_roles)
     if check:
