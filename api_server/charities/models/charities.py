@@ -3,6 +3,7 @@ import uuid
 
 from sqlalchemy import Column, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 
 from common.constants.charities.charities import CharityModelConstants
@@ -49,14 +50,17 @@ class CharityEmployeeAssociation(Base):
     roles = relationship(
         'EmployeeRole',
         secondary='charity_employee_role_association',
-        lazy='subquery',
+        lazy='selectin',
     )
+
+    employee = relationship('Employee', back_populates='charity', lazy='selectin')
+    user = association_proxy('employee', 'user')
 
     __mapper_args__ = {'eager_defaults': True}
 
     def __repr__(self):
         return (
-            f'CharityUserAssociation: charity_id={self.charity_id}, employee_id={self.employee_id}, '
+            f'CharityUserAssociation: id={self.id}, charity_id={self.charity_id}, employee_id={self.employee_id}, '
             f'created_at={self.created_at}'
         )
 
@@ -73,7 +77,8 @@ class Charity(Base):
     phone_number = Column(String(length=CharityModelConstants.CHAR_SIZE_128.value), unique=True)
     created_at = Column(DateTime, default=datetime.now())
 
-    employees = relationship('Employee', secondary='charity_employee_association', lazy='subquery')
+    charity_employees = relationship('CharityEmployeeAssociation', lazy='selectin', cascade='all, delete')
+    employees = relationship('Employee', secondary='charity_employee_association', lazy='selectin')
 
     fundraisers = relationship('Fundraise', back_populates='charity', lazy='selectin', cascade='all, delete')
 

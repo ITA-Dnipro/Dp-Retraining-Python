@@ -59,30 +59,6 @@ class CharityCommonService:
     async def _save_employee_to_charity(self, employee: Employee, charity: Charity) -> Charity:
         return await self.charity_employee_db_service.add_employee_to_charity(employee, charity)
 
-    async def get_charity_by_id_with_relationships(self, id_: UUID) -> Charity:
-        """Get Charity object from database filtered by id with loaded relationships.
-
-        Args:
-            id_: UUID of charity.
-        Raise:
-            CharityNotFoundError in case fundraise not found.
-
-        Returns:
-        single Fundraise object filtered by id.
-        """
-        return await self._get_get_charity_by_id_with_relationships(id_)
-
-    async def _get_get_charity_by_id_with_relationships(self, id_: UUID) -> Charity:
-        charity = await self.charity_db_service.get_charity_by_id_with_relationships(id_)
-        if not charity:
-            err_msg = CharityExceptionMsgs.CHARITY_NOT_FOUND.value.format(
-                column='id',
-                value=id_,
-            )
-            self._log.debug(err_msg)
-            raise CharityNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
-        return await self.charity_db_service.refresh_charity(charity)
-
     async def count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
         """Counts how many 'Charity.employees' have specific role.
 
@@ -97,7 +73,7 @@ class CharityCommonService:
 
     async def _count_employee_role_in_charity(self, charity: Charity, role_name: str) -> int:
         total_roles = 0
-        for employee in charity.employees:
+        for employee in charity.charity_employees:
             for role in employee.roles:
                 if role.name == role_name:
                     total_roles += 1

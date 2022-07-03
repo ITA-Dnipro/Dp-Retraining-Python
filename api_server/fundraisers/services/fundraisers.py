@@ -56,7 +56,7 @@ class FundraiseService:
         return await self._add_fundraise(fundraise, jwt_subject)
 
     async def _add_fundraise(self, fundraise: FundraiseInputSchema, jwt_subject: str) -> Fundraise:
-        db_charity = await self.charity_service.get_charity_by_id_with_relationships(id_=fundraise.charity_id)
+        db_charity = await self.charity_service.get_charity_by_id(id_=fundraise.charity_id)
         usernames = [employee.user.username for employee in db_charity.employees]
         if jwt_fundraise_validator(jwt_subject=jwt_subject, usernames=usernames):
             db_fundraise = await self.fundraise_db_service.add_fundraise(fundraise)

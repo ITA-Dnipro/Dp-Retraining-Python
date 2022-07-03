@@ -16,7 +16,8 @@ class Employee(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, unique=True)
     created_at = Column(DateTime, default=datetime.now())
-    user = relationship('User', back_populates='employee', uselist=False, lazy='subquery')
+    user = relationship('User', back_populates='employee', uselist=False, lazy='selectin')
+    charity = relationship('CharityEmployeeAssociation', back_populates='employee', lazy='selectin')
 
     __mapper_args__ = {'eager_defaults': True}
 

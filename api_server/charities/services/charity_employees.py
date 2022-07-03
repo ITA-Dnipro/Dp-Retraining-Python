@@ -5,7 +5,7 @@ from fastapi import Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from charities.db_services import CharityEmployeeDBService, EmployeeDBService, EmployeeRoleDBService
-from charities.models import Charity, CharityEmployeeAssociation, Employee
+from charities.models import Charity, Employee
 from charities.schemas import EmployeeDBSchema, EmployeeInputSchema
 from charities.services.commons import CharityCommonService
 from charities.utils.exceptions import CharityEmployeeNotFoundError, CharityNonRemovableEmployeeError
@@ -57,11 +57,11 @@ class CharityEmployeeService(CharityCommonService):
             allowed_roles=CharityEmployeeAllowedRolesConstants.ADD_EMPLOYEE_ROLES_MAPPING.value,
         )
         # Checking if currently authenticated user is in Charity employees list.
-        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        db_charity = await self.get_charity_by_id(charity_id)
         db_charity_employee_usernames = [employee.user.username for employee in db_charity.employees]
         if jwt_charity_validator(jwt_subject=jwt_subject, usernames=db_charity_employee_usernames):
             # Checking if currently authenticated employee have sufficient roles to add employee with role.
-            for current_db_employee in db_charity.employees:
+            for current_db_employee in db_charity.charity_employees:
                 if current_db_employee.user.username == jwt_subject:
                     break
             current_db_employee_role_names = [role.name for role in current_db_employee.roles]
@@ -85,9 +85,9 @@ class CharityEmployeeService(CharityCommonService):
                     role=new_employee_role,
                     charity_employee=new_db_charity_employee,
                 )
-                # Refreshing charity and returning newly added employee with roles.
-                await self.charity_db_service.refresh_charity(db_charity)
-                return new_db_employee
+                # Refreshing and returning new_db_charity_employee with roles.
+                await self.charity_db_service.refresh_object(new_db_charity_employee)
+                return new_db_charity_employee
 
     async def get_charity_employees(self, charity_id: UUID) -> list[Employee]:
         """Get Charity's Employee objects from the database.
@@ -101,8 +101,8 @@ class CharityEmployeeService(CharityCommonService):
         return await self._get_charity_employees(charity_id)
 
     async def _get_charity_employees(self, charity_id: UUID) -> list[Employee]:
-        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
-        return db_charity.employees
+        db_charity = await self.get_charity_by_id(charity_id)
+        return db_charity.charity_employees
 
     async def get_charity_employee_by_id(self, charity_id: UUID, employee_id: UUID) -> Employee:
         """Get Charity's Employee object from the database filtered by id.
@@ -117,7 +117,7 @@ class CharityEmployeeService(CharityCommonService):
         return await self._get_charity_employee_by_id(charity_id, employee_id)
 
     async def _get_charity_employee_by_id(self, charity_id: UUID, employee_id: UUID) -> Employee:
-        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        db_charity = await self.get_charity_by_id(charity_id)
         return await self.get_employee_from_charity_by_id(db_charity, employee_id)
 
     async def get_employee_from_charity_by_id(self, charity: Charity, employee_id: UUID) -> Employee:
@@ -136,7 +136,7 @@ class CharityEmployeeService(CharityCommonService):
         return await self._get_employee_from_charity_by_id(charity, employee_id)
 
     async def _get_employee_from_charity_by_id(self, charity: Charity, employee_id: UUID) -> Employee:
-        for employee in charity.employees:
+        for employee in charity.charity_employees:
             if employee.id == employee_id:
                 break
         else:
@@ -164,8 +164,8 @@ class CharityEmployeeService(CharityCommonService):
 
     async def _remove_employee_from_charity(self, charity_id: UUID, employee_id: UUID, jwt_subject: str) -> dict:
         # Checking if currently authenticated user is in Charity employees list.
-        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
-        db_charity_employee_usernames = [employee.user.username for employee in db_charity.employees]
+        db_charity = await self.get_charity_by_id(charity_id)
+        db_charity_employee_usernames = [employee.user.username for employee in db_charity.charity_employees]
         if jwt_charity_validator(jwt_subject=jwt_subject, usernames=db_charity_employee_usernames):
             # Checking if currently authenticated employee have sufficient roles to perform action.
             authenticated_employee = await self.get_employee_from_charity_by_username(db_charity, jwt_subject)
@@ -199,7 +199,10 @@ class CharityEmployeeService(CharityCommonService):
                     self._log.debug(err_msg)
                     raise CharityNonRemovableEmployeeError(status_code=status.HTTP_403_FORBIDDEN, detail=err_msg)
                 # Removing Employee from Charity.employees.
-                await self.charity_employee_db_service.remove_employee_from_charity(db_charity, employee_to_delete)
+                await self.charity_employee_db_service.remove_employee_from_charity(
+                    db_charity,
+                    employee_to_delete.employee,
+                )
                 CharityEmployeeServiceConstants.SUCCESSFUL_EMPLOYEE_REMOVAL_MSG.value['message'] = (
                     CharityEmployeeServiceConstants.SUCCESSFUL_EMPLOYEE_REMOVAL_MSG.value['message'].format(
                         charity_id=db_charity.id,
@@ -224,7 +227,7 @@ class CharityEmployeeService(CharityCommonService):
         return await self._get_employee_from_charity_by_username(charity, username)
 
     async def _get_employee_from_charity_by_username(self, charity: Charity, username: str) -> Employee:
-        for employee in charity.employees:
+        for employee in charity.charity_employees:
             if employee.user.username == username:
                 break
         else:
@@ -236,34 +239,3 @@ class CharityEmployeeService(CharityCommonService):
             self._log.debug(err_msg)
             raise CharityEmployeeNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
         return employee
-
-    async def get_charity_employee_by_charity_and_employee_id(
-            self, charity_id: UUID, employee_id: UUID,
-    ) -> CharityEmployeeAssociation | None:
-        """Get CharityEmployeeAssociation object from database filtered by charity_id and employee_id.
-
-        Args:
-            charity_id: UUID of a Charity object.
-            employee_id: UUID of an Employee object.
-
-        Returns:
-        Single CharityEmployeeAssociation filtered by charity_id and employee_id.
-        """
-        return await self._get_charity_employee_by_charity_and_employee_id(charity_id, employee_id)
-
-    async def _get_charity_employee_by_charity_and_employee_id(
-            self, charity_id: UUID, employee_id: UUID,
-    ) -> CharityEmployeeAssociation | None:
-        charity_employee = await self.charity_employee_db_service.get_charity_employee_by_charity_and_employee_id(
-            charity_id,
-            employee_id,
-        )
-        if not charity_employee:
-            err_msg = CharityEmployeesExceptionMsgs.EMPLOYEE_NOT_FOUND.value.format(
-                field_name='id',
-                field_value=employee_id,
-                charity_id=charity_id,
-            )
-            self._log.debug(err_msg)
-            raise CharityEmployeeNotFoundError(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
-        return charity_employee

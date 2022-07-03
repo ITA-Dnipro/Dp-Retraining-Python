@@ -90,7 +90,7 @@ async def get_charity(
     """
     return ResponseBaseSchema(
         status_code=status.HTTP_200_OK,
-        data=CharityFullOutputSchema.from_orm(await charity_service.get_charity_by_id_with_relationships(id_=id)),
+        data=CharityFullOutputSchema.from_orm(await charity_service.get_charity_by_id(id_=id)),
         errors=[],
     )
 

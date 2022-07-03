@@ -102,6 +102,7 @@ class EmployeeRoleDBService:
         self._log.debug(
             f'EmployeeRole with name: "{role.name}" added to CharityEmployeeAssociation with id: {charity_employee.id}.'
         )
+        return charity_employee_role_association
 
     async def remove_employee_role_from_charity_employee(
             self, charity_employee: CharityEmployeeAssociation, role: EmployeeRole,

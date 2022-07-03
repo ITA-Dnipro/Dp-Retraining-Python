@@ -1,8 +1,5 @@
-from uuid import UUID
-
 from fastapi import status
 
-from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,29 +64,3 @@ class CharityEmployeeDBService:
         charity.employees.remove(employee)
         await self.session.commit()
         self._log.debug(f'Employee with id: "{employee.id}" removed from Charity with id: {charity.id}.')
-
-    async def get_charity_employee_by_charity_and_employee_id(
-            self, charity_id: UUID, employee_id: UUID,
-    ) -> CharityEmployeeAssociation | None:
-        """Get CharityEmployeeAssociation object from database filtered by charity_id and employee_id.
-
-        Args:
-            charity_id: UUID of a Charity object.
-            employee_id: UUID of an Employee object.
-
-        Returns:
-        Single CharityEmployeeAssociation filtered by charity_id and employee_id.
-        """
-        return await self._get_charity_employee_by_charity_and_employee_id(charity_id, employee_id)
-
-    async def _get_charity_employee_by_charity_and_employee_id(
-            self, charity_id: UUID, employee_id: UUID,
-    ) -> CharityEmployeeAssociation | None:
-        q = select(CharityEmployeeAssociation).where(
-            and_(
-                CharityEmployeeAssociation.charity_id == charity_id,
-                CharityEmployeeAssociation.employee_id == employee_id,
-            )
-        )
-        result = await self.session.execute(q)
-        return result.scalars().one_or_none()

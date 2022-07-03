@@ -45,7 +45,7 @@ class CharityOutputSchema(CharityBaseSchema):
 class CharityFullOutputSchema(CharityOutputSchema):
     """Charity Output schema with all nested schemas included."""
     fundraisers: List[Optional['FundraiseOutputSchema']]
-    employees: list[EmployeeOutputSchema]
+    charity_employees: list[EmployeeOutputSchema]
 
 
 class CharityInputSchema(CharityBaseSchema):
@@ -114,7 +114,7 @@ class CharityPaginatedOutputSchema(BaseModel):
     current_page: int
     has_next: bool
     has_previous: bool
-    items: list[CharityOutputSchema]
+    items: list[CharityFullOutputSchema]
     next_page: int | None
     previous_page: int | None
     total_pages: int

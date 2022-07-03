@@ -1,11 +1,10 @@
 from uuid import UUID
 
-from sqlalchemy import and_, func, update
+from sqlalchemy import func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import aliased, relationship, subqueryload
 
-from charities.models import Charity, CharityEmployeeAssociation, CharityEmployeeRoleAssociation, Employee, EmployeeRole
+from charities.models import Charity
 from charities.schemas import CharityInputSchema, CharityUpdateSchema
 from utils.logging import setup_logging
 
@@ -55,41 +54,6 @@ class CharityDBService:
         self._log.debug(f'Charity with id: "{db_charity.id}" successfully created.')
         return db_charity
 
-    async def get_charity_by_id_with_relationships(self, id_: UUID) -> Charity | None:
-        """Get Charity object from database filtered by id with loaded relationships.
-
-        Args:
-            id_: UUID of charity.
-
-        Returns:
-        Single Charity object filtered by id with loaded relationships.
-        """
-        return await self._get_charity_by_id_with_relationships(id_)
-
-    async def _get_charity_by_id_with_relationships(self, id_: UUID) -> Charity | None:
-        roles_subquery = (
-            select(EmployeeRole, CharityEmployeeAssociation).join(
-                CharityEmployeeRoleAssociation, CharityEmployeeRoleAssociation.role_id == EmployeeRole.id
-            ).join(
-                CharityEmployeeAssociation,
-                CharityEmployeeAssociation.id == CharityEmployeeRoleAssociation.charity_employee_id
-            ).join(
-                Charity,
-                CharityEmployeeAssociation.charity_id == Charity.id
-            ).subquery()
-        )
-        self._log.debug(f'EmployeeRole subquery: {roles_subquery}')
-        EmployeeRoleAlias = aliased(EmployeeRole, roles_subquery)
-        Employee.roles = relationship(
-            EmployeeRoleAlias,
-            primaryjoin=and_(Employee.id == roles_subquery.c.employee_id, id_ == roles_subquery.c.charity_id)
-        )
-        q = select(Charity).where(Charity.id == id_).options(
-            subqueryload(Charity.employees).subqueryload(Employee.roles),
-        )
-        result = await self.session.execute(q)
-        return result.scalars().one_or_none()
-
     async def get_charities(self, page: int, page_size: int) -> list[Charity]:
         """Get Charity objects from database.
 
@@ -138,22 +102,22 @@ class CharityDBService:
 
         self._log.debug(f'Charity with id: "{id_}" successfully updated.')
 
-    async def refresh_charity(self, charity: Charity) -> Charity:
-        """Refreshes charity object from the database.
+    async def refresh_object(self, object):
+        """Refreshes object from the database.
 
         Args:
-            charity: Charity object.
+            object: to refresh from database.
 
         Returns:
-        Refreshed Charity object.
+        Refreshed object from database.
         """
-        return await self._refresh_charity(charity)
+        return await self._refresh_object(object)
 
-    async def _refresh_charity(self, charity: Charity) -> Charity:
-        await self.session.refresh(charity)
+    async def _refresh_object(self, object):
+        await self.session.refresh(object)
 
-        self._log.debug(f'Charity with id: "{charity.id}" successfully refreshed.')
-        return charity
+        self._log.debug(f'"{object.__table__.name}" with id: "{object.id}" successfully refreshed.')
+        return object
 
     async def delete_charity(self, charity: Charity) -> None:
         """Delete charity and related objects from the database.

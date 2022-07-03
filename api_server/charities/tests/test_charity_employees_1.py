@@ -63,7 +63,7 @@ class TestCaseGetCharityEmployee(TestMixin):
         url = app.url_path_for(
             'get_charity_employee',
             charity_id=test_charity.id,
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
         )
         response = await client.get(url)
         response_data = response.json()
@@ -201,7 +201,7 @@ class TestCaseDeleteCharityEmployee(TestMixin):
         url = app.url_path_for(
             'delete_charity_employee',
             charity_id=random_test_charity.id,
-            employee_id=test_employee_manager.id,
+            employee_id=random_test_charity.charity_employees[1].id,
         )
         response = await client.delete(url)
         response_data = response.json()
@@ -246,7 +246,7 @@ class TestCaseDeleteCharityEmployee(TestMixin):
         url = app.url_path_for(
             'delete_charity_employee',
             charity_id=random_test_charity.id,
-            employee_id=authenticated_random_test_user.employee.id,
+            employee_id=random_test_charity.charity_employees[0].id,
         )
         response = await client.delete(url)
         response_data = response.json()
@@ -280,7 +280,7 @@ class TestCaseDeleteCharityEmployee(TestMixin):
         url = app.url_path_for(
             'delete_charity_employee',
             charity_id=random_test_charity.id,
-            employee_id=authenticated_random_test_user.employee.id,
+            employee_id=random_test_charity.charity_employees[0].id,
         )
         response = await client.delete(url)
         response_data = response.json()

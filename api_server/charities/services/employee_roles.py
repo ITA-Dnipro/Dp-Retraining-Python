@@ -47,7 +47,7 @@ class EmployeeRoleService(CharityCommonService):
         return await self._get_employee_roles(charity_id, employee_id)
 
     async def _get_employee_roles(self, charity_id: UUID, employee_id: UUID) -> list[EmployeeRole]:
-        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        db_charity = await self.get_charity_by_id(charity_id)
         db_charity_employee = await self.charity_employee_service.get_employee_from_charity_by_id(
             db_charity,
             employee_id,
@@ -68,7 +68,7 @@ class EmployeeRoleService(CharityCommonService):
         return await self._get_employee_role_by_id(charity_id, employee_id, role_id)
 
     async def _get_employee_role_by_id(self, charity_id: UUID, employee_id: UUID, role_id: UUID) -> EmployeeRole:
-        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        db_charity = await self.get_charity_by_id(charity_id)
         db_charity_employee = await self.charity_employee_service.get_employee_from_charity_by_id(
             db_charity,
             employee_id,
@@ -122,7 +122,7 @@ class EmployeeRoleService(CharityCommonService):
     async def _add_role_to_employee(
             self, charity_id: UUID, employee_id: UUID, jwt_subject: str, role_data: EmployeeRoleInputSchema,
     ) -> EmployeeRole:
-        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        db_charity = await self.get_charity_by_id(charity_id)
         employee_to_add_role = await self.charity_employee_service.get_employee_from_charity_by_id(
             db_charity,
             employee_id,
@@ -156,13 +156,9 @@ class EmployeeRoleService(CharityCommonService):
                 allowed_roles=incoming_role_allowed_roles,
         ):
             new_employee_role = await self.get_employee_role_by_name(name=role_data.name)
-            charity_employee_to_add_role = await self.charity_employee_service.get_charity_employee_by_charity_and_employee_id( # noqa
-                charity_id,
-                employee_id,
-            )
             await self.employee_role_db_service.add_role_to_charity_employee(
                 role=new_employee_role,
-                charity_employee=charity_employee_to_add_role,
+                charity_employee=employee_to_add_role,
             )
             return new_employee_role
 
@@ -207,7 +203,7 @@ class EmployeeRoleService(CharityCommonService):
     async def _remove_role_from_employee(
             self, charity_id: UUID, employee_id: UUID, role_id: UUID, jwt_subject: str,
     ) -> dict:
-        db_charity = await self.get_charity_by_id_with_relationships(charity_id)
+        db_charity = await self.get_charity_by_id(charity_id)
         # Checking if currently authenticated employee have sufficient roles to perform action.
         authenticated_employee = await self.charity_employee_service.get_employee_from_charity_by_username(
             db_charity,
@@ -256,16 +252,12 @@ class EmployeeRoleService(CharityCommonService):
                 )
                 self._log.debug(err_msg)
                 raise EmployeeNonRemovableEmployeeRoleError(status_code=status.HTTP_403_FORBIDDEN, detail=err_msg)
-            charity_employee_to_remove_role = await self.charity_employee_service.get_charity_employee_by_charity_and_employee_id( # noqa
-                charity_id,
-                employee_id,
-            )
             # Removing role from charity_employee.
             await self.employee_role_db_service.remove_employee_role_from_charity_employee(
-                charity_employee_to_remove_role,
+                employee_to_remove_role,
                 role_to_remove,
             )
-            #
+            # Making response message.
             EmployeeRoleServiceConstants.SUCCESSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value['message'] = (
                 EmployeeRoleServiceConstants.SUCCESSFUL_EMPLOYEE_ROLE_REMOVAL_MSG.value['message'].format(
                     role_id=role_to_remove.id,

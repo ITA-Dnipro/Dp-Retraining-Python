@@ -30,6 +30,10 @@ RESPONSE_GET_CHARITIES = {
                 'id': ANY,
                 'phone_number': '+380501112233',
                 'title': 'Good deeds charity',
+                'charity_employees': [
+                    response_charity_employees_test_data.RESPONSE_CHARITY_EMPLOYEE_SUPERVISOR_TEST_DATA,
+                ],
+                'fundraisers': [],
             }
         ],
         'next_page': None,
@@ -43,7 +47,9 @@ RESPONSE_GET_CHARITY = {
     'data': {
         'description': 'Good deeds charity, making good deeds since 2000.',
         'email': 'good.deeds@totalynotemail.com',
-        'employees': [response_charity_employees_test_data.RESPONSE_CHARITY_EMPLOYEE_SUPERVISOR_TEST_DATA],
+        'charity_employees': [
+            response_charity_employees_test_data.RESPONSE_CHARITY_EMPLOYEE_SUPERVISOR_TEST_DATA,
+        ],
         'fundraisers': [],
         'id': ANY,
         'phone_number': '+380501112233',
@@ -56,7 +62,7 @@ RESPONSE_POST_CHARITIES = {
     'data': {
         'description': 'Good deeds charity, making good deeds since 2000.',
         'email': 'good.deeds@totalynotemail.com',
-        'employees': [response_charity_employees_test_data.RESPONSE_CHARITY_EMPLOYEE_SUPERVISOR_TEST_DATA],
+        'charity_employees': [response_charity_employees_test_data.RESPONSE_CHARITY_EMPLOYEE_SUPERVISOR_TEST_DATA],
         'fundraisers': [],
         'id': ANY,
         'phone_number': '+380501112233',
@@ -70,7 +76,7 @@ RESPONSE_PUT_CHARITY = {
     'data': {
         'description': 'Updated Good deeds charity, making good deeds since 2000.',
         'email': 'updated-good.deeds@totalynotemail.com',
-        'employees': [response_charity_employees_test_data.RESPONSE_CHARITY_EMPLOYEE_SUPERVISOR_TEST_DATA],
+        'charity_employees': [response_charity_employees_test_data.RESPONSE_CHARITY_EMPLOYEE_SUPERVISOR_TEST_DATA],
         'fundraisers': [],
         'id': ANY,
         'phone_number': '+380512223344',

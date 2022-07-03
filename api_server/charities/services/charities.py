@@ -53,10 +53,13 @@ class CharityService(CharityCommonService):
         supervisor_role = await self.employee_role_db_service.get_employee_role_by_name(
             EmployeeRolePopulateData.SUPERVISOR.value
         )
-        await self.employee_role_db_service.add_role_to_charity_employee(
+        db_charity_employee_role = await self.employee_role_db_service.add_role_to_charity_employee(
             role=supervisor_role, charity_employee=db_charity_employee,
         )
-        return await self.get_charity_by_id_with_relationships(id_=db_charity.id)
+        await self.charity_db_service.refresh_object(db_charity_employee_role)
+        await self.charity_db_service.refresh_object(db_charity_employee)
+        await self.charity_db_service.refresh_object(db_charity)
+        return await self.get_charity_by_id(id_=db_charity.id)
 
     async def get_charities(self, page: int, page_size: int) -> PaginationPage:
         """Get Charity objects from database.
@@ -92,11 +95,11 @@ class CharityService(CharityCommonService):
 
     async def _update_charity(self, id_: UUID, jwt_subject: str, update_data: CharityUpdateSchema) -> Charity:
         # Checking if currently authenticated user is in Charity employees list.
-        db_charity = await self.get_charity_by_id_with_relationships(id_)
+        db_charity = await self.get_charity_by_id(id_)
         usernames = [employee.user.username for employee in db_charity.employees]
         if jwt_charity_validator(jwt_subject=jwt_subject, usernames=usernames):
             # Checking if currently authenticated employee have sufficient roles to perform charity update.
-            for db_employee in db_charity.employees:
+            for db_employee in db_charity.charity_employees:
                 if db_employee.user.username == jwt_subject:
                     break
             db_employee_roles = [role for role in db_employee.roles]
@@ -107,7 +110,8 @@ class CharityService(CharityCommonService):
             ):
                 # Updating and refreshing Charity.
                 await self.charity_db_service.update_charity(id_, update_data)
-                return await self.charity_db_service.refresh_charity(db_charity)
+                await self.charity_db_service.refresh_object(db_charity)
+                return db_charity
 
     async def delete_charity(self, id_: UUID,  jwt_subject: str) -> None:
         """Delete Fundraise object from the database.
@@ -123,11 +127,11 @@ class CharityService(CharityCommonService):
 
     async def _delete_charity(self, id_: UUID, jwt_subject: str) -> None:
         # Checking if currently authenticated user is in Charity employees list.
-        db_charity = await self.get_charity_by_id_with_relationships(id_)
-        usernames = [employee.user.username for employee in db_charity.employees]
+        db_charity = await self.get_charity_by_id(id_)
+        usernames = [employee.user.username for employee in db_charity.charity_employees]
         if jwt_charity_validator(jwt_subject=jwt_subject, usernames=usernames):
             # Checking if currently authenticated employee have sufficient roles to perform delete charity.
-            for db_employee in db_charity.employees:
+            for db_employee in db_charity.charity_employees:
                 if db_employee.user.username == jwt_subject:
                     break
             db_employee_roles = [role for role in db_employee.roles]

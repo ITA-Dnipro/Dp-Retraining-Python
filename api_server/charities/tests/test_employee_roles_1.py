@@ -35,7 +35,7 @@ class TestCaseGetEmployeeRoles(TestMixin):
         url = app.url_path_for(
             'get_employee_roles',
             charity_id=test_charity.id,
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
         )
         response = await client.get(url)
         response_data = response.json()
@@ -104,8 +104,8 @@ class TestCaseGetEmployeeRole(TestMixin):
         url = app.url_path_for(
             'get_employee_role',
             charity_id=test_charity.id,
-            employee_id=authenticated_test_user.employee.id,
-            role_id=test_charity.employees[0].roles[0].id,
+            employee_id=test_charity.charity_employees[0].id,
+            role_id=test_charity.charity_employees[0].roles[0].id,
         )
         response = await client.get(url)
         response_data = response.json()
@@ -136,7 +136,7 @@ class TestCaseGetEmployeeRole(TestMixin):
         url = app.url_path_for(
             'get_employee_role',
             charity_id=test_charity.id,
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
             role_id=request_test_employee_role_data.DUMMY_EMPLOYEE_ROLE_UUID,
         )
         response = await client.get(url)
@@ -144,7 +144,7 @@ class TestCaseGetEmployeeRole(TestMixin):
         expected_result = response_employee_roles_test_data.RESPONSE_EMPLOYEE_ROLES_ROLE_NOT_FOUND_IN_EMPLOYEE
         expected_result['errors'][0]['detail'] = expected_result['errors'][0]['detail'].format(
             role_id=request_test_employee_role_data.DUMMY_EMPLOYEE_ROLE_UUID,
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
         )
         assert response_data == expected_result
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -176,7 +176,7 @@ class TestCasePostEmployeeRoles(TestMixin):
         url = app.url_path_for(
             'post_employee_roles',
             charity_id=test_charity.id,
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
         )
         response = await client.post(url, json=request_test_employee_role_data.ADD_EMPLOYEE_ROLE_MANAGER_TEST_DATA)
         response_data = response.json()
@@ -208,13 +208,13 @@ class TestCasePostEmployeeRoles(TestMixin):
         url = app.url_path_for(
             'post_employee_roles',
             charity_id=test_charity.id,
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
         )
         response = await client.post(url, json=request_test_employee_role_data.ADD_EMPLOYEE_ROLE_SUPERVISOR_TEST_DATA)
         response_data = response.json()
         expected_result = response_employee_roles_test_data.RESPONSE_EMPLOYEE_ROLES_SUPERVISOR_ROLE_ALREADY_EXISTS
         expected_result['errors'][0]['detail'] = expected_result['errors'][0]['detail'].format(
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
         )
         assert response_data == expected_result
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -243,7 +243,7 @@ class TestCasePostEmployeeRoles(TestMixin):
         url = app.url_path_for(
             'post_employee_roles',
             charity_id=test_charity.id,
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
         )
         response = await client.post(
             url,
@@ -284,14 +284,14 @@ class TestCaseDeleteEmployeeRole(TestMixin):
         url = app.url_path_for(
             'delete_employee_role',
             charity_id=test_charity.id,
-            employee_id=authenticated_test_user.employee.id,
-            role_id=test_charity.employees[0].roles[0].id,
+            employee_id=test_charity.charity_employees[0].id,
+            role_id=test_charity.charity_employees[0].roles[0].id,
         )
         response = await client.delete(url)
         response_data = response.json()
         expected_result = response_employee_roles_test_data.RESPONSE_EMPLOYEE_ROLES_LAST_SUPERVISOR_IN_CHARITY
         expected_result['errors'][0]['detail'] = expected_result['errors'][0]['detail'].format(
-            employee_id=authenticated_test_user.employee.id,
+            employee_id=test_charity.charity_employees[0].id,
         )
         assert response_data == expected_result
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -323,13 +323,13 @@ class TestCaseDeleteEmployeeRole(TestMixin):
             'delete_employee_role',
             charity_id=random_test_charity.id,
             employee_id=test_employee_manager_and_supervisor.id,
-            role_id=test_employee_manager_and_supervisor.roles[0].id,
+            role_id=test_employee_manager_and_supervisor.roles[1].id,
         )
         response = await client.delete(url)
         response_data = response.json()
         expected_result = response_employee_roles_test_data.RESPONSE_DELETE_EMPLOYEE_ROLE
         expected_result['data']['message'] = expected_result['data']['message'].format(
-            role_id=test_employee_manager_and_supervisor.roles[0].id,
+            role_id=test_employee_manager_and_supervisor.roles[1].id,
             employee_id=test_employee_manager_and_supervisor.id,
         )
         assert response_data == expected_result
