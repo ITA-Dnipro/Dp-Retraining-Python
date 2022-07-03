@@ -4,6 +4,15 @@ from charities.tests.test_data import response_charity_employees_test_data
 from common.tests.test_data.charities import request_test_charity_data
 from common.tests.test_data.users import request_test_user_data
 
+# Test data.
+RESPONSE_CHARITY_OUTPUT_SCHEMA_TEST_DATA = {
+    'description': 'Good deeds charity, making good deeds since 2000.',
+    'email': 'good.deeds@totalynotemail.com',
+    'id': ANY,
+    'phone_number': '+380501112233',
+    'title': 'Good deeds charity',
+}
+
 # GET
 RESPONSE_GET_CHARITIES_EMPTY_DB = {
     'data': {

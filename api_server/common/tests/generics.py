@@ -43,12 +43,15 @@ from common.tests.test_data.charities import (
     request_test_charity_employee_data,
     request_test_employee_role_data,
 )
+from common.tests.test_data.fundraisers import request_test_fundraise_data
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
     user_pictures_mock_data,
 )
 from db import create_engine
+from fundraisers.schemas import FundraiseInputSchema
+from fundraisers.services import FundraiseService
 from users.cruds import UserPictureCRUD
 from users.models import User, UserPicture
 from users.schemas import UserInputSchema
@@ -741,7 +744,7 @@ class TestMixin:
             jwt_subject: decoded jwt identity.
 
         Returns:
-        newly created User object.
+        newly created Charity object.
         """
         return await charity_service.add_charity(charity=charity, jwt_subject=jwt_subject)
 
@@ -942,3 +945,66 @@ class TestMixin:
         )
         await db_session.refresh(test_employee_manager)
         return test_employee_manager
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def fundraise_service(self, db_session: AsyncSession) -> FundraiseService:
+        """A pytest fixture that creates instance of FundraiseService business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of FundraiseService business logic class.
+        """
+        return FundraiseService(session=db_session)
+
+    async def _create_fundraise(
+            self, fundraise_service: FundraiseService, fundraise: FundraiseInputSchema, jwt_subject: str,
+    ) -> Charity:
+        """Stores fundraise test data in test database.
+
+        Args:
+            fundraise_service: instance of business logic class.
+            fundraise: serialized FundraiseInputSchema object.
+            jwt_subject: decoded jwt identity.
+
+        Returns:
+        newly created Fundraise object.
+        """
+        return await fundraise_service.add_fundraise(fundraise=fundraise, jwt_subject=jwt_subject)
+
+    @pytest_asyncio.fixture
+    async def test_fundraise(
+            self, fundraise_service: FundraiseService, patch_model_current_time: fixture, request: fixture,
+            test_charity: Charity, authenticated_test_user: User, db_session: AsyncSession,
+    ) -> Charity:
+        """Create test fundraise data and store it in test database.
+
+        Args:
+            fundraise_service: instance of business logic class.
+            patch_model_current_time: pytest fixture that alters datetime that saves in db model.
+            request: native pytest fixture.
+            test_charity: pytest fixture, add charity to database.
+            authenticated_test_user: pytest fixture, add user to database and add auth cookies to client fixture.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        newly created Charity object.
+        """
+        fundraise_data = request_test_fundraise_data.ADD_FUNDRAISE_TEST_DATA
+        fundraise_data['charity_id'] = test_charity.id
+        fundraise_data = FundraiseInputSchema(**fundraise_data)
+        if not hasattr(request, 'param'):
+            fundraise = await self._create_fundraise(
+                fundraise_service=fundraise_service,
+                fundraise=fundraise_data,
+                jwt_subject=authenticated_test_user.username,
+            )
+            return fundraise
+        with patch_model_current_time(**request.param):
+            fundraise = await self._create_fundraise(
+                fundraise_service=fundraise_service,
+                fundraise=fundraise_data,
+                jwt_subject=authenticated_test_user.username,
+            )
+            return fundraise
