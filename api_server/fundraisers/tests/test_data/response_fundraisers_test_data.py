@@ -50,9 +50,24 @@ RESPONSE_GET_FUNDRAISE = {
     'errors': [],
     'status_code': 200
 }
+# POST
+RESPONSE_POST_FUNDRAISE = {
+    'data': RESPONSE_FUNDRAISE_TEST_DATA,
+    'errors': [],
+    'status_code': 201
+}
 # Errors.
 RESPONSE_FUNDRAISE_NOT_FOUND = {
     'data': [],
     'errors': [{'detail': f"Fundraise with id: '{request_test_fundraise_data.DUMMY_FUNDRAISE_UUID}' not found."}],
     'status_code': 404,
+}
+RESPONSE_FUNDRAISE_NO_EMPLOYEE_PERMISSION = {
+    'data': [],
+    'errors': [
+        {
+            'detail': 'Employee do not have permissions to perform this action.',
+        },
+    ],
+    'status_code': 403
 }
