@@ -18,6 +18,19 @@ RESPONSE_FUNDRAISE_TEST_DATA = {
     'charity': response_charities_test_data.RESPONSE_CHARITY_OUTPUT_SCHEMA_TEST_DATA,
     'statuses': [response_fundraise_statuses_test_data.RESPONSE_FUNDRAISE_STATUS_NEW_TEST_DATA],
 }
+RESPONSE_UPDATED_FUNDRAISE_TEST_DATA = {
+    'id': ANY,
+    'title': 'Buy 500000 MGM-140 ATACMS missiles (M39A1, M48, M57, M57E1) modifications.',
+    'description': (
+        'Fundraise to buy 500000 MGM-140 ATACMS missiles (M39A1, M48, M57, M57E1) modifications for '
+        'M270 and HIMARS platforms.'
+    ),
+    'goal': 5000000.0,
+    'is_donatable': True,
+    'ending_at': '2022-09-01T22:00:00',
+    'charity': response_charities_test_data.RESPONSE_CHARITY_OUTPUT_SCHEMA_TEST_DATA,
+    'statuses': [response_fundraise_statuses_test_data.RESPONSE_FUNDRAISE_STATUS_NEW_TEST_DATA],
+}
 # GET
 RESPONSE_GET_FUNDRAISERS_EMPTY_DB = {
     'data': {
@@ -55,6 +68,12 @@ RESPONSE_POST_FUNDRAISE = {
     'data': RESPONSE_FUNDRAISE_TEST_DATA,
     'errors': [],
     'status_code': 201
+}
+# PUT
+RESPONSE_PUT_FUNDRAISE = {
+    'data': RESPONSE_UPDATED_FUNDRAISE_TEST_DATA,
+    'errors': [],
+    'status_code': 200
 }
 # Errors.
 RESPONSE_FUNDRAISE_NOT_FOUND = {

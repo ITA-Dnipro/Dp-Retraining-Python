@@ -116,7 +116,7 @@ async def put_fundraise(
     Authorize.jwt_required()
     jwt_subject = Authorize.get_jwt_subject()
     return ResponseBaseSchema(
-        status_code=status.HTTP_201_CREATED,
+        status_code=status.HTTP_200_OK,
         data=FundraiseFullOutputSchema.from_orm(
             await fundraise_service.update_fundraise(id_=id, jwt_subject=jwt_subject, update_data=update_data)
         ),
