@@ -191,7 +191,7 @@ class TestCasePutFundraise(TestMixin):
             self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_fundraise: Fundraise,
             authenticated_random_test_user: User,
     ) -> None:
-        """Test PUT '/fundraisers/{id}' endpoint with valid payload and employee ries to update fundraise but he is not
+        """Test PUT '/fundraisers/{id}' endpoint with valid payload and employee tries to update fundraise but he is not
         listed as employee in charity.
 
         Args:
@@ -207,6 +207,59 @@ class TestCasePutFundraise(TestMixin):
         """
         url = app.url_path_for('put_fundraise', id=test_fundraise.id)
         response = await client.put(url, json=request_test_fundraise_data.UPDATE_FUNDRAISE_TEST_DATA)
+        response_data = response.json()
+        expected_result = response_fundraisers_test_data.RESPONSE_FUNDRAISE_NO_EMPLOYEE_PERMISSION
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (await db_session.execute(select(func.count(Fundraise.id)))).scalar_one() == 1
+
+
+class TestCaseDeleteFundraise(TestMixin):
+
+    @pytest.mark.asyncio
+    async def test_delete_fundraise_valid_credentials(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_fundraise: Fundraise,
+    ) -> None:
+        """Test DELETE '/fundraisers/{id}' endpoint fundraise test data added to the db and employee have permissions.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            test_fundraise: pytest fixture, add fundraise to database.
+
+        Returns:
+        Nothing.
+        """
+        url = app.url_path_for('delete_fundraise', id=test_fundraise.id)
+        response = await client.delete(url)
+        response_data = response.content
+        expected_result = response_fundraisers_test_data.RESPONSE_DELETE_FUNDRAISE
+        assert response_data == expected_result
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert (await db_session.execute(select(func.count(Fundraise.id)))).scalar_one() == 0
+
+    @pytest.mark.asyncio
+    async def test_delete_fundraise_employee_not_listed_in_charity(
+            self, app: FastAPI, client: AsyncClient, db_session: AsyncSession, test_fundraise: Fundraise,
+            authenticated_random_test_user: User,
+    ) -> None:
+        """Test DELETE '/fundraisers/{id}' employee tries to delete fundraise but he is not listed as employee in
+        charity.
+
+        Args:
+            app: pytest fixture, an instance of FastAPI.
+            client: pytest fixture, an instance of AsyncClient for http requests.
+            db_session: pytest fixture, sqlalchemy AsyncSession.
+            test_fundraise: pytest fixture, add fundraise to database.
+            authenticated_random_test_user: pytest fixture, add random user to database and auth cookies to client
+            fixture.
+
+        Returns:
+        Nothing.
+        """
+        url = app.url_path_for('delete_fundraise', id=test_fundraise.id)
+        response = await client.delete(url)
         response_data = response.json()
         expected_result = response_fundraisers_test_data.RESPONSE_FUNDRAISE_NO_EMPLOYEE_PERMISSION
         assert response_data == expected_result

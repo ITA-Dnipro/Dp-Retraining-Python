@@ -75,6 +75,8 @@ RESPONSE_PUT_FUNDRAISE = {
     'errors': [],
     'status_code': 200
 }
+# DELETE
+RESPONSE_DELETE_FUNDRAISE = b''
 # Errors.
 RESPONSE_FUNDRAISE_NOT_FOUND = {
     'data': [],
