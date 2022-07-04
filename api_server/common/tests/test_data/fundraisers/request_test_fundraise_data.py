@@ -8,3 +8,4 @@ ADD_FUNDRAISE_TEST_DATA = {
     'goal': 1000000.0,
     'ending_at': '2022-10-10T22:00:00',
 }
+DUMMY_FUNDRAISE_UUID = '5c1b7fb4-50f3-2256-b075-e4cc236f7752'
