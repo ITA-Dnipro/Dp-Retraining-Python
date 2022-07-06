@@ -16,13 +16,17 @@ class UserCRUD:
         self._log = setup_logging(self.__class__.__name__)
         self.session = session
 
-    async def get_users(self) -> list[User]:
+    async def get_users(self, page: int, page_size: int) -> list[User]:
         """Get User objects from database.
+
+        Args:
+            page: number of result page.
+            page_size: number of items per page.
 
         Returns:
         list of User objects.
         """
-        return await self._get_users()
+        return await self._get_users(page, page_size)
 
     async def _get_users(self, page: int, page_size: int) -> None:
         self._log.debug('Getting all users from the db.')

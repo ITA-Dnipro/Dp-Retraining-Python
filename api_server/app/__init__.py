@@ -1,3 +1,4 @@
+from functools import partial
 import json
 import os
 
@@ -34,9 +35,43 @@ from auth.utils.exceptions import (
     invalid_jwt_token_handler,
     user_already_activated_handler,
 )
-from charity.routers import charities_router
-from charity.utils.exceptions import OrganisationHTTPException, organisation_exception_handler
+from charities.routers import charities_router
+from charities.utils.exceptions import (
+    CharityEmployeeDuplicateError,
+    CharityEmployeeNotFoundError,
+    CharityEmployeePermissionError,
+    CharityEmployeeRoleDuplicateError,
+    CharityEmployeeRolePermissionError,
+    CharityNonRemovableEmployeeError,
+    CharityNotFoundError,
+    EmployeeNonRemovableEmployeeRoleError,
+    EmployeeRoleNotFoundError,
+    EmployeeRoleNotSupportedError,
+    charity_employee_not_found_error_handler,
+    charity_employee_permission_error_handler,
+    charity_employee_role_permission_error_handler,
+    charity_non_removable_employee_error_handler,
+    charity_not_found_error_handler,
+    employee_already_added_to_charity_error_handler,
+    employee_non_removable_employee_role_error_handler,
+    employee_role_already_added_to_employee_error_handler,
+    employee_role_not_found_error_handler,
+    employee_role_not_supported_error_handler,
+)
 from common.constants.api import ApiConstants
+from fundraisers.routers import fundraisers_router
+from fundraisers.utils.exceptions import (
+    FundraiseNotFoundError,
+    FundraisePermissionError,
+    FundraiseStatusNotFoundError,
+    FundraiseStatusNotSupportedError,
+    FundraiseStatusPermissionError,
+    fundraise_no_permissions_error_handler,
+    fundraise_not_found_error_handler,
+    fundraise_status_not_found_error_handler,
+    fundraise_status_not_supported_error_handler,
+    fundraise_status_permission_error_handler,
+)
 from users.routers import users_router
 from users.utils.exceptions import (
     UserNotFoundError,
@@ -53,6 +88,8 @@ from users.utils.exceptions import (
     user_picture_size_error_handler,
 )
 from utils.exceptions import integrity_error_handler
+from utils.prepopulates.employee_roles import populate_employee_roles_table
+from utils.prepopulates.fundraise_statuses import populate_fundraise_statuses_table
 
 load_dotenv()
 
@@ -80,6 +117,8 @@ def create_app(config_name=ApiConstants.DEVELOPMENT_CONFIG.value) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    # Adding on start_up events.
+    app_on_start_up_events(app)
 
     @AuthJWT.load_config
     def get_config():
@@ -100,6 +139,7 @@ def app_route_includer(app: FastAPI) -> FastAPI:
     app.include_router(users_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(auth_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     app.include_router(charities_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
+    app.include_router(fundraisers_router, prefix=f'/api/v{ApiConstants.API_VERSION_V1.value}')
     return app
 
 
@@ -121,7 +161,7 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     app.add_exception_handler(UserPictureExtensionError, user_picture_extension_error_handler)
     app.add_exception_handler(UserPictureResolutionError, user_picture_resolution_error_handler)
     app.add_exception_handler(UserPictureNotFoundError, user_picture_not_found_error_handler)
-    app.add_exception_handler(OrganisationHTTPException, organisation_exception_handler)
+    app.add_exception_handler(CharityNotFoundError, charity_not_found_error_handler)
     app.add_exception_handler(UserAlreadyActivatedException, user_already_activated_handler)
     app.add_exception_handler(EmailConfirmationTokenNotFoundError, email_confirmation_token_not_found_error_handler)
     app.add_exception_handler(EmailConfirmationTokenExpiredError, email_confirmation_token_expired_handler)
@@ -135,4 +175,31 @@ def app_exception_handler(app: FastAPI) -> FastAPI:
     )
     app.add_exception_handler(ChangePasswordTokenNotFoundError, change_password_token_not_found_handler)
     app.add_exception_handler(ChangePasswordTokenExpiredError, change_password_token_expired_in_db_handler)
+    app.add_exception_handler(FundraiseNotFoundError, fundraise_not_found_error_handler)
+    app.add_exception_handler(FundraisePermissionError, fundraise_no_permissions_error_handler)
+    app.add_exception_handler(CharityEmployeePermissionError, charity_employee_permission_error_handler)
+    app.add_exception_handler(CharityEmployeeRolePermissionError, charity_employee_role_permission_error_handler)
+    app.add_exception_handler(CharityEmployeeDuplicateError, employee_already_added_to_charity_error_handler)
+    app.add_exception_handler(EmployeeRoleNotSupportedError, employee_role_not_supported_error_handler)
+    app.add_exception_handler(CharityEmployeeRoleDuplicateError, employee_role_already_added_to_employee_error_handler)
+    app.add_exception_handler(CharityEmployeeNotFoundError, charity_employee_not_found_error_handler)
+    app.add_exception_handler(CharityNonRemovableEmployeeError, charity_non_removable_employee_error_handler)
+    app.add_exception_handler(EmployeeRoleNotFoundError, employee_role_not_found_error_handler)
+    app.add_exception_handler(EmployeeNonRemovableEmployeeRoleError, employee_non_removable_employee_role_error_handler)
+    app.add_exception_handler(FundraiseStatusNotFoundError, fundraise_status_not_found_error_handler)
+    app.add_exception_handler(FundraiseStatusNotSupportedError, fundraise_status_not_supported_error_handler)
+    app.add_exception_handler(FundraiseStatusPermissionError, fundraise_status_permission_error_handler)
     return app
+
+
+def app_on_start_up_events(app: FastAPI) -> FastAPI:
+    """Add on start_up handlers to FastAPI app.
+
+    Args:
+        app: FastAPI instance.
+
+    Returns:
+    An instance of FastAPI with added start_up handlers.
+    """
+    app.add_event_handler(event_type='startup', func=partial(populate_fundraise_statuses_table, config=app.app_config))
+    app.add_event_handler(event_type='startup', func=partial(populate_employee_roles_table, config=app.app_config))

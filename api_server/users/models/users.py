@@ -12,7 +12,7 @@ from db import Base
 class User(Base):
     """A model representing a user."""
 
-    __tablename__ = 'Users'
+    __tablename__ = 'users'
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     first_name = Column(String(UserModelConstants.CHAR_SIZE_64.value), nullable=True)
@@ -32,7 +32,9 @@ class User(Base):
     change_password_token = relationship(
         'ChangePasswordToken', back_populates='user', lazy='selectin', cascade='all, delete',
     )
-    charities = relationship('CharityUserAssociation', back_populates='user', lazy="selectin")
+    employee = relationship(
+        'Employee', back_populates='user', uselist=False, lazy='selectin', cascade='all, delete',
+    )
 
     __mapper_args__ = {'eager_defaults': True}
 
@@ -46,7 +48,7 @@ class UserPicture(Base):
     __tablename__ = 'user-pictures'
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('Users.id'), nullable=False, unique=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, unique=True)
     url = Column(String(UserPictureModelConstants.CHAR_SIZE_512.value), nullable=True, unique=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True)

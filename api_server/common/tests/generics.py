@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 import os
 import random
 import time
@@ -30,19 +30,28 @@ from auth.cruds import ChangePasswordTokenCRUD, EmailConfirmationTokenCRUD
 from auth.models import ChangePasswordToken, EmailConfirmationToken
 from auth.services import AuthService
 from auth.utils.jwt_tokens import create_jwt_token, create_token_payload
-from charity.models import CharityOrganisation, CharityUserAssociation
+from charities.models import Charity, Employee
+from charities.schemas import CharityInputSchema, EmployeeInputSchema, EmployeeRoleInputSchema
+from charities.services import CharityEmployeeService, CharityService, EmployeeRoleService
 from common.constants.api import ApiConstants
 from common.constants.auth import AuthJWTConstants, ChangePasswordTokenConstants, EmailConfirmationTokenConstants
 from common.constants.celery import CeleryConstants
 from common.constants.tests import GenericTestConstants
 from common.tests.test_data.auth import request_test_auth_email_confirmation_data
-from common.tests.test_data.charity.charity_requests import ADDITIONAL_USER_TEST_DATA, initialize_charity_data
+from common.tests.test_data.charities import (
+    request_test_charity_data,
+    request_test_charity_employee_data,
+    request_test_employee_role_data,
+)
+from common.tests.test_data.fundraisers import request_test_fundraise_data
 from common.tests.test_data.users import (
     request_test_user_data,
     request_test_user_pictures_data,
     user_pictures_mock_data,
 )
 from db import create_engine
+from fundraisers.schemas import FundraiseInputSchema
+from fundraisers.services import FundraiseService
 from users.cruds import UserPictureCRUD
 from users.models import User, UserPicture
 from users.schemas import UserInputSchema
@@ -313,9 +322,9 @@ class TestMixin:
         newly created User object.
         """
         user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        return await self._create_authenticated_user(user, auth_service, client)
+        return await self._authenticate_user(user, auth_service, client)
 
-    async def _create_authenticated_user(self, user: User, auth_service: AuthService, client: fixture) -> User:
+    async def _authenticate_user(self, user: User, auth_service: AuthService, client: fixture) -> User:
         """Modifies 'client' fixture by adding JWT cookies for user authentication.
 
         Args:
@@ -328,11 +337,7 @@ class TestMixin:
         """
         Authorize = AuthJWT()
         user_claims = {
-            'user_data': {
-                'id': str(user.id),
-                'email': user.email,
-                'phone': user.phone_number,
-            },
+            'user_data': {'id': str(user.id)},
         }
         access_token = Authorize.create_access_token(
             subject=user.username,
@@ -412,7 +417,7 @@ class TestMixin:
         newly created UserPicture object.
         """
         user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        await self._create_authenticated_user(user, auth_service, client)
+        await self._authenticate_user(user, auth_service, client)
         return await user_picture_crud.add_user_picture(user.id)
 
     @pytest_asyncio.fixture(autouse=True)
@@ -487,133 +492,6 @@ class TestMixin:
         mocker.patch('users.utils.aws_s3.S3Client.delete_file_objects', side_effect=async_mock)
         async_mock.return_value = user_pictures_mock_data.S3Client_delete_images_in_s3_valid_response
         return async_mock
-
-    @staticmethod
-    async def _initialize_charity(user: User, db_session: AsyncSession, charity_title: str, is_director: bool,
-                                  is_supermanager: bool) -> CharityOrganisation:
-        """
-        Initializes charityOrganisation in database.
-        Args:
-                user: instance of User business logic class.
-                db_session: pytest fixture that creates test sqlalchemy session.
-
-        Returns:
-            newly created CharityOrganisation object.
-        """
-        organisation = CharityOrganisation(**initialize_charity_data(charity_title))
-        association = CharityUserAssociation()
-        association.user = user
-        association.is_director = is_director
-        association.is_supermanager = is_supermanager
-        organisation.users_association.append(association)
-
-        db_session.add(organisation)
-        await db_session.commit()
-        await db_session.refresh(organisation)
-        return organisation
-
-    @pytest_asyncio.fixture
-    async def charity(self, user_service: UserService, db_session: AsyncSession) -> CharityOrganisation:
-        """
-            Create test charity data and store it in test database.
-
-            Returns:
-            CharityOrganisation object and not authenticated User object.
-            """
-
-        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        organisation = await self._initialize_charity(
-            user=user,
-            db_session=db_session,
-            charity_title="Charity Organisation",
-            is_director=True,
-            is_supermanager=True
-        )
-        return organisation
-
-    @pytest_asyncio.fixture
-    async def charity_with_authenticated_manager(self,
-                                                 user_service: UserService,
-                                                 db_session: AsyncSession,
-                                                 auth_service: AuthService,
-                                                 client: fixture, ) -> CharityOrganisation:
-        """
-        Create authenticated test charity data and store it in test database.
-
-            Returns:
-        CharityOrganisation object with authenticated user.
-        """
-        additional_user = await self._create_user(user_service, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
-        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        organisation = await self._initialize_charity(user=user,
-                                                      db_session=db_session,
-                                                      charity_title="Charity Organisation",
-                                                      is_supermanager=False,
-                                                      is_director=False)
-        association = CharityUserAssociation()
-        association.user = additional_user
-        association.charity = organisation
-        association.is_supermanager = False
-
-        db_session.add(association)
-        await db_session.commit()
-
-        await self._create_authenticated_user(user, auth_service, client)
-
-        return organisation
-
-    @pytest_asyncio.fixture
-    async def charity_with_authenticated_director(self,
-                                                  user_service: UserService,
-                                                  db_session: AsyncSession,
-                                                  auth_service: AuthService,
-                                                  client: fixture, ) -> CharityOrganisation:
-        """
-        Create authenticated test charity data and store it in test database.
-
-            Returns:
-        CharityOrganisation object with authenticated user.
-        """
-        additional_user = await self._create_user(user_service, UserInputSchema(**ADDITIONAL_USER_TEST_DATA))
-        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        organisation = await self._initialize_charity(user=user,
-                                                      db_session=db_session,
-                                                      charity_title="Charity Organisation",
-                                                      is_supermanager=True,
-                                                      is_director=True)
-        association = CharityUserAssociation()
-        association.user = additional_user
-        association.charity = organisation
-        association.is_supermanager = True
-
-        db_session.add(association)
-        await db_session.commit()
-        await self._create_authenticated_user(user, auth_service, client)
-
-        return organisation
-
-    @pytest_asyncio.fixture
-    async def authenticated_random_test_user(self, random_test_user: User,
-                                             auth_service: AuthService,
-                                             client: fixture):
-        return await self._create_authenticated_user(random_test_user, auth_service, client)
-
-    @pytest_asyncio.fixture
-    async def many_charities(
-            self,
-            user_service: UserService,
-            db_session: AsyncSession,
-            auth_service: AuthService,
-            client: fixture
-    ):
-        user = await self._create_user(user_service, UserInputSchema(**request_test_user_data.ADD_USER_TEST_DATA))
-        charity_titles = ("organisation D", "organisation B", "organisation A", "organisation Y")
-        organisations = [
-            await self._initialize_charity(user=user, db_session=db_session, charity_title=title, is_director=True,
-                                           is_supermanager=True)
-            for title in charity_titles]
-        await self._create_authenticated_user(user, auth_service, client)
-        return organisations
 
     @pytest_asyncio.fixture(autouse=True)
     async def email_confirmation_token_crud(self, db_session: AsyncSession) -> EmailConfirmationTokenCRUD:
@@ -808,3 +686,325 @@ class TestMixin:
         An instance of FrozenDateTimeFactory object.
         """
         return self.patch_model_time
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def charity_service(self, db_session: AsyncSession) -> CharityService:
+        """A pytest fixture that creates instance of charity_service business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of CharityService business logic class.
+        """
+        return CharityService(session=db_session)
+
+    @pytest_asyncio.fixture
+    async def test_charity(
+            self, charity_service: CharityService, patch_model_current_time: fixture, request: fixture,
+            authenticated_test_user: User, db_session: AsyncSession,
+    ) -> Charity:
+        """Create test charity data and store it in test database.
+
+        Args:
+            charity_service: instance of business logic class.
+            patch_model_current_time: pytest fixture that alters datetime that saves in db model.
+            request: native pytest fixture.
+            authenticated_test_user: pytest fixture, add user to database and add auth cookies to client fixture.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        newly created Charity object.
+        """
+        if not hasattr(request, 'param'):
+            charity = await self._create_charity(
+                charity_service=charity_service,
+                charity=CharityInputSchema(**request_test_charity_data.ADD_CHARITY_TEST_DATA),
+                jwt_subject=authenticated_test_user.username,
+            )
+            await db_session.refresh(authenticated_test_user)
+            return charity
+        with patch_model_current_time(**request.param):
+            charity = await self._create_charity(
+                charity_service=charity_service,
+                charity=CharityInputSchema(**request_test_charity_data.ADD_CHARITY_TEST_DATA),
+                jwt_subject=authenticated_test_user.username,
+            )
+            await db_session.refresh(authenticated_test_user)
+            return charity
+
+    async def _create_charity(
+            self, charity_service: CharityService, charity: CharityInputSchema, jwt_subject: str,
+    ) -> Charity:
+        """Stores charity test data in test database.
+
+        Args:
+            charity_service: instance of business logic class.
+            charity: serialized CharityInputSchema object.
+            jwt_subject: decoded jwt identity.
+
+        Returns:
+        newly created Charity object.
+        """
+        return await charity_service.add_charity(charity=charity, jwt_subject=jwt_subject)
+
+    @pytest_asyncio.fixture
+    async def authenticated_random_test_user(
+            self, client: fixture, auth_service: AuthService, random_test_user: User,
+    ) -> User:
+        """Create random authenticated test user data and store it in test database.
+
+        Args:
+            client: pytest fixture that creates test httpx client.
+            auth_service: instance of auth business logic class.
+            random_test_user: pytest fixture, add user with random data to database.
+
+        Returns:
+        newly created User object.
+        """
+        return await self._authenticate_user(random_test_user, auth_service, client)
+
+    @pytest_asyncio.fixture
+    async def random_test_charity(
+            self, charity_service: CharityService, patch_model_current_time: fixture, request: fixture,
+            authenticated_random_test_user: User, db_session: AsyncSession,
+    ) -> Charity:
+        """Create test charity with random test data and store it in test database.
+
+        Args:
+            charity_service: instance of business logic class.
+            patch_model_current_time: pytest fixture that alters datetime that saves in db model.
+            request: native pytest fixture.
+            authenticated_random_test_user: pytest fixture, add user with random data to database and
+            auth cookies to client fixture.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        newly created Charity object.
+        """
+        RANDOM_CHARITY_TEST_DATA = {
+            'title': f'Good deeds charity{uuid4()}',
+            'description': f'Good deeds charity, making good deeds since 2000 {uuid4()}.',
+            'phone_number': f'+38{random.randrange(1000000000, 9999999999)}',
+            'email': f'good.deeds{random.randrange(1000000000, 9999999999)}@totalynotemail.com',
+        }
+        if not hasattr(request, 'param'):
+            charity = await self._create_charity(
+                charity_service=charity_service,
+                charity=CharityInputSchema(**RANDOM_CHARITY_TEST_DATA),
+                jwt_subject=authenticated_random_test_user.username,
+            )
+            await db_session.refresh(authenticated_random_test_user)
+            return charity
+        with patch_model_current_time(**request.param):
+            charity = await self._create_charity(
+                charity_service=charity_service,
+                charity=CharityInputSchema(**RANDOM_CHARITY_TEST_DATA),
+                jwt_subject=authenticated_random_test_user.username,
+            )
+            await db_session.refresh(authenticated_random_test_user)
+            return charity
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def charity_employee_service(self, db_session: AsyncSession) -> CharityEmployeeService:
+        """A pytest fixture that creates instance of charity_employee_service business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of CharityEmployeeService business logic class.
+        """
+        return CharityEmployeeService(session=db_session)
+
+    async def _add_employee_to_charity(
+            self, charity_employee_service: CharityEmployeeService, charity_id: UUID, jwt_subject: str,
+            employee_data: EmployeeInputSchema,
+    ) -> Charity:
+        """Add employee test data to charity in test database.
+
+        Args:
+            charity_employee_service: instance of business logic class.
+            charity_id: UUID of charity.
+            jwt_subject: decoded jwt identity.
+            employee_data: Serialized EmployeeInputSchema object.
+
+        Returns:
+        newly created User object.
+        """
+        return await charity_employee_service.add_employee_to_charity(
+            charity_id=charity_id, jwt_subject=jwt_subject, employee_data=employee_data,
+        )
+
+    @pytest_asyncio.fixture
+    async def test_employee_manager(
+            self, random_test_charity: Charity, charity_employee_service: CharityEmployeeService,
+            authenticated_random_test_user: User, test_user: User, db_session: AsyncSession,
+    ) -> None:
+        """Add test_user to random_test_charity.employees as an Employee with 'manager' EmployeeRole.
+
+        Args:
+            random_test_charity: pytest fixture add charity with random data to the database.
+            charity_employee_service: instance of business logic class.
+            authenticated_random_test_user: pytest fixture, add user with random data to database and
+            auth cookies to client fixture.
+            test_user: pytest fixture, add user test data to the database.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+
+        """
+        employee = await self._add_employee_to_charity(
+            charity_employee_service=charity_employee_service,
+            charity_id=random_test_charity.id,
+            jwt_subject=authenticated_random_test_user.username,
+            employee_data=EmployeeInputSchema(
+                **request_test_charity_employee_data.ADD_CHARITY_EMPLOYEE_MANAGER_TEST_DATA
+            ),
+        )
+        await db_session.refresh(random_test_charity)
+        return employee
+
+    @pytest_asyncio.fixture
+    async def login_as(
+            self, user_service: UserService, auth_service: AuthService, client: fixture, request: fixture,
+    ) -> None:
+        """Finds and authenticate user by username from request.params.
+
+        Args:
+            user_service: instance of business logic class.
+            auth_service: instance of business logic class.
+            client: client: pytest fixture that creates test httpx client.
+            request: native pytest fixture.
+
+        Returns:
+
+        """
+        if not hasattr(request, 'param'):
+            pass
+        user = await user_service.get_user_by_username(request.param['username'])
+        await self._authenticate_user(user=user, auth_service=auth_service, client=client)
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def employee_role_service(self, db_session: AsyncSession) -> EmployeeRoleService:
+        """A pytest fixture that creates instance of EmployeeRoleService business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of EmployeeRoleService business logic class.
+        """
+        return EmployeeRoleService(session=db_session)
+
+    async def _add_role_to_employee(
+            self, employee_role_service: EmployeeRoleService, charity_id: UUID, employee_id: UUID, jwt_subject: str,
+            role_data: EmployeeRoleInputSchema,
+    ) -> Charity:
+        """Add employee role test data to employee in test database.
+
+        Args:
+            employee_role_service: instance of business logic class.
+            charity_id: UUID of charity.
+            employee_id: UUID of employee.
+            jwt_subject: decoded jwt identity.
+            role_data: Serialized EmployeeRoleInputSchema object.
+
+        Returns:
+        newly created EmployeeRole object.
+        """
+        employee_role = await employee_role_service.add_role_to_employee(
+            charity_id=charity_id, employee_id=employee_id, jwt_subject=jwt_subject, role_data=role_data,
+        )
+        return employee_role
+
+    @pytest_asyncio.fixture
+    async def test_employee_manager_and_supervisor(
+            self, employee_role_service: EmployeeRoleService, random_test_charity: Charity,
+            authenticated_random_test_user: User, test_employee_manager: Employee, db_session: AsyncSession,
+    ):
+        """
+
+        Args:
+            employee_role_service: instance of business logic class.
+            random_test_charity: random_test_charity: pytest fixture add charity with random data to the database.
+            authenticated_random_test_user: pytest fixture, add user with random data to database and
+            auth cookies to client fixture.
+            test_employee_manager: pytest fixture, add employee with manager role to charity employees.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+
+        """
+        await self._add_role_to_employee(
+            employee_role_service=employee_role_service,
+            charity_id=random_test_charity.id,
+            employee_id=test_employee_manager.id,
+            jwt_subject=authenticated_random_test_user.username,
+            role_data=EmployeeRoleInputSchema(**request_test_employee_role_data.ADD_EMPLOYEE_ROLE_SUPERVISOR_TEST_DATA),
+        )
+        await db_session.refresh(test_employee_manager)
+        return test_employee_manager
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def fundraise_service(self, db_session: AsyncSession) -> FundraiseService:
+        """A pytest fixture that creates instance of FundraiseService business logic.
+
+        Args:
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        An instance of FundraiseService business logic class.
+        """
+        return FundraiseService(session=db_session)
+
+    async def _create_fundraise(
+            self, fundraise_service: FundraiseService, fundraise: FundraiseInputSchema, jwt_subject: str,
+    ) -> Charity:
+        """Stores fundraise test data in test database.
+
+        Args:
+            fundraise_service: instance of business logic class.
+            fundraise: serialized FundraiseInputSchema object.
+            jwt_subject: decoded jwt identity.
+
+        Returns:
+        newly created Fundraise object.
+        """
+        return await fundraise_service.add_fundraise(fundraise=fundraise, jwt_subject=jwt_subject)
+
+    @pytest_asyncio.fixture
+    async def test_fundraise(
+            self, fundraise_service: FundraiseService, patch_model_current_time: fixture, request: fixture,
+            test_charity: Charity, authenticated_test_user: User, db_session: AsyncSession,
+    ) -> Charity:
+        """Create test fundraise data and store it in test database.
+
+        Args:
+            fundraise_service: instance of business logic class.
+            patch_model_current_time: pytest fixture that alters datetime that saves in db model.
+            request: native pytest fixture.
+            test_charity: pytest fixture, add charity to database.
+            authenticated_test_user: pytest fixture, add user to database and add auth cookies to client fixture.
+            db_session: pytest fixture that creates test sqlalchemy session.
+
+        Returns:
+        newly created Charity object.
+        """
+        fundraise_data = request_test_fundraise_data.ADD_FUNDRAISE_TEST_DATA
+        fundraise_data['charity_id'] = test_charity.id
+        fundraise_data = FundraiseInputSchema(**fundraise_data)
+        if not hasattr(request, 'param'):
+            fundraise = await self._create_fundraise(
+                fundraise_service=fundraise_service,
+                fundraise=fundraise_data,
+                jwt_subject=authenticated_test_user.username,
+            )
+            return fundraise
+        with patch_model_current_time(**request.param):
+            fundraise = await self._create_fundraise(
+                fundraise_service=fundraise_service,
+                fundraise=fundraise_data,
+                jwt_subject=authenticated_test_user.username,
+            )
+            return fundraise

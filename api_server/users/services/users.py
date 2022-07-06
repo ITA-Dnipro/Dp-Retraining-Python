@@ -16,8 +16,8 @@ from users.models import User
 from users.schemas import UserInputSchema, UserUpdateSchema
 from users.utils.exceptions import UserNotFoundError
 from users.utils.jwt.user import jwt_user_validator
-from users.utils.pagination import PaginationPage
 from utils.logging import setup_logging
+from utils.pagination import PaginationPage
 
 
 class UserService:
@@ -41,7 +41,7 @@ class UserService:
         return await self._get_users(page, page_size)
 
     async def _get_users(self, page: int, page_size: int) -> None:
-        users = await self.user_crud._get_users(page, page_size)
+        users = await self.user_crud.get_users(page, page_size)
         total_users = await self.user_crud._get_total_of_users()
         return PaginationPage(items=users, page=page, page_size=page_size, total=total_users)
 

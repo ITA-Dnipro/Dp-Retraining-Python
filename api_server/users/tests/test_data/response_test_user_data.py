@@ -93,10 +93,10 @@ RESPONSE_USER_INVALID_PAYLOAD = {
         }
     ]
 }
-RESPONSE_USER_DUPLICATE_USERNAME = {
+RESPONSE_USER_DUPLICATE_EMAIL = {
     'data': [],
     'errors': [
-        {'detail': f'''User with username: '{request_test_user_data.ADD_USER_TEST_DATA["username"]}' already exists.'''}
+        {'detail': f'''User with email: '{request_test_user_data.ADD_USER_TEST_DATA["email"]}' already exists.'''}
     ],
     'status_code': 400,
 }

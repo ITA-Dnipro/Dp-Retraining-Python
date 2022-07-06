@@ -20,8 +20,8 @@ class GenericTestConstants(enum.Enum):
 
 
 class HealthChecksConstants(enum.Enum):
-    """Healthchecks constants."""
+    """Health checks constants."""
 
     ROOT_FILEPATH = '/'
     API_SERVER_STARTUP_FILENAME = 'api_server_startup.py'
-    STDOUT_TIMEOUT_SEC = 10
+    STDOUT_TIMEOUT_SEC = 15
